@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35260912345678000195550010000012341000012345" versao="4.00">
+      <ide><cUF>35</cUF><nNF>1234</nNF><serie>1</serie><mod>55</mod><dhEmi>2026-09-20T10:00:00-03:00</dhEmi></ide>
+      <emit>
+        <CNPJ>12345678000195</CNPJ><xNome>DISTRIBUIDORA APPLE PARTS LTDA</xNome><xFant>Apple Parts</xFant><IE>123456789110</IE>
+        <enderEmit><xMun>Sao Paulo</xMun><UF>SP</UF><fone>1133334444</fone></enderEmit>
+      </emit>
+      <dest><CNPJ>98765432000110</CNPJ><xNome>LOJA IDESK</xNome></dest>
+      <det nItem="1">
+        <prod><cProd>CAPA-15</cProd><cEAN>7891234567890</cEAN><xProd>CAPA MAGSAFE IPHONE 15 CX C/ 10</xProd><NCM>39269090</NCM><CFOP>6102</CFOP><uCom>CX</uCom><qCom>2.0000</qCom><vUnCom>300.00</vUnCom><vProd>600.00</vProd><vFrete>20.00</vFrete><vDesc>10.00</vDesc></prod>
+        <imposto><IPI><IPITrib><vIPI>0</vIPI></IPITrib></IPI></imposto>
+      </det>
+      <det nItem="2">
+        <prod><cProd>IP15-128-PT</cProd><cEAN>SEM GTIN</cEAN><xProd>IPHONE 15 128GB PRETO</xProd><NCM>85171300</NCM><CFOP>6102</CFOP><uCom>UN</uCom><qCom>2.0000</qCom><vUnCom>4200.00</vUnCom><vProd>8400.00</vProd></prod>
+        <imposto/>
+        <infAdProd>IMEI: 356111111111119 / 356222222222228</infAdProd>
+      </det>
+      <total><ICMSTot><vNF>9010.00</vNF></ICMSTot></total>
+      <cobr><dup><nDup>001</nDup><dVenc>2026-10-20</dVenc><vDup>4505.00</vDup></dup><dup><nDup>002</nDup><dVenc>2026-11-20</dVenc><vDup>4505.00</vDup></dup></cobr>
+    </infNFe>
+  </NFe>
+  <protNFe><infProt><chNFe>35260912345678000195550010000012341000012345</chNFe></infProt></protNFe>
+</nfeProc>

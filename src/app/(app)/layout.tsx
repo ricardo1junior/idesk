@@ -9,7 +9,8 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
   { href: "/os", label: "Ordens de serviço", permissao: "os" },
   { href: "/clientes", label: "Clientes", permissao: "clientes" },
   { href: "/estoque", label: "Estoque", permissao: "estoque" },
-  { href: "#", label: "Notas fiscais", embreve: true },
+  { href: "/financeiro", label: "Financeiro", permissao: "financeiro" },
+  { href: "/notas", label: "Notas fiscais", permissao: "notasFiscais" },
   { href: "/usuarios", label: "Usuários", permissao: "usuarios" },
 ];
 

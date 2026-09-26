@@ -31,8 +31,10 @@ Testes: `npm test` · Lint: `npm run lint`
 | Estoque: produtos, acessórios, peças e aparelhos por IMEI/série | pronto |
 | Vendas: quantidade, desconto por item e geral (R$ ou %), vários pagamentos, troca de aparelho, recibo, cancelamento | pronto |
 | Verificação de IMEI (Anatel roubo/furto, iCloud, blacklist GSMA, garantia Apple) com bloqueio da troca | pronto (precisa das chaves) |
-| Entrada de NF-e (XML) | a fazer |
-| Emissão de NF-e / NFC-e / NFS-e | a fazer |
+| Financeiro: lançamentos de entrada e saída, parcelas, contas a pagar e receber, fluxo de caixa com filtros, exportação CSV | pronto |
+| Entrada de NF-e por XML (vínculo de produtos por fornecedor, fator de conversão, IMEIs, custo médio, contas a pagar) | pronto |
+| Emissão de NF-e e NFC-e a partir da venda (Focus NFe), cancelamento, DANFE | pronto (precisa da conta Focus NFe) |
+| Emissão de NFS-e (serviços da OS) | a fazer (depende da prefeitura) |
 
 ## Verificação de IMEI
 
@@ -44,3 +46,20 @@ A Apple não tem API pública de garantia nem de bloqueio, então o sistema usa 
 O botão **Verificar IMEI** aparece na troca (venda), na abertura e na tela da OS e nas unidades do estoque. Cada clique faz uma consulta cobrada e o resultado fica guardado com data. Com as chaves configuradas, a venda com troca só fecha se o IMEI do aparelho recebido tiver sido consultado nas últimas 24 horas sem restrição. Sem as chaves, o botão fica desativado e a troca funciona como antes.
 
 A leitura das respostas é tolerante (`src/lib/verificacao/interpretar.ts`): o que não dá para interpretar aparece como "Conferir", com o texto original do serviço.
+
+## Financeiro
+
+Toda venda finalizada gera lançamentos de entrada (um por parcela: crédito a cada 30 dias, boleto e a prazo mensais, dinheiro/PIX/débito já pagos). Pagamentos da OS e lançamentos manuais (aluguel, salários etc.) entram pelo mesmo cadastro. O fluxo de caixa filtra por período, visão realizada (data do pagamento) ou prevista (vencimento), tipo, situação, categoria e forma de pagamento, agrupa por dia, categoria ou forma e exporta em CSV.
+
+## Notas fiscais
+
+**Entrada:** em *Notas fiscais › Importar XML de compra*, envie o XML da NF-e do fornecedor. Cada item pode ser ligado a um produto existente, virar um produto novo ou ser ignorado. O vínculo fica guardado por fornecedor, então a próxima nota já vem conferida. Aparelhos pedem um IMEI por unidade (o sistema lê os IMEIs do texto do item quando o fornecedor informa). A importação dá entrada no estoque com custo médio, cadastra o fornecedor e cria as contas a pagar a partir das duplicatas.
+
+**Emissão:** usa a API da [Focus NFe](https://focusnfe.com.br). Para ligar:
+
+1. Crie a conta na Focus NFe, cadastre a empresa, envie o certificado digital A1 e, para NFC-e, o CSC da SEFAZ.
+2. Coloque os tokens no `.env` (`FOCUSNFE_TOKEN_HOMOLOGACAO` e `FOCUSNFE_TOKEN_PRODUCAO`, ou só `FOCUSNFE_TOKEN`).
+3. Em *Notas fiscais › Dados fiscais da empresa*, preencha CNPJ, UF e regime. Os códigos já vêm para o Simples Nacional (CSOSN 102, CFOP 5102/6102, PIS/COFINS 07) e devem ser confirmados com o contador.
+4. Emita em **homologação** (sem valor fiscal) até conferir tudo; depois troque o ambiente para produção.
+
+Na tela da venda, o botão sugere NFC-e no balcão e NF-e para empresa com inscrição estadual ou cliente de outro estado. Os produtos precisam ter NCM cadastrado. Nota autorizada precisa ser cancelada antes de cancelar a venda.

@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
+import { categoriaId, parcelarPagamento } from "@/lib/financeiro";
 import { prisma } from "@/lib/db";
 import { somenteDigitos } from "@/lib/documentos";
 import { GARANTIA_ACESSORIO, GARANTIA_PADRAO } from "@/lib/estoque";
@@ -193,6 +194,27 @@ export async function finalizarVenda(dados: unknown): Promise<{ erro?: string; i
         await tx.pagamento.create({
           data: { vendaId: criada.id, forma: p.forma, valor: p.valor, parcelas: p.parcelas, aparelhoTrocaId },
         });
+        // Financeiro: à vista entra no caixa; crédito, boleto e a prazo viram contas a receber.
+        const categoria = await categoriaId(tx, "ENTRADA", "Vendas");
+        for (const parc of parcelarPagamento(p.forma, p.valor, p.parcelas, criada.criadoEm)) {
+          await tx.lancamento.create({
+            data: {
+              tipo: "ENTRADA",
+              status: parc.pago ? "PAGO" : "PENDENTE",
+              descricao: `Venda #${criada.numero}`,
+              valor: parc.valor,
+              vencimento: parc.vencimento,
+              pagoEm: parc.pago ? criada.criadoEm : null,
+              forma: p.forma,
+              parcela: parc.parcela,
+              totalParcelas: parc.totalParcelas,
+              categoriaId: categoria,
+              clienteId: v.clienteId,
+              vendaId: criada.id,
+              usuarioId: usuario.id,
+            },
+          });
+        }
       }
       return criada;
     });
@@ -217,6 +239,9 @@ export async function cancelarVenda(id: string): Promise<{ erro?: string }> {
         include: { itens: true, pagamentos: { include: { aparelhoTroca: true } } },
       });
       if (venda.status === "CANCELADA") throw new ErroVenda("Venda já cancelada.");
+      if (await tx.notaFiscal.count({ where: { vendaId: id, status: { in: ["AUTORIZADA", "PROCESSANDO"] } } })) {
+        throw new ErroVenda("Esta venda tem nota fiscal emitida. Cancele a nota antes de cancelar a venda.");
+      }
       const ref = `Cancelamento venda ${venda.numero}`;
 
       // O aparelho recebido na troca volta para o cliente; se já foi revendido, não dá para cancelar.
@@ -238,6 +263,7 @@ export async function cancelarVenda(id: string): Promise<{ erro?: string }> {
         await tx.movimentoEstoque.create({ data: { produtoId: item.produtoId, tipo: "DEVOLUCAO", quantidade: item.quantidade, referencia: ref } });
       }
       await tx.venda.update({ where: { id }, data: { status: "CANCELADA", canceladaEm: new Date() } });
+      await tx.lancamento.updateMany({ where: { vendaId: id }, data: { status: "CANCELADO" } });
     });
   } catch (e) {
     if (e instanceof ErroVenda) return { erro: e.message };

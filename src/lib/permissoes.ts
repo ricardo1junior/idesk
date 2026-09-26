@@ -17,6 +17,9 @@ const REGRAS = {
   cancelarVenda: ["FINANCEIRO"],
   estoque: ["VENDEDOR", "FINANCEIRO", "TECNICO"],
   editarProdutos: ["FINANCEIRO"],
+  financeiro: ["FINANCEIRO"],
+  notasFiscais: ["FINANCEIRO"],
+  emitirNota: ["FINANCEIRO", "VENDEDOR"],
   usuarios: [],
 } satisfies Record<string, Perfil[]>;
 

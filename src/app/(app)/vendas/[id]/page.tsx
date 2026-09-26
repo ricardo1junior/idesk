@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 import { ResumoVenda } from "@/components/ResumoVenda";
 import { exigirUsuario } from "@/lib/auth";
 import { formatarDocumento } from "@/lib/documentos";
+import { prisma } from "@/lib/db";
+import { linkFocus } from "@/lib/nfe/focus";
 import { pode } from "@/lib/permissoes";
 import { CancelarVenda } from "./CancelarVenda";
 import { carregarVenda } from "./dados";
+import { NotasDaVenda } from "./NotasDaVenda";
 
 export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">) {
   const usuario = await exigirUsuario("vendas");
@@ -13,6 +16,15 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
   const venda = await carregarVenda(id);
   if (!venda) notFound();
   const cancelada = venda.status === "CANCELADA";
+  const [notas, empresa] = await Promise.all([
+    prisma.notaFiscal.findMany({ where: { vendaId: id }, orderBy: { criadoEm: "asc" } }),
+    prisma.empresaFiscal.findUnique({ where: { id: "empresa" }, select: { uf: true } }),
+  ]);
+  // NF-e para empresa com IE ou cliente de outro estado; NFC-e no balcão.
+  const sugerido =
+    venda.cliente && ((venda.cliente.tipo === "PJ" && venda.cliente.inscricaoEstadual) || (empresa && venda.cliente.uf && venda.cliente.uf !== empresa.uf))
+      ? "NFE"
+      : "NFCE";
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -53,6 +65,31 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
         <ResumoVenda venda={venda} />
         {venda.observacoes && <p className="mt-4 text-sm text-zinc-600">Obs.: {venda.observacoes}</p>}
       </section>
+
+      {(notas.length > 0 || !cancelada) && (
+        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+          <h2 className="titulo-secao">Nota fiscal</h2>
+          <NotasDaVenda
+            vendaId={venda.id}
+            sugerido={sugerido}
+            podeEmitir={!cancelada && pode(usuario.perfil, "emitirNota")}
+            podeCancelar={pode(usuario.perfil, "cancelarVenda")}
+            notas={notas.map((n) => ({
+              id: n.id,
+              modelo: n.modelo,
+              status: n.status,
+              numero: n.numero,
+              serie: n.serie,
+              chave: n.chave,
+              mensagem: n.mensagem,
+              danfe: linkFocus(n.ambiente, n.caminhoDanfe),
+              xml: linkFocus(n.ambiente, n.caminhoXml),
+              homologacao: n.ambiente === "HOMOLOGACAO",
+              criadoEm: n.criadoEm.toISOString(),
+            }))}
+          />
+        </section>
+      )}
     </div>
   );
 }

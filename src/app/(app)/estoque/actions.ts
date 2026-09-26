@@ -7,6 +7,7 @@ import { exigirUsuario } from "@/lib/auth";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { prisma } from "@/lib/db";
 import { aparelhoSchema, paraNumero, produtoSchema } from "@/lib/estoque";
+import { entradaComCustoMedio } from "@/lib/movimentos";
 
 function errosDe(issues: { path: PropertyKey[]; message: string }[]) {
   const erros: Record<string, string> = {};
@@ -54,16 +55,7 @@ export async function movimentarEstoque(produtoId: string, _e: EstadoFormulario,
     if (p.tipo === "APARELHO") return "Aparelhos entram no estoque um a um, com IMEI/série.";
     if (p.estoque + quantidade < 0) return `Estoque atual é ${p.estoque}; não dá para retirar ${-quantidade}.`;
 
-    // Custo médio ponderado nas entradas com custo informado.
-    let precoCusto = p.precoCusto;
-    if (quantidade > 0 && custo > 0) {
-      const totalAnterior = p.precoCusto.mul(Math.max(p.estoque, 0));
-      precoCusto = totalAnterior.add(new Prisma.Decimal(custo).mul(quantidade)).div(Math.max(p.estoque, 0) + quantidade).toDecimalPlaces(2);
-    }
-    await tx.produto.update({ where: { id: produtoId }, data: { estoque: { increment: quantidade }, precoCusto } });
-    await tx.movimentoEstoque.create({
-      data: { produtoId, tipo, quantidade, custoUnit: custo > 0 ? custo : null, referencia },
-    });
+    await entradaComCustoMedio(tx, produtoId, quantidade, custo, tipo, referencia);
     return null;
   });
   if (erro) return { erros: { quantidade: erro } };

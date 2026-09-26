@@ -1,10 +1,13 @@
 "use server";
 
-import { Prisma, type StatusOS } from "@prisma/client";
+import { Prisma, type FormaPagamento, type StatusOS } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { exigirUsuario } from "@/lib/auth";
+import { paraNumero } from "@/lib/estoque";
+import { categoriaId, parcelarPagamento } from "@/lib/financeiro";
+import { FORMAS_PAGAMENTO } from "@/lib/vendas";
 import { criptografar, descriptografar } from "@/lib/cripto";
 import { prisma } from "@/lib/db";
 import { somenteDigitos } from "@/lib/documentos";
@@ -186,6 +189,42 @@ export async function definirDesconto(osId: string, formData: FormData) {
     await recalcularTotal(tx, osId);
   });
   revalidatePath(`/os/${osId}`);
+}
+
+export async function registrarPagamentoOS(osId: string, _e: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
+  const usuario = await exigirUsuario("os");
+  const forma = String(formData.get("forma")) as FormaPagamento;
+  const valor = paraNumero(formData.get("valor"));
+  const parcelas = Math.max(1, Math.trunc(paraNumero(formData.get("parcelas")) || 1));
+  if (!(forma in FORMAS_PAGAMENTO) || forma === "TROCA") return { erros: { forma: "Escolha a forma de pagamento" } };
+  if (!(valor > 0)) return { erros: { valor: "Informe o valor" } };
+
+  await prisma.$transaction(async (tx) => {
+    const os = await tx.ordemServico.findUniqueOrThrow({ where: { id: osId } });
+    const categoria = await categoriaId(tx, "ENTRADA", "Serviços (OS)");
+    const agora = new Date();
+    for (const p of parcelarPagamento(forma, valor, parcelas, agora)) {
+      await tx.lancamento.create({
+        data: {
+          tipo: "ENTRADA",
+          status: p.pago ? "PAGO" : "PENDENTE",
+          descricao: `OS #${os.numero}`,
+          valor: p.valor,
+          vencimento: p.vencimento,
+          pagoEm: p.pago ? agora : null,
+          forma,
+          parcela: p.parcela,
+          totalParcelas: p.totalParcelas,
+          categoriaId: categoria,
+          clienteId: os.clienteId,
+          osId,
+          usuarioId: usuario.id,
+        },
+      });
+    }
+  });
+  revalidatePath(`/os/${osId}`);
+  return { mensagem: "Pagamento registrado." };
 }
 
 export async function revelarSenha(osId: string): Promise<string | null> {

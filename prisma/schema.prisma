@@ -20,13 +20,13 @@ enum Perfil {
 }
 
 model Usuario {
-  id         String   @id @default(cuid())
-  nome       String
-  email      String   @unique
-  senhaHash  String
-  perfil     Perfil   @default(VENDEDOR)
-  ativo      Boolean  @default(true)
-  criadoEm   DateTime @default(now())
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  perfil    Perfil   @default(VENDEDOR)
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
 
   ordensTecnico OrdemServico[] @relation("TecnicoOS")
   vendas        Venda[]
@@ -53,12 +53,12 @@ enum TipoPessoa {
 model Cliente {
   id                 String     @id @default(cuid())
   tipo               TipoPessoa
-  nome               String     // PF: nome completo | PJ: razão social
+  nome               String // PF: nome completo | PJ: razão social
   nomeFantasia       String?
   documento          String     @unique // CPF (11) ou CNPJ (14), só dígitos
   rg                 String?
   dataNascimento     DateTime?
-  inscricaoEstadual  String?    // "ISENTO" quando for o caso
+  inscricaoEstadual  String? // "ISENTO" quando for o caso
   inscricaoMunicipal String?
   email              String?
   telefone           String?
@@ -71,16 +71,17 @@ model Cliente {
   complemento String?
   bairro      String?
   cidade      String?
-  uf          String?  @db.Char(2)
+  uf          String? @db.Char(2)
 
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  aparelhos Aparelho[]
-  ordens    OrdemServico[]
-  vendas    Venda[]
-  contatos  ClienteContato[]
-  enderecos ClienteEndereco[]
+  aparelhos   Aparelho[]
+  ordens      OrdemServico[]
+  vendas      Venda[]
+  contatos    ClienteContato[]
+  enderecos   ClienteEndereco[]
+  lancamentos Lancamento[]
 
   @@index([nome])
 }
@@ -96,8 +97,8 @@ model ClienteContato {
   clienteId String
   cliente   Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   tipo      TipoContato
-  valor     String      // telefone só com dígitos ou e-mail
-  rotulo    String?     // ex.: "Trabalho", "Esposa", "Financeiro"
+  valor     String // telefone só com dígitos ou e-mail
+  rotulo    String? // ex.: "Trabalho", "Esposa", "Financeiro"
   whatsapp  Boolean     @default(false)
   ordem     Int         @default(0)
 
@@ -126,8 +127,8 @@ model ClienteEndereco {
 // ---------- Produtos, peças e serviços ----------
 
 enum TipoProduto {
-  APARELHO   // iPhone, iPad, Mac, Watch... controlado por IMEI/serial
-  PECA       // peça de reposição
+  APARELHO // iPhone, iPad, Mac, Watch... controlado por IMEI/serial
+  PECA // peça de reposição
   ACESSORIO
 }
 
@@ -138,7 +139,7 @@ model Produto {
   codigoBarras  String?     @unique
   sku           String?     @unique
   marca         String?     @default("Apple")
-  modelo        String?     // ex.: "iPhone 15 Pro"
+  modelo        String? // ex.: "iPhone 15 Pro"
   unidade       String      @default("UN")
   ncm           String?
   cest          String?
@@ -149,12 +150,13 @@ model Produto {
   ativo         Boolean     @default(true)
   criadoEm      DateTime    @default(now())
 
-  compativelCom String[]    // peças: modelos compatíveis
+  compativelCom String[] // peças: modelos compatíveis
 
-  unidades      Aparelho[]
-  movimentos    MovimentoEstoque[]
-  itensVenda    ItemVenda[]
-  itensOS       ItemOS[]
+  unidades           Aparelho[]
+  movimentos         MovimentoEstoque[]
+  itensVenda         ItemVenda[]
+  itensOS            ItemOS[]
+  vinculosFornecedor VinculoProdutoFornecedor[]
 
   @@index([descricao])
 }
@@ -174,7 +176,7 @@ model Servico {
 enum SituacaoAparelho {
   EM_ESTOQUE
   VENDIDO
-  DO_CLIENTE   // aparelho do cliente, entrou só para manutenção
+  DO_CLIENTE // aparelho do cliente, entrou só para manutenção
   RESERVADO
   DEVOLVIDO
 }
@@ -187,43 +189,43 @@ enum CondicaoAparelho {
 }
 
 model Aparelho {
-  id            String           @id @default(cuid())
-  produtoId     String?
-  produto       Produto?         @relation(fields: [produtoId], references: [id])
-  clienteId     String?          // dono atual (cliente) quando não é estoque da loja
-  cliente       Cliente?         @relation(fields: [clienteId], references: [id])
-  modelo        String           // ex.: "iPhone 13 128GB"
-  cor           String?
-  capacidade    String?
-  imei          String?          @unique
-  imei2         String?
-  serial        String?          @unique
-  condicao      CondicaoAparelho @default(NOVO)
-  situacao      SituacaoAparelho
-  saudeBateria  Int?             // %
-  custo         Decimal?         @db.Decimal(12, 2)
-  garantiaAte   DateTime?
-  observacoes   String?
-  criadoEm      DateTime         @default(now())
+  id           String           @id @default(cuid())
+  produtoId    String?
+  produto      Produto?         @relation(fields: [produtoId], references: [id])
+  clienteId    String? // dono atual (cliente) quando não é estoque da loja
+  cliente      Cliente?         @relation(fields: [clienteId], references: [id])
+  modelo       String // ex.: "iPhone 13 128GB"
+  cor          String?
+  capacidade   String?
+  imei         String?          @unique
+  imei2        String?
+  serial       String?          @unique
+  condicao     CondicaoAparelho @default(NOVO)
+  situacao     SituacaoAparelho
+  saudeBateria Int? // %
+  custo        Decimal?         @db.Decimal(12, 2)
+  garantiaAte  DateTime?
+  observacoes  String?
+  criadoEm     DateTime         @default(now())
 
-  ordens     OrdemServico[]
-  itensVenda ItemVenda[]
-  trocaEm    Pagamento?     @relation("AparelhoTroca")
+  ordens       OrdemServico[]
+  itensVenda   ItemVenda[]
+  trocaEm      Pagamento?        @relation("AparelhoTroca")
   verificacoes VerificacaoImei[]
 }
 
 // ---------- Verificação de IMEI (serviços externos) ----------
 
 enum FonteVerificacao {
-  ANATEL   // Celular Legal (roubo, furto, irregular) via Infosimples
+  ANATEL // Celular Legal (roubo, furto, irregular) via Infosimples
   IMEI_ORG // iCloud / Buscar, blacklist GSMA, operadora e garantia Apple
 }
 
 enum SituacaoVerificacao {
   OK
-  ALERTA     // resposta que não deu para interpretar com certeza
-  RESTRICAO  // roubo, furto, blacklist ou iCloud ativo
-  ERRO       // o serviço falhou ou recusou a consulta
+  ALERTA // resposta que não deu para interpretar com certeza
+  RESTRICAO // roubo, furto, blacklist ou iCloud ativo
+  ERRO // o serviço falhou ou recusou a consulta
 }
 
 model VerificacaoImei {
@@ -234,7 +236,7 @@ model VerificacaoImei {
   fonte      FonteVerificacao
   situacao   SituacaoVerificacao
   resumo     String
-  detalhes   Json?               // resposta bruta do serviço
+  detalhes   Json? // resposta bruta do serviço
   usuarioId  String?
   criadoEm   DateTime            @default(now())
 
@@ -247,7 +249,7 @@ enum TipoSenha {
   NENHUMA
   NUMERICA
   ALFANUMERICA
-  PADRAO      // desenho: sequência de pontos 1 a 9
+  PADRAO // desenho: sequência de pontos 1 a 9
   NAO_INFORMADA
 }
 
@@ -263,38 +265,39 @@ enum StatusOS {
 }
 
 model OrdemServico {
-  id              String   @id @default(cuid())
-  numero          Int      @unique @default(autoincrement())
+  id              String         @id @default(cuid())
+  numero          Int            @unique @default(autoincrement())
   clienteId       String
-  cliente         Cliente  @relation(fields: [clienteId], references: [id])
+  cliente         Cliente        @relation(fields: [clienteId], references: [id])
   aparelhoId      String?
-  aparelho        Aparelho? @relation(fields: [aparelhoId], references: [id])
+  aparelho        Aparelho?      @relation(fields: [aparelhoId], references: [id])
   tecnicoId       String?
-  tecnico         Usuario? @relation("TecnicoOS", fields: [tecnicoId], references: [id])
-  status          StatusOS @default(ABERTA)
+  tecnico         Usuario?       @relation("TecnicoOS", fields: [tecnicoId], references: [id])
+  status          StatusOS       @default(ABERTA)
   defeitoRelatado String
   diagnostico     String?
-  checklist       Json?    // { "tela": "OK" | "DEFEITO" | "NAO_TESTADO", ... } na entrada
+  checklist       Json? // { "tela": "OK" | "DEFEITO" | "NAO_TESTADO", ... } na entrada
   icloudBloqueado Boolean?
-  tipoSenha       TipoSenha @default(NENHUMA)
-  senhaAparelho   String?  // criptografada (AES-256-GCM) com APP_SECRET
-  marcasUso       String?  // riscos, amassados, trincas já existentes
+  tipoSenha       TipoSenha      @default(NENHUMA)
+  senhaAparelho   String? // criptografada (AES-256-GCM) com APP_SECRET
+  marcasUso       String? // riscos, amassados, trincas já existentes
   acessorios      String[] // o que o cliente deixou junto (capa, carregador...)
-  precisaBackup   Boolean  @default(false)
-  backupObs       String?  // ex.: "fazer backup das fotos antes do reparo"
+  precisaBackup   Boolean        @default(false)
+  backupObs       String? // ex.: "fazer backup das fotos antes do reparo"
   previsaoEntrega DateTime?
-  garantiaDias    Int      @default(90)
-  desconto        Decimal  @default(0) @db.Decimal(12, 2)
-  total           Decimal  @default(0) @db.Decimal(12, 2)
-  osOrigemId      String?  // retorno em garantia
+  garantiaDias    Int            @default(90)
+  desconto        Decimal        @default(0) @db.Decimal(12, 2)
+  total           Decimal        @default(0) @db.Decimal(12, 2)
+  osOrigemId      String? // retorno em garantia
   osOrigem        OrdemServico?  @relation("RetornoGarantia", fields: [osOrigemId], references: [id])
   retornos        OrdemServico[] @relation("RetornoGarantia")
-  criadoEm        DateTime @default(now())
-  atualizadoEm    DateTime @updatedAt
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
   entregueEm      DateTime?
 
-  itens     ItemOS[]
-  historico HistoricoOS[]
+  itens       ItemOS[]
+  historico   HistoricoOS[]
+  lancamentos Lancamento[]
 
   @@index([status])
 }
@@ -303,7 +306,7 @@ model ItemOS {
   id         String       @id @default(cuid())
   osId       String
   os         OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
-  produtoId  String?      // peça
+  produtoId  String? // peça
   produto    Produto?     @relation(fields: [produtoId], references: [id])
   servicoId  String?
   servico    Servico?     @relation(fields: [servicoId], references: [id])
@@ -336,52 +339,54 @@ enum FormaPagamento {
   CREDITO
   BOLETO
   A_PRAZO
-  TROCA     // valor de aparelho recebido na troca
+  TROCA // valor de aparelho recebido na troca
 }
 
 model Venda {
-  id         String      @id @default(cuid())
-  numero     Int         @unique @default(autoincrement())
-  clienteId  String?
-  cliente    Cliente?    @relation(fields: [clienteId], references: [id])
-  vendedorId String?
-  vendedor   Usuario?    @relation(fields: [vendedorId], references: [id])
-  status     StatusVenda @default(ORCAMENTO)
-  subtotal   Decimal     @default(0) @db.Decimal(12, 2) // soma dos itens já com desconto por item
-  desconto   Decimal     @default(0) @db.Decimal(12, 2) // desconto geral da venda
-  total      Decimal     @default(0) @db.Decimal(12, 2)
+  id          String      @id @default(cuid())
+  numero      Int         @unique @default(autoincrement())
+  clienteId   String?
+  cliente     Cliente?    @relation(fields: [clienteId], references: [id])
+  vendedorId  String?
+  vendedor    Usuario?    @relation(fields: [vendedorId], references: [id])
+  status      StatusVenda @default(ORCAMENTO)
+  subtotal    Decimal     @default(0) @db.Decimal(12, 2) // soma dos itens já com desconto por item
+  desconto    Decimal     @default(0) @db.Decimal(12, 2) // desconto geral da venda
+  total       Decimal     @default(0) @db.Decimal(12, 2)
   observacoes String?
-  criadoEm   DateTime    @default(now())
+  criadoEm    DateTime    @default(now())
   canceladaEm DateTime?
 
-  itens      ItemVenda[]
-  pagamentos Pagamento[]
+  itens       ItemVenda[]
+  pagamentos  Pagamento[]
+  lancamentos Lancamento[]
+  notas       NotaFiscal[]
 }
 
 model ItemVenda {
-  id         String    @id @default(cuid())
-  vendaId    String
-  venda      Venda     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
-  produtoId  String
-  produto    Produto   @relation(fields: [produtoId], references: [id])
-  aparelhoId String?   // unidade vendida (IMEI/serial)
-  aparelho   Aparelho? @relation(fields: [aparelhoId], references: [id])
-  descricao  String
-  quantidade Int       @default(1)
-  valorUnit  Decimal   @db.Decimal(12, 2)
-  desconto   Decimal   @default(0) @db.Decimal(12, 2) // desconto do item (em R$)
+  id           String    @id @default(cuid())
+  vendaId      String
+  venda        Venda     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  produtoId    String
+  produto      Produto   @relation(fields: [produtoId], references: [id])
+  aparelhoId   String? // unidade vendida (IMEI/serial)
+  aparelho     Aparelho? @relation(fields: [aparelhoId], references: [id])
+  descricao    String
+  quantidade   Int       @default(1)
+  valorUnit    Decimal   @db.Decimal(12, 2)
+  desconto     Decimal   @default(0) @db.Decimal(12, 2) // desconto do item (em R$)
   garantiaDias Int?
 }
 
 model Pagamento {
-  id       String         @id @default(cuid())
-  vendaId  String
-  venda    Venda          @relation(fields: [vendaId], references: [id], onDelete: Cascade)
-  forma    FormaPagamento
-  valor    Decimal        @db.Decimal(12, 2)
-  parcelas Int            @default(1)
-  aparelhoTrocaId String?  @unique // aparelho recebido na troca
-  aparelhoTroca   Aparelho? @relation("AparelhoTroca", fields: [aparelhoTrocaId], references: [id])
+  id              String         @id @default(cuid())
+  vendaId         String
+  venda           Venda          @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+  forma           FormaPagamento
+  valor           Decimal        @db.Decimal(12, 2)
+  parcelas        Int            @default(1)
+  aparelhoTrocaId String?        @unique // aparelho recebido na troca
+  aparelhoTroca   Aparelho?      @relation("AparelhoTroca", fields: [aparelhoTrocaId], references: [id])
 }
 
 // ---------- Estoque ----------
@@ -396,14 +401,192 @@ enum TipoMovimento {
 }
 
 model MovimentoEstoque {
-  id         String        @id @default(cuid())
-  produtoId  String
-  produto    Produto       @relation(fields: [produtoId], references: [id])
-  tipo       TipoMovimento
-  quantidade Int           // positivo entra, negativo sai
-  custoUnit  Decimal?      @db.Decimal(12, 2)
-  referencia String?       // ex.: "Venda 12", "OS 45", "NF 1234"
-  criadoEm   DateTime      @default(now())
+  id            String        @id @default(cuid())
+  produtoId     String
+  produto       Produto       @relation(fields: [produtoId], references: [id])
+  tipo          TipoMovimento
+  quantidade    Int // positivo entra, negativo sai
+  custoUnit     Decimal?      @db.Decimal(12, 2)
+  referencia    String? // ex.: "Venda 12", "OS 45", "NF 1234"
+  notaEntradaId String?
+  notaEntrada   NotaEntrada?  @relation(fields: [notaEntradaId], references: [id])
+  criadoEm      DateTime      @default(now())
 
   @@index([produtoId, criadoEm])
+}
+
+// ---------- Financeiro ----------
+
+enum TipoLancamento {
+  ENTRADA
+  SAIDA
+}
+
+enum StatusLancamento {
+  PENDENTE // a receber / a pagar
+  PAGO // realizado (entrou ou saiu do caixa)
+  CANCELADO
+}
+
+model CategoriaFinanceira {
+  id    String         @id @default(cuid())
+  nome  String
+  tipo  TipoLancamento
+  ativa Boolean        @default(true)
+
+  lancamentos Lancamento[]
+
+  @@unique([nome, tipo])
+}
+
+model Lancamento {
+  id            String               @id @default(cuid())
+  tipo          TipoLancamento
+  status        StatusLancamento     @default(PENDENTE)
+  descricao     String
+  valor         Decimal              @db.Decimal(12, 2)
+  vencimento    DateTime // data prevista
+  pagoEm        DateTime? // data em que entrou/saiu do caixa
+  forma         FormaPagamento?
+  parcela       Int? // ex.: 2 (de 10)
+  totalParcelas Int?
+  categoriaId   String?
+  categoria     CategoriaFinanceira? @relation(fields: [categoriaId], references: [id])
+  clienteId     String?
+  cliente       Cliente?             @relation(fields: [clienteId], references: [id])
+  fornecedorId  String?
+  fornecedor    Fornecedor?          @relation(fields: [fornecedorId], references: [id])
+  vendaId       String?
+  venda         Venda?               @relation(fields: [vendaId], references: [id])
+  osId          String?
+  os            OrdemServico?        @relation(fields: [osId], references: [id])
+  notaEntradaId String?
+  notaEntrada   NotaEntrada?         @relation(fields: [notaEntradaId], references: [id])
+  observacoes   String?
+  usuarioId     String?
+  criadoEm      DateTime             @default(now())
+
+  @@index([vencimento])
+  @@index([pagoEm])
+  @@index([tipo, status])
+}
+
+// ---------- Fornecedores e notas de entrada ----------
+
+model Fornecedor {
+  id                String   @id @default(cuid())
+  cnpj              String   @unique // CNPJ ou CPF, só dígitos
+  razaoSocial       String
+  nomeFantasia      String?
+  inscricaoEstadual String?
+  telefone          String?
+  email             String?
+  cidade            String?
+  uf                String?  @db.Char(2)
+  criadoEm          DateTime @default(now())
+
+  notas       NotaEntrada[]
+  lancamentos Lancamento[]
+  vinculos    VinculoProdutoFornecedor[]
+}
+
+// Lembra qual produto do cadastro corresponde ao código do produto na nota do fornecedor.
+model VinculoProdutoFornecedor {
+  id               String     @id @default(cuid())
+  fornecedorId     String
+  fornecedor       Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  codigoFornecedor String
+  produtoId        String
+  produto          Produto    @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  fatorConversao   Int        @default(1) // ex.: 1 caixa na nota = 12 unidades
+
+  @@unique([fornecedorId, codigoFornecedor])
+}
+
+model NotaEntrada {
+  id           String     @id @default(cuid())
+  chave        String     @unique // chave de acesso (44 dígitos)
+  numero       String
+  serie        String
+  emissao      DateTime
+  valorTotal   Decimal    @db.Decimal(12, 2)
+  fornecedorId String
+  fornecedor   Fornecedor @relation(fields: [fornecedorId], references: [id])
+  xml          String // XML original (guardar por 5 anos)
+  usuarioId    String?
+  criadoEm     DateTime   @default(now())
+
+  lancamentos Lancamento[]
+  movimentos  MovimentoEstoque[]
+}
+
+// ---------- Emissão de notas (via Focus NFe) ----------
+
+enum RegimeTributario {
+  SIMPLES_NACIONAL // CRT 1
+  SIMPLES_EXCESSO // CRT 2 (excesso de sublimite)
+  NORMAL // CRT 3 (Lucro Presumido ou Real)
+  MEI // CRT 4
+}
+
+enum AmbienteFiscal {
+  HOMOLOGACAO
+  PRODUCAO
+}
+
+// Registro único (id "empresa") com os dados fiscais e as regras padrão de impostos.
+// Confirme os códigos com o contador antes de emitir em produção.
+model EmpresaFiscal {
+  id                String           @id @default("empresa")
+  cnpj              String
+  razaoSocial       String
+  nomeFantasia      String?
+  inscricaoEstadual String?
+  uf                String           @db.Char(2)
+  regime            RegimeTributario @default(SIMPLES_NACIONAL)
+  ambiente          AmbienteFiscal   @default(HOMOLOGACAO)
+  icmsSituacao      String           @default("102") // CSOSN no Simples; CST no regime normal
+  icmsAliquota      Decimal          @default(0) @db.Decimal(5, 2)
+  pisCofinsCst      String           @default("07")
+  cfopDentroEstado  String           @default("5102")
+  cfopForaEstado    String           @default("6102")
+  origemPadrao      String           @default("0") // 0 nacional, 1 e 2 importado
+  naturezaOperacao  String           @default("Venda de mercadoria")
+  informacoesFisco  String? // texto obrigatório do Simples, por exemplo
+  atualizadoEm      DateTime         @updatedAt
+}
+
+enum ModeloNota {
+  NFE // modelo 55
+  NFCE // modelo 65
+}
+
+enum StatusNota {
+  PROCESSANDO
+  AUTORIZADA
+  REJEITADA
+  CANCELADA
+  ERRO
+}
+
+model NotaFiscal {
+  id           String         @id @default(cuid())
+  referencia   String         @unique // "ref" enviada ao provedor
+  modelo       ModeloNota
+  ambiente     AmbienteFiscal
+  status       StatusNota     @default(PROCESSANDO)
+  vendaId      String
+  venda        Venda          @relation(fields: [vendaId], references: [id])
+  numero       String?
+  serie        String?
+  chave        String?
+  mensagem     String?
+  caminhoDanfe String?
+  caminhoXml   String?
+  usuarioId    String?
+  criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
+  canceladaEm  DateTime?
+
+  @@index([vendaId])
 }

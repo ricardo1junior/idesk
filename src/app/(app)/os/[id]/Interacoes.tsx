@@ -3,7 +3,8 @@
 import { useActionState, useRef, useState } from "react";
 import { PadraoSenha } from "@/components/PadraoSenha";
 import type { EstadoFormulario } from "@/lib/clientes";
-import { adicionarItem, revelarSenha } from "../actions";
+import { FORMAS_PAGAMENTO } from "@/lib/vendas";
+import { adicionarItem, registrarPagamentoOS, revelarSenha } from "../actions";
 
 export function RevelarSenha({ osId, tipo, rotulo }: { osId: string; tipo: string; rotulo: string }) {
   const [senha, setSenha] = useState<string | null>();
@@ -55,6 +56,53 @@ export function NovoItem({ osId }: { osId: string }) {
         Adicionar
       </button>
       {estado.erros && <p className="text-sm text-red-600 sm:col-span-5">{Object.values(estado.erros)[0]}</p>}
+    </form>
+  );
+}
+
+export function PagamentoOS({ osId, sugerido }: { osId: string; sugerido: string }) {
+  const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(registrarPagamentoOS.bind(null, osId), {});
+  const [forma, setForma] = useState("PIX");
+  return (
+    <form action={acao} key={estado.mensagem} className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_auto]">
+      <label className="campo">
+        <span>Forma</span>
+        <select name="forma" value={forma} onChange={(e) => setForma(e.target.value)}>
+          {Object.entries(FORMAS_PAGAMENTO)
+            .filter(([f]) => f !== "TROCA")
+            .map(([f, l]) => (
+              <option key={f} value={f}>
+                {l}
+              </option>
+            ))}
+        </select>
+      </label>
+      <label className={`campo ${estado.erros?.valor ? "campo-erro" : ""}`}>
+        <span>Valor (R$)</span>
+        <input name="valor" inputMode="decimal" defaultValue={sugerido} />
+      </label>
+      {forma === "CREDITO" || forma === "BOLETO" || forma === "A_PRAZO" ? (
+        <label className="campo">
+          <span>Parcelas</span>
+          <select name="parcelas" defaultValue="1">
+            {Array.from({ length: 12 }, (_, k) => k + 1).map((n) => (
+              <option key={n} value={n}>
+                {n}x
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <div />
+      )}
+      <button className="btn-primario" disabled={pendente}>
+        Registrar pagamento
+      </button>
+      {(estado.mensagem || estado.erros) && (
+        <p className={`text-sm sm:col-span-4 ${estado.erros ? "text-red-600" : "text-green-700"}`}>
+          {estado.mensagem ?? Object.values(estado.erros ?? {})[0]}
+        </p>
+      )}
     </form>
   );
 }

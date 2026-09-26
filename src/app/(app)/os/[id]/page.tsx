@@ -7,9 +7,10 @@ import { VerificarImei } from "@/components/VerificarImei";
 import { formatarDocumento } from "@/lib/documentos";
 import { formatarMoeda, STATUS_OS, TIPOS_SENHA } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
+import { FORMAS_PAGAMENTO } from "@/lib/vendas";
 import { definirDesconto, mudarStatus, removerItem } from "../actions";
 import { carregarOS } from "./dados";
-import { NovoItem, RevelarSenha } from "./Interacoes";
+import { NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
 
 export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const usuario = await exigirUsuario("os");
@@ -17,6 +18,8 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const os = await carregarOS(id);
   if (!os) notFound();
 
+  const pago = os.lancamentos.reduce((s, l) => s + Number(l.valor), 0);
+  const restante = Math.round((Number(os.total) - pago) * 100) / 100;
   const subtotal = os.itens.reduce((s, i) => s + Number(i.valorUnit) * i.quantidade, 0);
   const whatsapp = (os.cliente.whatsapp || os.cliente.telefone || "").replace(/\D/g, "");
 
@@ -121,6 +124,33 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           </form>
           <div className="text-lg font-semibold">Total: {formatarMoeda(os.total)}</div>
         </div>
+      </section>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <h2 className="titulo-secao">Pagamento</h2>
+        {os.lancamentos.length > 0 && (
+          <table className="mb-4 w-full text-sm">
+            <tbody>
+              {os.lancamentos.map((l) => (
+                <tr key={l.id} className="border-b border-zinc-100">
+                  <td className="py-1.5">
+                    {l.forma ? FORMAS_PAGAMENTO[l.forma] : "-"}
+                    {l.parcela && ` ${l.parcela}/${l.totalParcelas}`}
+                  </td>
+                  <td className="py-1.5 text-zinc-500">
+                    {l.status === "PAGO" ? `pago em ${l.pagoEm?.toLocaleDateString("pt-BR")}` : `a receber em ${l.vencimento.toLocaleDateString("pt-BR")}`}
+                  </td>
+                  <td className="py-1.5 text-right">{formatarMoeda(l.valor)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {restante > 0 ? (
+          <PagamentoOS osId={os.id} sugerido={restante.toFixed(2).replace(".", ",")} />
+        ) : (
+          <p className="text-sm text-green-700">{Number(os.total) > 0 ? "OS paga." : "Lance os serviços e peças para registrar o pagamento."}</p>
+        )}
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5">
