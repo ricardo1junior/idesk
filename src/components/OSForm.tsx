@@ -7,6 +7,7 @@ import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarDocumento } from "@/lib/documentos";
 import { ACESSORIOS, CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA } from "@/lib/os";
 import { Campo, Secao } from "./Campos";
+import { FotosAparelho, fotosParaEnvio, type FotoEnviada } from "./FotosAparelho";
 import { PadraoSenha } from "./PadraoSenha";
 import { VerificarImei } from "./VerificarImei";
 
@@ -22,6 +23,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
   const [senha, setSenha] = useState(v.senha ?? "");
   const [backup, setBackup] = useState(v.precisaBackup === "sim");
   const [imei, setImei] = useState(v.imei ?? "");
+  const [fotos, setFotos] = useState<FotoEnviada[]>([]);
 
   return (
     <form action={acao} className="space-y-6">
@@ -156,6 +158,14 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
         <Campo label="Outros acessórios" className="sm:col-span-2">
           <input name="acessoriosOutros" defaultValue={v.acessoriosOutros} />
         </Campo>
+      </Secao>
+
+      <Secao titulo="Fotos do aparelho">
+        <div className="sm:col-span-4">
+          <p className="mb-3 text-sm text-zinc-500">Fotografe o aparelho na frente do cliente, principalmente riscos, amassados e partes quebradas.</p>
+          <input type="hidden" name="fotos" value={fotosParaEnvio(fotos)} />
+          <FotosAparelho fotos={fotos} onChange={setFotos} />
+        </div>
       </Secao>
 
       <Secao titulo="Backup">

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { exigirUsuario } from "@/lib/auth";
+import { lerFotosJson, MAX_FOTOS_OS } from "@/lib/fotos";
 import { paraNumero } from "@/lib/estoque";
 import { categoriaId, parcelarPagamento } from "@/lib/financeiro";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
@@ -107,6 +108,7 @@ export async function abrirOS(_estado: EstadoFormulario, formData: FormData): Pr
           historico: { create: { status: "ABERTA", nota: "OS aberta" } },
         },
       });
+      await ligarFotos(tx, os.id, formData.get("fotos"));
       return os.id;
     });
   } catch (e) {
@@ -231,4 +233,26 @@ export async function revelarSenha(osId: string): Promise<string | null> {
   await exigirUsuario("verSenhaAparelho");
   const os = await prisma.ordemServico.findUnique({ where: { id: osId }, select: { senhaAparelho: true } });
   return os?.senhaAparelho ? descriptografar(os.senhaAparelho) : null;
+}
+
+// Liga à OS as fotos enviadas durante o preenchimento (só as que ainda estão soltas).
+async function ligarFotos(tx: Prisma.TransactionClient, osId: string, valor: unknown) {
+  const fotos = lerFotosJson(valor);
+  const jaTem = await tx.fotoOS.count({ where: { osId } });
+  for (const f of fotos.slice(0, Math.max(0, MAX_FOTOS_OS - jaTem))) {
+    await tx.fotoOS.updateMany({ where: { id: f.id, osId: null }, data: { osId, tipo: f.tipo, legenda: f.legenda || null } });
+  }
+}
+
+export async function adicionarFotos(osId: string, fotosJson: string): Promise<{ erro?: string }> {
+  await exigirUsuario("os");
+  await prisma.$transaction((tx) => ligarFotos(tx, osId, fotosJson));
+  revalidatePath(`/os/${osId}`);
+  return {};
+}
+
+export async function removerFoto(osId: string, fotoId: string) {
+  await exigirUsuario("editarOS");
+  await prisma.fotoOS.deleteMany({ where: { id: fotoId, osId } });
+  revalidatePath(`/os/${osId}`);
 }

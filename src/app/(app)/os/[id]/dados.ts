@@ -8,6 +8,7 @@ export async function carregarOS(id: string) {
       aparelho: true,
       itens: { orderBy: { id: "asc" } },
       historico: { orderBy: { criadoEm: "desc" } },
+      fotos: { select: { id: true, tipo: true, legenda: true }, orderBy: { criadoEm: "asc" } },
       lancamentos: { where: { status: { not: "CANCELADO" } }, orderBy: { vencimento: "asc" } },
     },
   });

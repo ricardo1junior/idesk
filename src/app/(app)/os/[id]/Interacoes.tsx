@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { PadraoSenha } from "@/components/PadraoSenha";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
-import { adicionarItem, registrarPagamentoOS, revelarSenha } from "../actions";
+import { FotosAparelho, fotosParaEnvio, type FotoEnviada } from "@/components/FotosAparelho";
+import { adicionarFotos, adicionarItem, registrarPagamentoOS, revelarSenha } from "../actions";
 
 export function RevelarSenha({ osId, tipo, rotulo }: { osId: string; tipo: string; rotulo: string }) {
   const [senha, setSenha] = useState<string | null>();
@@ -104,5 +105,31 @@ export function PagamentoOS({ osId, sugerido }: { osId: string; sugerido: string
         </p>
       )}
     </form>
+  );
+}
+
+export function AdicionarFotos({ osId, restantes }: { osId: string; restantes: number }) {
+  const [fotos, setFotos] = useState<FotoEnviada[]>([]);
+  const [pendente, iniciar] = useTransition();
+  if (restantes <= 0) return <p className="text-sm text-zinc-500">Limite de fotos atingido.</p>;
+  return (
+    <div className="space-y-3">
+      <FotosAparelho fotos={fotos} onChange={setFotos} maximo={restantes} />
+      {fotos.length > 0 && (
+        <button
+          type="button"
+          className="btn-primario"
+          disabled={pendente}
+          onClick={() =>
+            iniciar(async () => {
+              await adicionarFotos(osId, fotosParaEnvio(fotos));
+              setFotos([]);
+            })
+          }
+        >
+          {pendente ? "Salvando…" : `Salvar ${fotos.length} foto(s) na OS`}
+        </button>
+      )}
+    </div>
   );
 }

@@ -60,6 +60,7 @@ export type DadosEmailOS = {
   desconto: number;
   total: number;
   pago: number;
+  fotos?: { cid: string; titulo: string }[]; // anexadas no e-mail e mostradas no corpo
 };
 
 export function emailOS(d: DadosEmailOS) {
@@ -77,7 +78,17 @@ export function emailOS(d: DadosEmailOS) {
       ["Diagnóstico", d.diagnostico],
       ["Previsão de entrega", d.previsao ? data(d.previsao) : null],
       ["Garantia do serviço", d.garantiaDias ? `${d.garantiaDias} dias` : null],
-    ]) + (d.itens.length ? tabela(d.itens, rodape) : `<p style="font-size:14px;color:#6e6e73">O orçamento ainda está sendo preparado.</p>`);
+    ]) +
+    (d.itens.length ? tabela(d.itens, rodape) : `<p style="font-size:14px;color:#6e6e73">O orçamento ainda está sendo preparado.</p>`) +
+    (d.fotos?.length
+      ? `<h2 style="font-size:17px;margin:24px 0 4px">Fotos do aparelho na entrada</h2><p style="font-size:13px;color:#6e6e73;margin:0 0 12px">Registro do estado em que o aparelho foi recebido na loja.</p>` +
+        d.fotos
+          .map(
+            (f) =>
+              `<div style="display:inline-block;width:48%;margin:0 1% 12px;vertical-align:top"><img src="cid:${esc(f.cid)}" alt="${esc(f.titulo)}" style="width:100%;border-radius:12px;display:block"><div style="font-size:12px;color:#424245;margin-top:4px">${esc(f.titulo)}</div></div>`,
+          )
+          .join("")
+      : "");
   const primeiro = d.cliente.split(" ")[0];
   return {
     assunto,
@@ -91,6 +102,7 @@ export function emailOS(d: DadosEmailOS) {
       d.previsao ? `Previsão de entrega: ${data(d.previsao)}` : "",
       ...d.itens.map((i) => `- ${i.descricao}: ${i.quantidade} x ${reais(i.valor)}`),
       d.itens.length ? `Total: ${reais(d.total)}` : "",
+      d.fotos?.length ? `Fotos do aparelho na entrada: ${d.fotos.length} (em anexo)` : "",
     ]),
   };
 }

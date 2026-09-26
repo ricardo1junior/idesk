@@ -7,13 +7,14 @@ import { IconeWhatsApp, LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { StatusBadge } from "@/components/StatusBadge";
 import { VerificarImei } from "@/components/VerificarImei";
 import { formatarDocumento } from "@/lib/documentos";
+import { MAX_FOTOS_OS, TIPOS_FOTO } from "@/lib/fotos";
 import { formatarMoeda, STATUS_OS, TIPOS_SENHA } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
-import { definirDesconto, mudarStatus, removerItem } from "../actions";
+import { definirDesconto, mudarStatus, removerFoto, removerItem } from "../actions";
 import { enviarEmailOS } from "../../email/actions";
 import { carregarOS } from "./dados";
-import { NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
+import { AdicionarFotos, NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
 
 export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const usuario = await exigirUsuario("os");
@@ -87,6 +88,36 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           <div className="text-xs font-medium text-zinc-500">Defeito relatado</div>
           <p className="whitespace-pre-line">{os.defeitoRelatado}</p>
         </div>
+      </section>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <h2 className="titulo-secao">Fotos do aparelho ({os.fotos.length})</h2>
+        {os.fotos.length > 0 && (
+          <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {os.fotos.map((f) => (
+              <li key={f.id} className="overflow-hidden rounded-lg border border-zinc-200">
+                <a href={`/fotos-os/${f.id}`} target="_blank" rel="noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- foto protegida por login, servida pela rota da OS */}
+                  <img src={`/fotos-os/${f.id}`} alt={`${TIPOS_FOTO[f.tipo]}${f.legenda ? `: ${f.legenda}` : ""}`} loading="lazy" className="aspect-square w-full object-cover" />
+                </a>
+                <div className="flex items-start justify-between gap-2 p-2 text-xs">
+                  <div>
+                    <div className="font-medium">{TIPOS_FOTO[f.tipo]}</div>
+                    {f.legenda && <div className="text-zinc-500">{f.legenda}</div>}
+                  </div>
+                  {editar && (
+                    <form action={removerFoto.bind(null, os.id, f.id)}>
+                      <button className="text-zinc-400 hover:text-red-600" aria-label="Apagar foto">
+                        ×
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <AdicionarFotos osId={os.id} restantes={MAX_FOTOS_OS - os.fotos.length} />
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5">

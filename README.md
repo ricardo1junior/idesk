@@ -69,3 +69,7 @@ Na tela da venda, o botão sugere NFC-e no balcão e NF-e para empresa com inscr
 Clicar no telefone do cliente (lista de clientes, ficha do cliente, OS e venda) abre a conversa no WhatsApp Web no computador ou no aplicativo no celular.
 
 Os botões **Enviar por e-mail** na OS e na venda mandam um resumo (situação, aparelho, orçamento, itens, garantia, pagamentos e link da nota fiscal) para um dos e-mails cadastrados do cliente. Configure o SMTP no `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_REMETENTE`). No Gmail, use uma senha de app. O envio da OS fica registrado no andamento.
+
+## Fotos do aparelho na OS
+
+Na abertura da OS e depois, na tela da OS, dá para tirar ou escolher fotos do aparelho (até 20), marcando o tipo do dano (riscado, amassado, quebrado/trincado, outro) e onde está. No celular o botão abre a câmera. As fotos são reduzidas no navegador (até 1600 px) antes do envio e ficam guardadas no banco. Elas não saem na impressão da OS; vão anexadas no e-mail da OS enviado ao cliente.

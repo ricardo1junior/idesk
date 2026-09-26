@@ -5,6 +5,7 @@ import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { enviarEmail, nomeDaLoja } from "@/lib/email";
 import { emailOS, emailVenda } from "@/lib/email-modelos";
+import { TIPOS_FOTO } from "@/lib/fotos";
 import { CONDICOES } from "@/lib/estoque";
 import { linkFocus } from "@/lib/nfe/focus";
 import { STATUS_OS } from "@/lib/os";
@@ -25,7 +26,13 @@ export async function enviarEmailOS(osId: string, para: string): Promise<{ erro?
   await exigirUsuario("os");
   const os = await prisma.ordemServico.findUnique({
     where: { id: osId },
-    include: { cliente: true, aparelho: true, itens: { orderBy: { id: "asc" } }, lancamentos: { where: { status: "PAGO" } } },
+    include: {
+      cliente: true,
+      aparelho: true,
+      itens: { orderBy: { id: "asc" } },
+      lancamentos: { where: { status: "PAGO" } },
+      fotos: { orderBy: { criadoEm: "asc" } },
+    },
   });
   if (!os) return { erro: "OS não encontrada." };
   const destino = await emailDoCliente(os.clienteId, para);
@@ -46,10 +53,19 @@ export async function enviarEmailOS(osId: string, para: string): Promise<{ erro?
     desconto: Number(os.desconto),
     total: Number(os.total),
     pago: os.lancamentos.reduce((s, l) => s + Number(l.valor), 0),
+    fotos: os.fotos.map((f, i) => ({ cid: `foto${i + 1}@idesk`, titulo: [TIPOS_FOTO[f.tipo], f.legenda].filter(Boolean).join(": ") })),
   });
-  const r = await enviarEmail(destino, e.assunto, e.html, e.texto);
+  const anexos = os.fotos.map((f, i) => ({
+    filename: `os${os.numero}-foto${i + 1}.${f.mime === "image/png" ? "png" : f.mime === "image/webp" ? "webp" : "jpg"}`,
+    content: Buffer.from(f.dados),
+    contentType: f.mime,
+    cid: `foto${i + 1}@idesk`,
+  }));
+  const r = await enviarEmail(destino, e.assunto, e.html, e.texto, anexos);
   if (r.erro) return r;
-  await prisma.historicoOS.create({ data: { osId, status: os.status, nota: `E-mail da OS enviado para ${destino}` } });
+  await prisma.historicoOS.create({
+    data: { osId, status: os.status, nota: `E-mail da OS enviado para ${destino}${anexos.length ? ` com ${anexos.length} foto(s)` : ""}` },
+  });
   revalidatePath(`/os/${osId}`);
   return { ok: `Enviado para ${destino}.` };
 }

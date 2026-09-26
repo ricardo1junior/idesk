@@ -13,7 +13,9 @@ export async function nomeDaLoja() {
   return process.env.LOJA_NOME || empresa?.nomeFantasia || empresa?.razaoSocial || "iDesk";
 }
 
-export async function enviarEmail(para: string, assunto: string, html: string, texto: string): Promise<{ erro?: string }> {
+export type Anexo = { filename: string; content: Buffer; contentType: string; cid?: string };
+
+export async function enviarEmail(para: string, assunto: string, html: string, texto: string, anexos: Anexo[] = []): Promise<{ erro?: string }> {
   if (!emailConfigurado()) return { erro: "Envio de e-mail não configurado: defina SMTP_HOST e EMAIL_REMETENTE no servidor." };
   const porta = Number(process.env.SMTP_PORT || 587);
   const transporte = nodemailer.createTransport({
@@ -32,6 +34,7 @@ export async function enviarEmail(para: string, assunto: string, html: string, t
       subject: assunto,
       html,
       text: texto,
+      attachments: anexos,
     });
     return {};
   } catch (e) {
