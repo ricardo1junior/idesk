@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900;
+}
+
+@layer components {
+  .campo {
+    @apply flex flex-col gap-1 text-sm;
+  }
+  .campo > span {
+    @apply font-medium text-zinc-700;
+  }
+  .campo input,
+  .campo select,
+  .campo textarea {
+    @apply rounded-md border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900;
+  }
+  .campo-erro input {
+    @apply border-red-500;
+  }
+  .btn-primario {
+    @apply rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50;
+  }
+  .btn-secundario {
+    @apply rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-100;
+  }
+}
