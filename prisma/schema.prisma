@@ -209,6 +209,36 @@ model Aparelho {
   ordens     OrdemServico[]
   itensVenda ItemVenda[]
   trocaEm    Pagamento?     @relation("AparelhoTroca")
+  verificacoes VerificacaoImei[]
+}
+
+// ---------- Verificação de IMEI (serviços externos) ----------
+
+enum FonteVerificacao {
+  ANATEL   // Celular Legal (roubo, furto, irregular) via Infosimples
+  IMEI_ORG // iCloud / Buscar, blacklist GSMA, operadora e garantia Apple
+}
+
+enum SituacaoVerificacao {
+  OK
+  ALERTA     // resposta que não deu para interpretar com certeza
+  RESTRICAO  // roubo, furto, blacklist ou iCloud ativo
+  ERRO       // o serviço falhou ou recusou a consulta
+}
+
+model VerificacaoImei {
+  id         String              @id @default(cuid())
+  imei       String
+  aparelhoId String?
+  aparelho   Aparelho?           @relation(fields: [aparelhoId], references: [id], onDelete: SetNull)
+  fonte      FonteVerificacao
+  situacao   SituacaoVerificacao
+  resumo     String
+  detalhes   Json?               // resposta bruta do serviço
+  usuarioId  String?
+  criadoEm   DateTime            @default(now())
+
+  @@index([imei, criadoEm])
 }
 
 // ---------- Ordens de serviço ----------

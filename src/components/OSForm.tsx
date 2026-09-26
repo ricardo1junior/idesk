@@ -8,6 +8,7 @@ import { formatarDocumento } from "@/lib/documentos";
 import { ACESSORIOS, CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA } from "@/lib/os";
 import { Campo, Secao } from "./Campos";
 import { PadraoSenha } from "./PadraoSenha";
+import { VerificarImei } from "./VerificarImei";
 
 type ClienteResumo = { id: string; nome: string; documento: string };
 
@@ -20,6 +21,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
   const [tipoSenha, setTipoSenha] = useState(v.tipoSenha ?? "NENHUMA");
   const [senha, setSenha] = useState(v.senha ?? "");
   const [backup, setBackup] = useState(v.precisaBackup === "sim");
+  const [imei, setImei] = useState(v.imei ?? "");
 
   return (
     <form action={acao} className="space-y-6">
@@ -53,7 +55,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
           <input name="capacidade" defaultValue={v.capacidade} placeholder="ex.: 128 GB" />
         </Campo>
         <Campo label="IMEI" erro={erro("imei")} dica="*#06# no teclado mostra o IMEI">
-          <input name="imei" defaultValue={v.imei} inputMode="numeric" maxLength={15} />
+          <input name="imei" value={imei} onChange={(e) => setImei(e.target.value.trim())} inputMode="numeric" maxLength={15} />
         </Campo>
         <Campo label="Número de série">
           <input name="serial" defaultValue={v.serial} className="uppercase" />
@@ -68,6 +70,11 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
             <option value="nao">Não, desativado</option>
           </select>
         </Campo>
+        {imei.length === 15 && (
+          <div className="sm:col-span-4">
+            <VerificarImei imei={imei} />
+          </div>
+        )}
       </Secao>
 
       <Secao titulo="Senha do aparelho">

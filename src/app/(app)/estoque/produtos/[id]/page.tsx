@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProdutoForm } from "@/components/ProdutoForm";
+import { VerificarImei } from "@/components/VerificarImei";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CONDICOES, TIPOS_PRODUTO } from "@/lib/estoque";
@@ -69,6 +70,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
                 <th className="py-2 font-medium">Condição</th>
                 <th className="py-2 font-medium">Situação</th>
                 <th className="py-2 text-right font-medium">Custo</th>
+                <th className="py-2 pl-4 font-medium">Restrições</th>
               </tr>
             </thead>
             <tbody>
@@ -84,11 +86,12 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
                   <td className="py-2">{CONDICOES[u.condicao]}</td>
                   <td className="py-2">{SITUACAO[u.situacao]}</td>
                   <td className="py-2 text-right">{u.custo ? formatarMoeda(u.custo) : "-"}</td>
+                  <td className="w-80 py-2 pl-4">{u.imei ? <VerificarImei imei={u.imei} aparelhoId={u.id} /> : <span className="text-xs text-zinc-500">sem IMEI</span>}</td>
                 </tr>
               ))}
               {produto.unidades.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-zinc-500">
+                  <td colSpan={6} className="py-4 text-zinc-500">
                     Nenhuma unidade cadastrada.
                   </td>
                 </tr>

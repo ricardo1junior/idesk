@@ -6,6 +6,7 @@ import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { somenteDigitos } from "@/lib/documentos";
 import { GARANTIA_ACESSORIO, GARANTIA_PADRAO } from "@/lib/estoque";
+import { bloqueioTroca } from "@/lib/verificacao";
 import { calcularTotais, vendaSchema, type TrocaEntrada } from "@/lib/vendas";
 
 export type OpcaoVenda = {
@@ -126,6 +127,12 @@ export async function finalizarVenda(dados: unknown): Promise<{ erro?: string; i
   if (!r.success) return { erro: r.error.issues[0].message };
   const v = r.data;
   const { subtotal, total } = calcularTotais(v.itens, v.desconto);
+
+  for (const p of v.pagamentos) {
+    if (p.forma !== "TROCA" || !p.troca) continue;
+    const bloqueio = await bloqueioTroca(p.troca.imei);
+    if (bloqueio) return { erro: bloqueio };
+  }
 
   try {
     const venda = await prisma.$transaction(async (tx) => {

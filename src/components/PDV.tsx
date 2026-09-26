@@ -7,6 +7,7 @@ import { formatarDocumento } from "@/lib/documentos";
 import { CONDICOES, paraNumero } from "@/lib/estoque";
 import { calcularTotais, centavos, FORMAS_PAGAMENTO, formatarReais, somaPagamentos, totalItem } from "@/lib/vendas";
 import { BuscaCliente } from "./OSForm";
+import { VerificarImei } from "./VerificarImei";
 
 type Cliente = { id: string; nome: string; documento: string };
 type Item = OpcaoVenda & { quantidade: number; valorUnit: string; desconto: string };
@@ -383,6 +384,9 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
         <span>Bateria (%)</span>
         <input {...campo("saudeBateria")} inputMode="numeric" />
       </label>
+      <div className="sm:col-span-4">
+        <VerificarImei imei={troca.imei.trim()} />
+      </div>
       <label className="campo sm:col-span-4">
         <span>Observações da avaliação</span>
         <input {...campo("observacoes")} placeholder="ex.: tela original, pequeno risco na traseira" />
