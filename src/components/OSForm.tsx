@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
-import { abrirOS, buscarClientes } from "@/app/os/actions";
+import { abrirOS, buscarClientes } from "@/app/(app)/os/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarDocumento } from "@/lib/documentos";
 import { ACESSORIOS, CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA } from "@/lib/os";
@@ -191,7 +191,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
   );
 }
 
-function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: ClienteResumo) => void; erro?: string }) {
+export function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: ClienteResumo) => void; erro?: string }) {
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<ClienteResumo[]>([]);
 

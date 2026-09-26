@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { salvarCliente } from "@/app/clientes/actions";
+import { salvarCliente } from "@/app/(app)/clientes/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarCep, formatarDocumento, somenteDigitos } from "@/lib/documentos";
 import { Campo, Secao } from "./Campos";

@@ -1,5 +1,5 @@
 import { CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA, type ResultadoChecklist } from "@/lib/os";
-import type { OSCompleta } from "@/app/os/[id]/dados";
+import type { OSCompleta } from "@/app/(app)/os/[id]/dados";
 
 // Dados do aparelho registrados na entrada. Usado na tela da OS e na impressão.
 export function FichaAparelho({ os, senha }: { os: OSCompleta; senha?: React.ReactNode }) {

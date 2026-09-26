@@ -1,0 +1,86 @@
+"use client";
+
+import { useActionState } from "react";
+import { Campo } from "@/components/Campos";
+import type { EstadoFormulario } from "@/lib/clientes";
+import { CONDICOES } from "@/lib/estoque";
+import { entradaAparelho, movimentarEstoque } from "../../actions";
+
+export function MovimentoForm({ produtoId }: { produtoId: string }) {
+  const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(movimentarEstoque.bind(null, produtoId), {});
+  return (
+    <form action={acao} key={estado.mensagem} className="grid items-end gap-3 sm:grid-cols-5">
+      <Campo label="Operação">
+        <select name="tipo" defaultValue="ENTRADA_NOTA">
+          <option value="ENTRADA_NOTA">Entrada</option>
+          <option value="AJUSTE">Ajuste (+/-)</option>
+        </select>
+      </Campo>
+      <Campo label="Quantidade" erro={estado.erros?.quantidade}>
+        <input name="quantidade" type="number" required />
+      </Campo>
+      <Campo label="Custo unit. (R$)">
+        <input name="custoUnit" inputMode="decimal" placeholder="opcional" />
+      </Campo>
+      <Campo label="Referência">
+        <input name="referencia" placeholder="ex.: NF 1234" />
+      </Campo>
+      <button className="btn-primario" disabled={pendente}>
+        Lançar
+      </button>
+      {estado.mensagem && <p className="text-sm text-green-700 sm:col-span-5">{estado.mensagem}</p>}
+    </form>
+  );
+}
+
+export function EntradaAparelhoForm({ produtoId, modelo }: { produtoId: string; modelo: string }) {
+  const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(entradaAparelho.bind(null, produtoId), {});
+  const v = estado.valores ?? {};
+  const erro = (c: string) => estado.erros?.[c];
+  return (
+    <form action={acao} key={estado.mensagem} className="grid gap-3 sm:grid-cols-4">
+      <Campo label="Modelo" erro={erro("modelo")}>
+        <input name="modelo" defaultValue={v.modelo ?? modelo} required />
+      </Campo>
+      <Campo label="Capacidade">
+        <input name="capacidade" defaultValue={v.capacidade} placeholder="128 GB" />
+      </Campo>
+      <Campo label="Cor">
+        <input name="cor" defaultValue={v.cor} />
+      </Campo>
+      <Campo label="Condição">
+        <select name="condicao" defaultValue={v.condicao ?? "NOVO"}>
+          {Object.entries(CONDICOES).map(([c, l]) => (
+            <option key={c} value={c}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </Campo>
+      <Campo label="IMEI" erro={erro("imei")}>
+        <input name="imei" defaultValue={v.imei} inputMode="numeric" maxLength={15} />
+      </Campo>
+      <Campo label="IMEI 2" erro={erro("imei2")}>
+        <input name="imei2" defaultValue={v.imei2} inputMode="numeric" maxLength={15} />
+      </Campo>
+      <Campo label="Nº de série">
+        <input name="serial" defaultValue={v.serial} className="uppercase" />
+      </Campo>
+      <Campo label="Bateria (%)" erro={erro("saudeBateria")}>
+        <input name="saudeBateria" defaultValue={v.saudeBateria} inputMode="numeric" />
+      </Campo>
+      <Campo label="Custo (R$)" erro={erro("custo")}>
+        <input name="custo" defaultValue={v.custo} inputMode="decimal" placeholder="0,00" />
+      </Campo>
+      <Campo label="Observações" className="sm:col-span-2">
+        <input name="observacoes" defaultValue={v.observacoes} />
+      </Campo>
+      <div className="flex items-end">
+        <button className="btn-primario" disabled={pendente}>
+          Adicionar ao estoque
+        </button>
+      </div>
+      {estado.mensagem && <p className="text-sm text-green-700 sm:col-span-4">{estado.mensagem}</p>}
+    </form>
+  );
+}
