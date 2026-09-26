@@ -65,7 +65,7 @@ export function PagamentoOS({ osId, sugerido }: { osId: string; sugerido: string
   const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(registrarPagamentoOS.bind(null, osId), {});
   const [forma, setForma] = useState("PIX");
   return (
-    <form action={acao} key={estado.mensagem} className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_auto]">
+    <form action={acao} key={estado.mensagem} className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_10rem_auto]">
       <label className="campo">
         <span>Forma</span>
         <select name="forma" value={forma} onChange={(e) => setForma(e.target.value)}>
@@ -96,11 +96,19 @@ export function PagamentoOS({ osId, sugerido }: { osId: string; sugerido: string
       ) : (
         <div />
       )}
+      {forma === "BOLETO" || forma === "A_PRAZO" ? (
+        <label className={`campo ${estado.erros?.primeiroVencimento ? "campo-erro" : ""}`}>
+          <span>1º vencimento</span>
+          <input type="date" name="primeiroVencimento" />
+        </label>
+      ) : (
+        <div />
+      )}
       <button className="btn-primario" disabled={pendente}>
         Registrar pagamento
       </button>
       {(estado.mensagem || estado.erros) && (
-        <p className={`text-sm sm:col-span-4 ${estado.erros ? "text-red-600" : "text-green-700"}`}>
+        <p className={`text-sm sm:col-span-5 ${estado.erros ? "text-red-600" : "text-green-700"}`}>
           {estado.mensagem ?? Object.values(estado.erros ?? {})[0]}
         </p>
       )}

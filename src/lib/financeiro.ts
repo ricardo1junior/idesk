@@ -1,6 +1,7 @@
 import type { FormaPagamento, Prisma, TipoLancamento } from "@prisma/client";
 import { z } from "zod";
 import { paraNumero } from "./estoque";
+import { dataHoraLocal } from "./tempo";
 
 export const CATEGORIAS_PADRAO: Record<TipoLancamento, string[]> = {
   ENTRADA: ["Vendas", "Serviços (OS)", "Outras entradas"],
@@ -10,7 +11,10 @@ export const CATEGORIAS_PADRAO: Record<TipoLancamento, string[]> = {
 export const DIA_MS = 86_400_000;
 
 // Formas que entram no caixa na hora; as demais viram contas a receber por parcela.
-const A_VISTA: FormaPagamento[] = ["DINHEIRO", "PIX", "DEBITO"];
+const A_VISTA: FormaPagamento[] = ["DINHEIRO", "PIX", "TRANSFERENCIA", "DEBITO"];
+
+/** Formas em que a loja escolhe a data do 1º vencimento (crédito segue o prazo da maquininha). */
+export const COM_VENCIMENTO: FormaPagamento[] = ["BOLETO", "A_PRAZO"];
 
 type ParcelaGerada = {
   valor: number;
@@ -21,8 +25,15 @@ type ParcelaGerada = {
 };
 
 // Divide um pagamento em parcelas (a última absorve a diferença de centavos).
-// Crédito: a maquininha repassa uma parcela a cada 30 dias. Boleto/a prazo: vencimento mensal.
-export function parcelarPagamento(forma: FormaPagamento, valor: number, parcelas: number, data: Date): ParcelaGerada[] {
+// Crédito: a maquininha repassa uma parcela a cada 30 dias. Boleto/a prazo: vencimento mensal,
+// a partir do 1º vencimento escolhido (ou um mês depois da venda, se não informado).
+export function parcelarPagamento(
+  forma: FormaPagamento,
+  valor: number,
+  parcelas: number,
+  data: Date,
+  primeiroVencimento?: string | null,
+): ParcelaGerada[] {
   if (forma === "TROCA") return [];
   if (A_VISTA.includes(forma)) return [{ valor, vencimento: data, pago: true, parcela: null, totalParcelas: null }];
   const n = Math.max(1, parcelas);
@@ -30,9 +41,15 @@ export function parcelarPagamento(forma: FormaPagamento, valor: number, parcelas
   const base = Math.floor(centavos / n);
   return Array.from({ length: n }, (_, i) => {
     const v = i === n - 1 ? centavos - base * (n - 1) : base;
-    const venc = new Date(data);
-    if (forma === "CREDITO") venc.setTime(data.getTime() + 30 * (i + 1) * DIA_MS);
-    else venc.setMonth(venc.getMonth() + i + 1);
+    let venc: Date;
+    if (forma === "CREDITO") venc = new Date(data.getTime() + 30 * (i + 1) * DIA_MS);
+    else if (primeiroVencimento && COM_VENCIMENTO.includes(forma)) {
+      venc = dataHoraLocal(primeiroVencimento, "12:00");
+      venc.setMonth(venc.getMonth() + i);
+    } else {
+      venc = new Date(data);
+      venc.setMonth(venc.getMonth() + i + 1);
+    }
     return { valor: v / 100, vencimento: venc, pago: false, parcela: n > 1 ? i + 1 : null, totalParcelas: n > 1 ? n : null };
   });
 }
@@ -100,7 +117,7 @@ export const lancamentoSchema = z.object({
   vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data"),
   parcelas: z.coerce.number().int().min(1).max(60).default(1),
   pago: z.enum(["sim"]).optional(),
-  forma: z.enum(["DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO", "A_PRAZO"]).optional().or(z.literal("").transform(() => undefined)),
+  forma: z.enum(["DINHEIRO", "PIX", "TRANSFERENCIA", "DEBITO", "CREDITO", "BOLETO", "A_PRAZO"]).optional().or(z.literal("").transform(() => undefined)),
   categoriaId: opcional,
   observacoes: opcional,
 });

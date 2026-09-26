@@ -366,6 +366,7 @@ enum StatusVenda {
 enum FormaPagamento {
   DINHEIRO
   PIX
+  TRANSFERENCIA
   DEBITO
   CREDITO
   BOLETO

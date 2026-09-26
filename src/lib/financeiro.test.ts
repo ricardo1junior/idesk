@@ -29,3 +29,18 @@ test("períodos", () => {
   const p = intervaloDoPeriodo("personalizado", "2026-09-01", "2026-09-10", data);
   assert.equal(p.fim.getDate(), 11);
 });
+
+test("transferência entra no caixa na hora", () => {
+  const p = parcelarPagamento("TRANSFERENCIA", 250, 1, new Date("2026-09-26T15:00:00-03:00"));
+  assert.equal(p.length, 1);
+  assert.equal(p[0].pago, true);
+});
+
+test("boleto usa o 1º vencimento escolhido e segue mês a mês", () => {
+  const p = parcelarPagamento("BOLETO", 300, 3, new Date("2026-09-26T15:00:00-03:00"), "2026-10-10");
+  assert.deepEqual(
+    p.map((x) => x.vencimento.toISOString().slice(0, 10)),
+    ["2026-10-10", "2026-11-10", "2026-12-10"],
+  );
+  assert.ok(p.every((x) => !x.pago));
+});

@@ -198,14 +198,16 @@ export async function registrarPagamentoOS(osId: string, _e: EstadoFormulario, f
   const forma = String(formData.get("forma")) as FormaPagamento;
   const valor = paraNumero(formData.get("valor"));
   const parcelas = Math.max(1, Math.trunc(paraNumero(formData.get("parcelas")) || 1));
+  const primeiroVencimento = String(formData.get("primeiroVencimento") ?? "");
   if (!(forma in FORMAS_PAGAMENTO) || forma === "TROCA") return { erros: { forma: "Escolha a forma de pagamento" } };
   if (!(valor > 0)) return { erros: { valor: "Informe o valor" } };
+  if (primeiroVencimento && !/^\d{4}-\d{2}-\d{2}$/.test(primeiroVencimento)) return { erros: { primeiroVencimento: "Data de vencimento inválida" } };
 
   await prisma.$transaction(async (tx) => {
     const os = await tx.ordemServico.findUniqueOrThrow({ where: { id: osId } });
     const categoria = await categoriaId(tx, "ENTRADA", "Serviços (OS)");
     const agora = new Date();
-    for (const p of parcelarPagamento(forma, valor, parcelas, agora)) {
+    for (const p of parcelarPagamento(forma, valor, parcelas, agora, primeiroVencimento || null)) {
       await tx.lancamento.create({
         data: {
           tipo: "ENTRADA",

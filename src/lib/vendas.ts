@@ -4,6 +4,7 @@ import { z } from "zod";
 export const FORMAS_PAGAMENTO: Record<FormaPagamento, string> = {
   DINHEIRO: "Dinheiro",
   PIX: "PIX",
+  TRANSFERENCIA: "Transferência",
   DEBITO: "Cartão de débito",
   CREDITO: "Cartão de crédito",
   BOLETO: "Boleto",
@@ -51,9 +52,10 @@ export const vendaSchema = z
     desconto: valor,
     pagamentos: z.array(
       z.object({
-        forma: z.enum(["DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO", "A_PRAZO", "TROCA"]),
+        forma: z.enum(["DINHEIRO", "PIX", "TRANSFERENCIA", "DEBITO", "CREDITO", "BOLETO", "A_PRAZO", "TROCA"]),
         valor: valor.refine((v) => v > 0, "Pagamento com valor zero"),
         parcelas: z.number().int().min(1).max(24),
+        primeiroVencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
         troca: trocaSchema.nullable(),
       }),
     ),

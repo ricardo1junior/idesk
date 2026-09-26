@@ -61,6 +61,7 @@ const CODIGO_PAGAMENTO: Record<FormaPagamento, string> = {
   A_PRAZO: "05", // crédito loja
   BOLETO: "15",
   PIX: "17",
+  TRANSFERENCIA: "18", // transferência bancária / carteira digital
   TROCA: "99",
 };
 

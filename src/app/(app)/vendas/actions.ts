@@ -196,7 +196,7 @@ export async function finalizarVenda(dados: unknown): Promise<{ erro?: string; i
         });
         // Financeiro: à vista entra no caixa; crédito, boleto e a prazo viram contas a receber.
         const categoria = await categoriaId(tx, "ENTRADA", "Vendas");
-        for (const parc of parcelarPagamento(p.forma, p.valor, p.parcelas, criada.criadoEm)) {
+        for (const parc of parcelarPagamento(p.forma, p.valor, p.parcelas, criada.criadoEm, p.primeiroVencimento)) {
           await tx.lancamento.create({
             data: {
               tipo: "ENTRADA",

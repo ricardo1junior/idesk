@@ -6,6 +6,7 @@ import { buscarParaVenda, finalizarVenda, type OpcaoVenda } from "@/app/(app)/ve
 import { formatarDocumento } from "@/lib/documentos";
 import { CONDICOES, paraNumero } from "@/lib/estoque";
 import { calcularTotais, centavos, FORMAS_PAGAMENTO, formatarReais, somaPagamentos, totalItem } from "@/lib/vendas";
+import { COM_VENCIMENTO } from "@/lib/financeiro";
 import { BuscaCliente } from "./OSForm";
 import { VerificarImei } from "./VerificarImei";
 
@@ -23,7 +24,7 @@ type Troca = {
   procedenciaDeclarada: boolean;
   observacoes: string;
 };
-type Pagamento = { id: number; forma: keyof typeof FORMAS_PAGAMENTO; valor: string; parcelas: number; troca: Troca | null };
+type Pagamento = { id: number; forma: keyof typeof FORMAS_PAGAMENTO; valor: string; parcelas: number; primeiroVencimento: string; troca: Troca | null };
 
 const trocaVazia = (): Troca => ({
   modelo: "",
@@ -88,7 +89,7 @@ export function PDV() {
   function novoPagamento(forma: Pagamento["forma"]) {
     setPagamentos((a) => [
       ...a,
-      { id: Date.now(), forma, valor: forma === "TROCA" ? "" : reais(Math.max(falta, 0)), parcelas: 1, troca: forma === "TROCA" ? trocaVazia() : null },
+      { id: Date.now(), forma, valor: forma === "TROCA" ? "" : reais(Math.max(falta, 0)), parcelas: 1, primeiroVencimento: "", troca: forma === "TROCA" ? trocaVazia() : null },
     ]);
   }
 
@@ -109,6 +110,7 @@ export function PDV() {
         forma: p.forma,
         valor: paraNumero(p.valor),
         parcelas: p.parcelas,
+        primeiroVencimento: COM_VENCIMENTO.includes(p.forma) && p.primeiroVencimento ? p.primeiroVencimento : null,
         troca: p.troca
           ? { ...p.troca, saudeBateria: p.troca.saudeBateria ? Number(p.troca.saudeBateria) : null, imei: p.troca.imei || undefined, serial: p.troca.serial || undefined }
           : null,
@@ -202,7 +204,7 @@ export function PDV() {
           <div className="space-y-4">
             {pagamentos.map((p) => (
               <div key={p.id} className="rounded-md border border-zinc-200 p-3">
-                <div className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_auto]">
+                <div className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_10rem_auto]">
                   <div className="text-sm font-medium">{FORMAS_PAGAMENTO[p.forma]}</div>
                   <label className="campo">
                     <span>{p.forma === "TROCA" ? "Valor avaliado" : "Valor"}</span>
@@ -218,6 +220,14 @@ export function PDV() {
                           </option>
                         ))}
                       </select>
+                    </label>
+                  ) : (
+                    <div />
+                  )}
+                  {COM_VENCIMENTO.includes(p.forma) ? (
+                    <label className="campo">
+                      <span>1º vencimento</span>
+                      <input type="date" value={p.primeiroVencimento} onChange={(e) => alterarPag(p.id, { primeiroVencimento: e.target.value })} />
                     </label>
                   ) : (
                     <div />
