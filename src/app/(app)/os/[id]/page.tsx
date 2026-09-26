@@ -54,6 +54,11 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           <Link href={`/os/${os.id}/imprimir`} className="btn-secundario">
             Imprimir
           </Link>
+          {pode(usuario.perfil, "entregas") && (
+            <Link href={`/entregas/nova?cliente=${os.cliente.id}&os=${os.id}`} className="btn-secundario">
+              Agendar entrega
+            </Link>
+          )}
           <EnviarEmail emails={emailsDoCliente(os.cliente)} enviar={enviarEmailOS.bind(null, os.id)} />
         </div>
       </div>

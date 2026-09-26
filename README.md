@@ -85,3 +85,9 @@ Os botões **Enviar por e-mail** na OS e na venda mandam um resumo (situação, 
 ## Fotos do aparelho na OS
 
 Na abertura da OS e depois, na tela da OS, dá para tirar ou escolher fotos do aparelho (até 20), marcando o tipo do dano (riscado, amassado, quebrado/trincado, outro) e onde está. No celular o botão abre a câmera. As fotos são reduzidas no navegador (até 1600 px) antes do envio e ficam guardadas no banco. Elas não saem na impressão da OS; vão anexadas no e-mail da OS enviado ao cliente.
+
+## Agenda e entregas
+
+**Agenda** (menu Agenda): horários do dia conforme o funcionamento da loja (Configurações: abertura, fechamento, dias, duração de cada horário e quantos clientes são atendidos ao mesmo tempo). Um horário cheio não aceita outro cliente. Cada agendamento tem motivo, aparelho, WhatsApp com mensagem de confirmação e os estados confirmado, atendido, faltou e cancelado. Reparo ou orçamento atendido abre a OS do cliente com um clique.
+
+**Entregas** (menu Entregas, ou "Agendar entrega" na venda e na OS): escolha o cliente e um dos endereços cadastrados (ou digite outro), clique em **Calcular ida e volta** e o sistema mostra a distância e o tempo fora da loja (ida + tempo no local + volta). O cálculo usa a OpenRouteService (`ORS_API_KEY`, gratuita) a partir do endereço da loja em Configurações e não considera trânsito em tempo real; o botão "Abrir rota" abre o Google Maps com o trânsito do momento. As entregas com horário aparecem também na agenda do dia.

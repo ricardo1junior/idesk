@@ -48,6 +48,11 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
           <Link href={`/vendas/${venda.id}/imprimir`} className="btn-secundario">
             Imprimir recibo
           </Link>
+          {venda.cliente && !cancelada && pode(usuario.perfil, "entregas") && (
+            <Link href={`/entregas/nova?cliente=${venda.cliente.id}&venda=${venda.id}`} className="btn-secundario">
+              Agendar entrega
+            </Link>
+          )}
           {venda.cliente && (
             <EnviarEmail
               emails={[...new Set([venda.cliente.email, ...venda.cliente.contatos.filter((c) => c.tipo === "EMAIL").map((c) => c.valor)].filter((e): e is string => !!e))]}

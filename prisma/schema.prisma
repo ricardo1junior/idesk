@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL") // conexão direta (sem pooler) usada nas migrações; localmente é igual à DATABASE_URL
 }
@@ -33,6 +33,7 @@ model Usuario {
   ordensTecnico OrdemServico[] @relation("TecnicoOS")
   vendas        Venda[]
   sessoes       Sessao[]
+  entregas      Entrega[]
 }
 
 model Sessao {
@@ -78,12 +79,14 @@ model Cliente {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  aparelhos   Aparelho[]
-  ordens      OrdemServico[]
-  vendas      Venda[]
-  contatos    ClienteContato[]
-  enderecos   ClienteEndereco[]
-  lancamentos Lancamento[]
+  aparelhos    Aparelho[]
+  ordens       OrdemServico[]
+  vendas       Venda[]
+  contatos     ClienteContato[]
+  enderecos    ClienteEndereco[]
+  agendamentos Agendamento[]
+  entregas     Entrega[]
+  lancamentos  Lancamento[]
 
   @@index([nome])
 }
@@ -300,6 +303,7 @@ model OrdemServico {
   itens       ItemOS[]
   fotos       FotoOS[]
   historico   HistoricoOS[]
+  entregas    Entrega[]
   lancamentos Lancamento[]
 
   @@index([status])
@@ -386,6 +390,7 @@ model Venda {
 
   itens       ItemVenda[]
   pagamentos  Pagamento[]
+  entregas    Entrega[]
   lancamentos Lancamento[]
   notas       NotaFiscal[]
 }
@@ -616,4 +621,95 @@ model NotaFiscal {
   canceladaEm  DateTime?
 
   @@index([vendaId])
+}
+
+// ---------- Agenda e entregas ----------
+
+// Configurações da loja (registro único "loja").
+model LojaConfig {
+  id                      String   @id @default("loja")
+  endereco                String? // ponto de partida das entregas
+  latitude                Float?
+  longitude               Float?
+  abreAs                  String   @default("09:00")
+  fechaAs                 String   @default("18:00")
+  diasSemana              Int[]    @default([1, 2, 3, 4, 5, 6]) // 0 = domingo
+  duracaoAtendimento      Int      @default(30) // minutos de cada horário da agenda
+  atendimentosSimultaneos Int      @default(1) // quantos clientes a loja atende ao mesmo tempo
+  minutosNoLocalEntrega   Int      @default(10)
+  atualizadoEm            DateTime @updatedAt
+}
+
+enum MotivoAgendamento {
+  REPARO
+  ORCAMENTO
+  COMPRA
+  RETIRADA
+  TROCA
+  OUTRO
+}
+
+enum StatusAgendamento {
+  AGENDADO
+  CONFIRMADO
+  ATENDIDO
+  FALTOU
+  CANCELADO
+}
+
+model Agendamento {
+  id           String            @id @default(cuid())
+  inicio       DateTime
+  fim          DateTime
+  clienteId    String?
+  cliente      Cliente?          @relation(fields: [clienteId], references: [id])
+  nome         String
+  telefone     String?
+  motivo       MotivoAgendamento @default(REPARO)
+  aparelho     String?
+  observacoes  String?
+  status       StatusAgendamento @default(AGENDADO)
+  usuarioId    String?
+  criadoEm     DateTime          @default(now())
+  atualizadoEm DateTime          @updatedAt
+
+  @@index([inicio])
+}
+
+enum TipoEntrega {
+  ENTREGA
+  COLETA
+}
+
+enum StatusEntrega {
+  PENDENTE
+  EM_ROTA
+  CONCLUIDA
+  CANCELADA
+}
+
+model Entrega {
+  id            String        @id @default(cuid())
+  numero        Int           @unique @default(autoincrement())
+  tipo          TipoEntrega   @default(ENTREGA)
+  status        StatusEntrega @default(PENDENTE)
+  clienteId     String
+  cliente       Cliente       @relation(fields: [clienteId], references: [id])
+  vendaId       String?
+  venda         Venda?        @relation(fields: [vendaId], references: [id])
+  osId          String?
+  os            OrdemServico? @relation(fields: [osId], references: [id])
+  endereco      String
+  agendadaPara  DateTime?
+  distanciaKm   Float? // só ida
+  minutosIda    Int?
+  minutosTotal  Int? // ida + tempo no local + volta
+  taxa          Decimal       @default(0) @db.Decimal(12, 2)
+  responsavelId String?
+  responsavel   Usuario?      @relation(fields: [responsavelId], references: [id])
+  observacoes   String?
+  criadoEm      DateTime      @default(now())
+  concluidaEm   DateTime?
+
+  @@index([agendadaPara])
 }

@@ -5,13 +5,16 @@ import { ItemMenu } from "./ItemMenu";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
   { href: "/", label: "Início" },
+  { href: "/agenda", label: "Agenda", permissao: "agenda" },
   { href: "/vendas", label: "Vendas", permissao: "vendas" },
   { href: "/os", label: "Ordens de serviço", permissao: "os" },
   { href: "/clientes", label: "Clientes", permissao: "clientes" },
   { href: "/estoque", label: "Estoque", permissao: "estoque" },
   { href: "/financeiro", label: "Financeiro", permissao: "financeiro" },
   { href: "/notas", label: "Notas fiscais", permissao: "notasFiscais" },
+  { href: "/entregas", label: "Entregas", permissao: "entregas" },
   { href: "/usuarios", label: "Usuários", permissao: "usuarios" },
+  { href: "/configuracoes", label: "Configurações", permissao: "configuracoes" },
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {

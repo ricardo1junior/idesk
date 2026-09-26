@@ -24,6 +24,9 @@ const REGRAS = {
   financeiro: ["FINANCEIRO"],
   notasFiscais: ["FINANCEIRO"],
   emitirNota: ["FINANCEIRO", "VENDEDOR"],
+  agenda: ["VENDEDOR", "TECNICO", "FINANCEIRO", "ESTAGIARIO"],
+  entregas: ["VENDEDOR", "TECNICO", "FINANCEIRO", "ESTAGIARIO"],
+  configuracoes: [],
   usuarios: [],
 } satisfies Record<string, Perfil[]>;
 
@@ -45,6 +48,9 @@ export const DESCRICAO_PERMISSOES: Record<Permissao, string> = {
   financeiro: "Financeiro e fluxo de caixa",
   notasFiscais: "Importar XML e dados fiscais",
   emitirNota: "Emitir nota fiscal da venda",
+  agenda: "Agenda de atendimentos",
+  entregas: "Entregas e coletas",
+  configuracoes: "Configurações da loja (endereço e horários)",
   usuarios: "Gerenciar usuários",
 };
 
