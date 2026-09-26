@@ -38,11 +38,11 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
         </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-lg border border-zinc-200 bg-white p-5">
+        <div className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <div className="text-sm text-zinc-500">Vendido hoje</div>
           <div className="mt-1 text-3xl font-semibold">{formatarReais(Number(hoje._sum.total ?? 0))}</div>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-5">
+        <div className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <div className="text-sm text-zinc-500">Vendas hoje</div>
           <div className="mt-1 text-3xl font-semibold">{hoje._count}</div>
         </div>
@@ -52,7 +52,7 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
         <input name="q" defaultValue={busca} placeholder="Nº da venda, cliente ou IMEI vendido" />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-zinc-200 text-zinc-500">
             <tr>

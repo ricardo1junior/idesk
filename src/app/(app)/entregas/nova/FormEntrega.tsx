@@ -43,7 +43,7 @@ export function FormEntrega({
 
   return (
     <form action={acao} className="space-y-6">
-      <section className="space-y-4 rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="space-y-4 rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Cliente e endereço</h2>
         {cliente ? (
           <div className="flex items-center gap-3">
@@ -125,7 +125,7 @@ export function FormEntrega({
         <input type="hidden" name="minutosTotal" value={estimativa?.minutosTotal ?? ""} />
       </section>
 
-      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Detalhes</h2>
         <Campo label="Tipo" className="sm:col-span-2">
           <select name="tipo" defaultValue="ENTREGA">

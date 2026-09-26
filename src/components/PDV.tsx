@@ -125,7 +125,7 @@ export function PDV() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="min-w-0 space-y-6">
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Itens</h2>
           <BuscaProduto onEscolher={adicionar} />
           <div className="mt-4 overflow-x-auto">
@@ -190,7 +190,7 @@ export function PDV() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Pagamento</h2>
           <div className="mb-4 flex flex-wrap gap-2">
             {Object.entries(FORMAS_PAGAMENTO).map(([f, label]) => (
@@ -234,7 +234,7 @@ export function PDV() {
       </div>
 
       <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Cliente</h2>
           {cliente ? (
             <div className="flex items-start justify-between gap-2 text-sm">
@@ -254,7 +254,7 @@ export function PDV() {
           )}
         </section>
 
-        <section className="space-y-3 rounded-lg border border-zinc-200 bg-white p-5 text-sm">
+        <section className="space-y-3 rounded-lg border border-zinc-200 bg-cartao p-5 text-sm">
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span>{formatarReais(subtotal)}</span>
@@ -317,7 +317,7 @@ function BuscaProduto({ onEscolher }: { onEscolher: (o: OpcaoVenda) => void }) {
         />
       </label>
       {opcoes.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-80 w-full divide-y divide-zinc-100 overflow-auto rounded-md border border-zinc-200 bg-white shadow-lg">
+        <ul className="absolute z-10 mt-1 max-h-80 w-full divide-y divide-zinc-100 overflow-auto rounded-md border border-zinc-200 bg-cartao shadow-lg">
           {opcoes.map((o) => (
             <li key={o.chave}>
               <button

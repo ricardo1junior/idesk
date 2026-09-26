@@ -32,7 +32,7 @@ export default async function Entregas() {
       </form>
     );
     return (
-      <li id={`e${e.numero}`} className="scroll-mt-6 rounded-lg border border-zinc-200 bg-white p-4">
+      <li id={`e${e.numero}`} className="scroll-mt-6 rounded-lg border border-zinc-200 bg-cartao p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1 text-sm">
             <div className="flex flex-wrap items-center gap-2">

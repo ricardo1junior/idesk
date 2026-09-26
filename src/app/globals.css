@@ -16,6 +16,8 @@
   --color-zinc-800: #333336;
   --color-zinc-900: #1d1d1f;
 
+  --color-cartao: #ffffff;
+
   --color-azul: #0071e3;
   --color-azul-escuro: #0077ed;
   --color-link: #0066cc;
@@ -48,13 +50,13 @@ main a.underline {
   .campo input,
   .campo select,
   .campo textarea {
-    @apply rounded-md border border-zinc-300 bg-white px-3 py-2 outline-none transition focus:border-azul focus:ring-4 focus:ring-azul/20;
+    @apply rounded-md border border-zinc-300 bg-cartao px-3 py-2 outline-none transition focus:border-azul focus:ring-4 focus:ring-azul/20;
   }
   .campo-erro input {
     @apply border-red-500;
   }
   .chip > span {
-    @apply inline-block cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs select-none;
+    @apply inline-block cursor-pointer rounded-full border border-zinc-300 bg-cartao px-3 py-1 text-xs select-none;
   }
   .chip > input:checked + span {
     @apply border-azul bg-azul text-white;
@@ -75,7 +77,7 @@ main a.underline {
 
 @media print {
   body {
-    @apply bg-white;
+    @apply bg-cartao;
   }
   @page {
     margin: 12mm;
@@ -84,7 +86,152 @@ main a.underline {
 
 /* Cartões sem borda, como na Apple: branco sobre o cinza claro com sombra leve. */
 @layer components {
-  main .rounded-lg.border.bg-white {
+  main .rounded-lg.border.bg-cartao {
     @apply border-transparent shadow-[0_2px_12px_rgba(0,0,0,0.04)];
   }
+}
+
+/* Modo escuro: a escolha fica em <html data-tema="claro|escuro|auto">. "auto" segue o sistema.
+   Só vale na tela; a impressão continua clara. */
+@media screen {
+  :root[data-tema="escuro"] {
+    color-scheme: dark;
+    --color-zinc-50: #000000;
+    --color-zinc-100: #1c1c1e;
+    --color-zinc-200: #2c2c2e;
+    --color-zinc-300: #3a3a3c;
+    --color-zinc-400: #6e6e73;
+    --color-zinc-500: #98989d;
+    --color-zinc-600: #aeaeb2;
+    --color-zinc-700: #c7c7cc;
+    --color-zinc-800: #e5e5ea;
+    --color-zinc-900: #f5f5f7;
+    --color-cartao: #1c1c1e;
+    --color-azul: #0a84ff;
+    --color-azul-escuro: #409cff;
+    --color-link: #2997ff;
+    --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 14%, #1c1c1e);
+    --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 22%, #1c1c1e);
+    --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 34%, #1c1c1e);
+    --color-red-600: color-mix(in oklab, oklch(63.7% 0.237 25.331) 70%, white);
+    --color-red-700: color-mix(in oklab, oklch(63.7% 0.237 25.331) 60%, white);
+    --color-red-800: color-mix(in oklab, oklch(63.7% 0.237 25.331) 50%, white);
+    --color-red-900: color-mix(in oklab, oklch(63.7% 0.237 25.331) 40%, white);
+    --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 14%, #1c1c1e);
+    --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 22%, #1c1c1e);
+    --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 34%, #1c1c1e);
+    --color-green-600: color-mix(in oklab, oklch(72.3% 0.219 149.579) 70%, white);
+    --color-green-700: color-mix(in oklab, oklch(72.3% 0.219 149.579) 60%, white);
+    --color-green-800: color-mix(in oklab, oklch(72.3% 0.219 149.579) 50%, white);
+    --color-green-900: color-mix(in oklab, oklch(72.3% 0.219 149.579) 40%, white);
+    --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 14%, #1c1c1e);
+    --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 22%, #1c1c1e);
+    --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 34%, #1c1c1e);
+    --color-amber-600: color-mix(in oklab, oklch(76.9% 0.188 70.08) 70%, white);
+    --color-amber-700: color-mix(in oklab, oklch(76.9% 0.188 70.08) 60%, white);
+    --color-amber-800: color-mix(in oklab, oklch(76.9% 0.188 70.08) 50%, white);
+    --color-amber-900: color-mix(in oklab, oklch(76.9% 0.188 70.08) 40%, white);
+    --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 14%, #1c1c1e);
+    --color-sky-100: color-mix(in oklab, oklch(68.5% 0.169 237.323) 22%, #1c1c1e);
+    --color-sky-200: color-mix(in oklab, oklch(68.5% 0.169 237.323) 34%, #1c1c1e);
+    --color-sky-600: color-mix(in oklab, oklch(68.5% 0.169 237.323) 70%, white);
+    --color-sky-700: color-mix(in oklab, oklch(68.5% 0.169 237.323) 60%, white);
+    --color-sky-800: color-mix(in oklab, oklch(68.5% 0.169 237.323) 50%, white);
+    --color-sky-900: color-mix(in oklab, oklch(68.5% 0.169 237.323) 40%, white);
+    --color-indigo-50: color-mix(in oklab, oklch(58.5% 0.233 277.117) 14%, #1c1c1e);
+    --color-indigo-100: color-mix(in oklab, oklch(58.5% 0.233 277.117) 22%, #1c1c1e);
+    --color-indigo-200: color-mix(in oklab, oklch(58.5% 0.233 277.117) 34%, #1c1c1e);
+    --color-indigo-600: color-mix(in oklab, oklch(58.5% 0.233 277.117) 70%, white);
+    --color-indigo-700: color-mix(in oklab, oklch(58.5% 0.233 277.117) 60%, white);
+    --color-indigo-800: color-mix(in oklab, oklch(58.5% 0.233 277.117) 50%, white);
+    --color-indigo-900: color-mix(in oklab, oklch(58.5% 0.233 277.117) 40%, white);
+    --color-teal-50: color-mix(in oklab, oklch(70.4% 0.14 182.503) 14%, #1c1c1e);
+    --color-teal-100: color-mix(in oklab, oklch(70.4% 0.14 182.503) 22%, #1c1c1e);
+    --color-teal-200: color-mix(in oklab, oklch(70.4% 0.14 182.503) 34%, #1c1c1e);
+    --color-teal-600: color-mix(in oklab, oklch(70.4% 0.14 182.503) 70%, white);
+    --color-teal-700: color-mix(in oklab, oklch(70.4% 0.14 182.503) 60%, white);
+    --color-teal-800: color-mix(in oklab, oklch(70.4% 0.14 182.503) 50%, white);
+    --color-teal-900: color-mix(in oklab, oklch(70.4% 0.14 182.503) 40%, white);
+    --color-violet-50: color-mix(in oklab, oklch(60.6% 0.25 292.717) 14%, #1c1c1e);
+    --color-violet-100: color-mix(in oklab, oklch(60.6% 0.25 292.717) 22%, #1c1c1e);
+    --color-violet-200: color-mix(in oklab, oklch(60.6% 0.25 292.717) 34%, #1c1c1e);
+    --color-violet-600: color-mix(in oklab, oklch(60.6% 0.25 292.717) 70%, white);
+    --color-violet-700: color-mix(in oklab, oklch(60.6% 0.25 292.717) 60%, white);
+    --color-violet-800: color-mix(in oklab, oklch(60.6% 0.25 292.717) 50%, white);
+    --color-violet-900: color-mix(in oklab, oklch(60.6% 0.25 292.717) 40%, white);
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --color-zinc-50: #000000;
+    --color-zinc-100: #1c1c1e;
+    --color-zinc-200: #2c2c2e;
+    --color-zinc-300: #3a3a3c;
+    --color-zinc-400: #6e6e73;
+    --color-zinc-500: #98989d;
+    --color-zinc-600: #aeaeb2;
+    --color-zinc-700: #c7c7cc;
+    --color-zinc-800: #e5e5ea;
+    --color-zinc-900: #f5f5f7;
+    --color-cartao: #1c1c1e;
+    --color-azul: #0a84ff;
+    --color-azul-escuro: #409cff;
+    --color-link: #2997ff;
+    --color-red-50: color-mix(in oklab, oklch(63.7% 0.237 25.331) 14%, #1c1c1e);
+    --color-red-100: color-mix(in oklab, oklch(63.7% 0.237 25.331) 22%, #1c1c1e);
+    --color-red-200: color-mix(in oklab, oklch(63.7% 0.237 25.331) 34%, #1c1c1e);
+    --color-red-600: color-mix(in oklab, oklch(63.7% 0.237 25.331) 70%, white);
+    --color-red-700: color-mix(in oklab, oklch(63.7% 0.237 25.331) 60%, white);
+    --color-red-800: color-mix(in oklab, oklch(63.7% 0.237 25.331) 50%, white);
+    --color-red-900: color-mix(in oklab, oklch(63.7% 0.237 25.331) 40%, white);
+    --color-green-50: color-mix(in oklab, oklch(72.3% 0.219 149.579) 14%, #1c1c1e);
+    --color-green-100: color-mix(in oklab, oklch(72.3% 0.219 149.579) 22%, #1c1c1e);
+    --color-green-200: color-mix(in oklab, oklch(72.3% 0.219 149.579) 34%, #1c1c1e);
+    --color-green-600: color-mix(in oklab, oklch(72.3% 0.219 149.579) 70%, white);
+    --color-green-700: color-mix(in oklab, oklch(72.3% 0.219 149.579) 60%, white);
+    --color-green-800: color-mix(in oklab, oklch(72.3% 0.219 149.579) 50%, white);
+    --color-green-900: color-mix(in oklab, oklch(72.3% 0.219 149.579) 40%, white);
+    --color-amber-50: color-mix(in oklab, oklch(76.9% 0.188 70.08) 14%, #1c1c1e);
+    --color-amber-100: color-mix(in oklab, oklch(76.9% 0.188 70.08) 22%, #1c1c1e);
+    --color-amber-200: color-mix(in oklab, oklch(76.9% 0.188 70.08) 34%, #1c1c1e);
+    --color-amber-600: color-mix(in oklab, oklch(76.9% 0.188 70.08) 70%, white);
+    --color-amber-700: color-mix(in oklab, oklch(76.9% 0.188 70.08) 60%, white);
+    --color-amber-800: color-mix(in oklab, oklch(76.9% 0.188 70.08) 50%, white);
+    --color-amber-900: color-mix(in oklab, oklch(76.9% 0.188 70.08) 40%, white);
+    --color-sky-50: color-mix(in oklab, oklch(68.5% 0.169 237.323) 14%, #1c1c1e);
+    --color-sky-100: color-mix(in oklab, oklch(68.5% 0.169 237.323) 22%, #1c1c1e);
+    --color-sky-200: color-mix(in oklab, oklch(68.5% 0.169 237.323) 34%, #1c1c1e);
+    --color-sky-600: color-mix(in oklab, oklch(68.5% 0.169 237.323) 70%, white);
+    --color-sky-700: color-mix(in oklab, oklch(68.5% 0.169 237.323) 60%, white);
+    --color-sky-800: color-mix(in oklab, oklch(68.5% 0.169 237.323) 50%, white);
+    --color-sky-900: color-mix(in oklab, oklch(68.5% 0.169 237.323) 40%, white);
+    --color-indigo-50: color-mix(in oklab, oklch(58.5% 0.233 277.117) 14%, #1c1c1e);
+    --color-indigo-100: color-mix(in oklab, oklch(58.5% 0.233 277.117) 22%, #1c1c1e);
+    --color-indigo-200: color-mix(in oklab, oklch(58.5% 0.233 277.117) 34%, #1c1c1e);
+    --color-indigo-600: color-mix(in oklab, oklch(58.5% 0.233 277.117) 70%, white);
+    --color-indigo-700: color-mix(in oklab, oklch(58.5% 0.233 277.117) 60%, white);
+    --color-indigo-800: color-mix(in oklab, oklch(58.5% 0.233 277.117) 50%, white);
+    --color-indigo-900: color-mix(in oklab, oklch(58.5% 0.233 277.117) 40%, white);
+    --color-teal-50: color-mix(in oklab, oklch(70.4% 0.14 182.503) 14%, #1c1c1e);
+    --color-teal-100: color-mix(in oklab, oklch(70.4% 0.14 182.503) 22%, #1c1c1e);
+    --color-teal-200: color-mix(in oklab, oklch(70.4% 0.14 182.503) 34%, #1c1c1e);
+    --color-teal-600: color-mix(in oklab, oklch(70.4% 0.14 182.503) 70%, white);
+    --color-teal-700: color-mix(in oklab, oklch(70.4% 0.14 182.503) 60%, white);
+    --color-teal-800: color-mix(in oklab, oklch(70.4% 0.14 182.503) 50%, white);
+    --color-teal-900: color-mix(in oklab, oklch(70.4% 0.14 182.503) 40%, white);
+    --color-violet-50: color-mix(in oklab, oklch(60.6% 0.25 292.717) 14%, #1c1c1e);
+    --color-violet-100: color-mix(in oklab, oklch(60.6% 0.25 292.717) 22%, #1c1c1e);
+    --color-violet-200: color-mix(in oklab, oklch(60.6% 0.25 292.717) 34%, #1c1c1e);
+    --color-violet-600: color-mix(in oklab, oklch(60.6% 0.25 292.717) 70%, white);
+    --color-violet-700: color-mix(in oklab, oklch(60.6% 0.25 292.717) 60%, white);
+    --color-violet-800: color-mix(in oklab, oklch(60.6% 0.25 292.717) 50%, white);
+    --color-violet-900: color-mix(in oklab, oklch(60.6% 0.25 292.717) 40%, white);
+  }
+}
+@media screen {
+  :root[data-tema="escuro"] main .rounded-lg.border.bg-cartao { box-shadow: none; }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) main .rounded-lg.border.bg-cartao { box-shadow: none; }
 }

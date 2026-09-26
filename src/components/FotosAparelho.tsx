@@ -98,7 +98,7 @@ export function FotosAparelho({
       {fotos.length > 0 && (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {fotos.map((f) => (
-            <li key={f.id} className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+            <li key={f.id} className="overflow-hidden rounded-lg border border-zinc-200 bg-cartao">
               {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:) */}
               <img src={f.previa} alt={TIPOS_FOTO[f.tipo]} className="aspect-square w-full object-cover" />
               <div className="space-y-1 p-2">

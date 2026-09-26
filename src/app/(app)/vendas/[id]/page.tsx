@@ -63,7 +63,7 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
         </div>
       </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Cliente</h2>
         {venda.cliente ? (
           <Link href={`/clientes/${venda.cliente.id}`} className="font-medium hover:underline">
@@ -78,14 +78,14 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
         {!venda.cliente && <span className="text-sm">Consumidor não identificado</span>}
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Itens e pagamento</h2>
         <ResumoVenda venda={venda} />
         {venda.observacoes && <p className="mt-4 text-sm text-zinc-600">Obs.: {venda.observacoes}</p>}
       </section>
 
       {(notas.length > 0 || !cancelada) && (
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Nota fiscal</h2>
           <NotasDaVenda
             vendaId={venda.id}

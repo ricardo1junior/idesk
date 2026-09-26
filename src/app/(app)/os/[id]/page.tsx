@@ -63,7 +63,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         </div>
       </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Cliente</h2>
         <Link href={`/clientes/${os.cliente.id}`} className="font-medium hover:underline">
           {os.cliente.nome}
@@ -73,7 +73,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Aparelho</h2>
         <FichaAparelho
           os={os}
@@ -95,7 +95,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Fotos do aparelho ({os.fotos.length})</h2>
         {os.fotos.length > 0 && (
           <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -125,7 +125,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         <AdicionarFotos osId={os.id} restantes={MAX_FOTOS_OS - os.fotos.length} />
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Serviços e peças</h2>
         <table className="mb-4 w-full text-sm">
           <tbody>
@@ -172,7 +172,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Pagamento</h2>
         {os.lancamentos.length > 0 && (
           <table className="mb-4 w-full text-sm">
@@ -201,7 +201,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         )}
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Andamento</h2>
         {editar && (
         <form key={os.atualizadoEm.toISOString()} action={mudarStatus.bind(null, os.id)} className="grid gap-3 sm:grid-cols-4">

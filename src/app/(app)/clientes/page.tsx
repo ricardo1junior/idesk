@@ -41,7 +41,7 @@ export default async function Clientes({ searchParams }: PageProps<"/clientes">)
         <input name="q" defaultValue={busca} placeholder="Buscar por nome, CPF/CNPJ, telefone ou e-mail" />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-zinc-200 text-zinc-500">
             <tr>

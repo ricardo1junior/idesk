@@ -1,6 +1,9 @@
+import { cookies } from "next/headers";
 import { exigirUsuario } from "@/lib/auth";
+import { lerTema } from "@/lib/tema";
 import { PERFIS, pode, type Permissao } from "@/lib/permissoes";
 import { sair } from "../login/actions";
+import { EscolherTema } from "@/components/EscolherTema";
 import { ItemMenu } from "./ItemMenu";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
@@ -22,9 +25,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="sticky top-0 z-20 flex flex-col border-b border-zinc-200/70 bg-white/75 backdrop-blur-xl backdrop-saturate-150 md:h-screen md:w-60 md:border-r md:border-b-0 print:hidden">
+      <aside className="sticky top-0 z-20 flex flex-col border-b border-zinc-200/70 bg-cartao/75 backdrop-blur-xl backdrop-saturate-150 md:h-screen md:w-60 md:border-r md:border-b-0 print:hidden">
         <div className="flex items-center gap-2 px-5 py-5 text-xl font-semibold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-[10px] bg-zinc-900 text-sm text-white">i</span>
+          <span className="grid size-8 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">i</span>
           iDesk
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
@@ -42,7 +45,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               ),
             )}
         </nav>
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-3 text-sm">
+        <div className="mt-auto px-4 pb-3">
+          <EscolherTema inicial={lerTema((await cookies()).get("tema")?.value)} />
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-3 text-sm">
           <div>
             <div className="font-medium">{usuario.nome}</div>
             <div className="text-xs text-zinc-500">{PERFIS[usuario.perfil]}</div>

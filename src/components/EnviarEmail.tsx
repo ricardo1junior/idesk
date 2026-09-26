@@ -24,8 +24,8 @@ export function EnviarEmail({ emails, enviar }: { emails: string[]; enviar: (par
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
-      <select aria-label="E-mail do cliente" value={para} onChange={(e) => setPara(e.target.value)} className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm">
+    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-cartao p-2 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+      <select aria-label="E-mail do cliente" value={para} onChange={(e) => setPara(e.target.value)} className="rounded-md border border-zinc-300 bg-cartao px-3 py-1.5 text-sm">
         {emails.map((e) => (
           <option key={e} value={e}>
             {e}

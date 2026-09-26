@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { lerTema } from "@/lib/tema";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,9 +8,10 @@ export const metadata: Metadata = {
   description: "Vendas, ordens de serviço, estoque e notas fiscais",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const tema = lerTema((await cookies()).get("tema")?.value);
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html lang="pt-BR" data-tema={tema} className="h-full antialiased">
       <body className="min-h-full">{children}</body>
     </html>
   );

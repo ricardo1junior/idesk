@@ -13,7 +13,7 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
   const [periodo, setPeriodo] = useState(filtros.periodo);
   const [base, setBase] = useState(filtros.base);
   return (
-    <form className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+    <form className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
       <Campo label="Visão">
         <select name="base" value={base} onChange={(e) => setBase(e.target.value as Filtros["base"])}>
           <option value="pagamento">Realizado (o que entrou e saiu)</option>

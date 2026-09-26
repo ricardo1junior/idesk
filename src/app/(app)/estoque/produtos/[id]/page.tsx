@@ -53,14 +53,14 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
       {salvo && <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Produto salvo.</div>}
 
       {editar && (
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">{aparelho ? "Entrada de aparelho (um por IMEI)" : "Entrada / ajuste de estoque"}</h2>
           {aparelho ? <EntradaAparelhoForm produtoId={produto.id} modelo={produto.modelo ?? produto.descricao} /> : <MovimentoForm produtoId={produto.id} />}
         </section>
       )}
 
       {aparelho && (
-        <section className="overflow-x-auto rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Unidades</h2>
           <table className="w-full text-left text-sm">
             <thead className="text-zinc-500">
@@ -101,7 +101,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
         </section>
       )}
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Movimentações</h2>
         <table className="w-full text-sm">
           <tbody>
@@ -125,7 +125,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
       </section>
 
       {editar && (
-        <details className="rounded-lg border border-zinc-200 bg-white p-5">
+        <details className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <summary className="cursor-pointer text-sm font-semibold text-zinc-500">Editar cadastro</summary>
           <div className="mt-4">
             <ProdutoForm key={String(produto.precoVenda) + produto.descricao} id={produto.id} inicial={inicial} />

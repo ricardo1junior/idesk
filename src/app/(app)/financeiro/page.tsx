@@ -72,7 +72,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
         <Card titulo="Saldo" valor={entradas - saidas} cor={entradas - saidas >= 0 ? "text-zinc-900" : "text-red-600"} />
       </div>
       <div className="grid gap-4 text-sm sm:grid-cols-2">
-        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="rounded-lg border border-zinc-200 bg-cartao p-4">
           A receber no período: <b>{formatarReais(aberto("ENTRADA"))}</b>
           {vencido("ENTRADA") && (
             <div className="text-red-600">
@@ -80,7 +80,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
             </div>
           )}
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="rounded-lg border border-zinc-200 bg-cartao p-4">
           A pagar no período: <b>{formatarReais(aberto("SAIDA"))}</b>
           {vencido("SAIDA") && (
             <div className="text-red-600">
@@ -90,14 +90,14 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
         </div>
       </div>
 
-      <details className="rounded-lg border border-zinc-200 bg-white p-5">
+      <details className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <summary className="cursor-pointer text-sm font-semibold text-zinc-500">Novo lançamento (despesa ou receita)</summary>
         <div className="mt-4">
           <NovoLancamento categorias={categorias} />
         </div>
       </details>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full min-w-[48rem] text-left text-sm">
           <thead className="border-b border-zinc-200 text-zinc-500">
             <tr>
@@ -198,7 +198,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
 
 function Card({ titulo, valor, cor }: { titulo: string; valor: number; cor: string }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5">
+    <div className="rounded-lg border border-zinc-200 bg-cartao p-5">
       <div className="text-sm text-zinc-500">{titulo}</div>
       <div className={`mt-1 text-2xl font-semibold ${cor}`}>{formatarReais(valor)}</div>
     </div>

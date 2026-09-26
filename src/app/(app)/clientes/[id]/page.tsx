@@ -75,7 +75,7 @@ export default async function EditarCliente({ params, searchParams }: PageProps<
 function ContatosRapidos({ telefones, emails }: { telefones: string[]; emails: string[] }) {
   if (!telefones.length && !emails.length) return null;
   return (
-    <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-lg bg-white px-5 py-3 text-sm shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+    <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-lg bg-cartao px-5 py-3 text-sm shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
       {telefones.map((t) => (
         <LinkWhatsApp key={t} telefone={t} />
       ))}

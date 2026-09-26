@@ -33,7 +33,7 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
           <Link
             key={a.label}
             href={a.href}
-            className={`rounded-full border px-3 py-1 ${a.ativo ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white hover:bg-zinc-100"}`}
+            className={`rounded-full border px-3 py-1 ${a.ativo ? "border-zinc-900 bg-zinc-900 text-zinc-50" : "border-zinc-300 bg-cartao hover:bg-zinc-100"}`}
           >
             {a.label}
           </Link>
@@ -72,7 +72,7 @@ async function ListaProdutos({ busca, tipo }: { busca: string; tipo?: TipoProdut
   });
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-zinc-200 text-zinc-500">
           <tr>
@@ -133,7 +133,7 @@ async function ListaAparelhos({ busca }: { busca: string }) {
   });
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-zinc-200 text-zinc-500">
           <tr>

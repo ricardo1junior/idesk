@@ -88,7 +88,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
           <label
             key={t}
             className={`cursor-pointer rounded-md border px-4 py-2 text-sm ${
-              tipo === t ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white"
+              tipo === t ? "border-zinc-900 bg-zinc-900 text-zinc-50" : "border-zinc-300 bg-cartao"
             }`}
           >
             <input type="radio" name="tipo" value={t} checked={tipo === t} onChange={() => setTipo(t)} className="sr-only" />

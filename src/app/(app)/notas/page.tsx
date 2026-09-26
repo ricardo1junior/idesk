@@ -26,7 +26,7 @@ export default async function Notas() {
 
       <section>
         <h2 className="titulo-secao">Notas emitidas</h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 text-left text-zinc-500">
               <tr>
@@ -67,7 +67,7 @@ export default async function Notas() {
 
       <section>
         <h2 className="titulo-secao">Notas de entrada (compras)</h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 text-left text-zinc-500">
               <tr>

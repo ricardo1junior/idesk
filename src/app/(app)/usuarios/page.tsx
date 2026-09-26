@@ -15,12 +15,12 @@ export default async function Usuarios() {
     <div className="max-w-5xl space-y-6">
       <h1 className="text-2xl font-semibold">Usuários</h1>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Novo usuário</h2>
         <NovoUsuario />
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Equipe</h2>
         <div className="divide-y divide-zinc-100">
           {usuarios.map((u) => (
@@ -58,7 +58,7 @@ export default async function Usuarios() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">O que cada perfil pode fazer</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-sm">

@@ -54,7 +54,7 @@ export function NovoAgendamento({ dia, horarios, hora, duracao }: { dia: string;
             <input value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Buscar por nome ou telefone" />
           </Campo>
           {opcoes.length > 0 && (
-            <ul className="absolute z-10 mt-1 w-full divide-y divide-zinc-100 rounded-md border border-zinc-200 bg-white text-sm shadow-lg">
+            <ul className="absolute z-10 mt-1 w-full divide-y divide-zinc-100 rounded-md border border-zinc-200 bg-cartao text-sm shadow-lg">
               {opcoes.map((c) => (
                 <li key={c.id}>
                   <button type="button" className="w-full px-3 py-2 text-left hover:bg-zinc-50" onClick={() => escolher(c)}>

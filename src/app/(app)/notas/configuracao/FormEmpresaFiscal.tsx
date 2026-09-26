@@ -18,7 +18,7 @@ export function FormEmpresaFiscal({ empresa }: { empresa?: Record<string, string
   const erro = (c: string) => estado.erros?.[c];
   return (
     <form action={acao} className="space-y-6">
-      <section className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+      <section className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Empresa</h2>
         <Campo label="CNPJ" erro={erro("cnpj")}>
           <input name="cnpj" defaultValue={v("cnpj")} />
@@ -52,7 +52,7 @@ export function FormEmpresaFiscal({ empresa }: { empresa?: Record<string, string
         </Campo>
       </section>
 
-      <section className="grid gap-3 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+      <section className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Impostos padrão dos itens</h2>
         <Campo label="CSOSN / CST do ICMS" erro={erro("icmsSituacao")}>
           <input name="icmsSituacao" defaultValue={v("icmsSituacao", "102")} />

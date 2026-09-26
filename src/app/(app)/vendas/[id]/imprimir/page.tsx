@@ -16,7 +16,7 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
   const trocas = venda.pagamentos.filter((p) => p.aparelhoTroca);
 
   return (
-    <div className="mx-auto max-w-3xl bg-white p-8 text-sm print:max-w-none print:p-0">
+    <div className="mx-auto max-w-3xl bg-cartao p-8 text-sm print:max-w-none print:p-0">
       <div className="mb-4 flex justify-end print:hidden">
         <BotaoImprimir />
       </div>

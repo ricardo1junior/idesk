@@ -60,7 +60,7 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
             key={a.label}
             href={a.valor ? `/os?status=${a.valor}` : "/os"}
             className={`whitespace-nowrap rounded-full border px-3 py-1 ${
-              atual === a.valor ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white hover:bg-zinc-100"
+              atual === a.valor ? "border-zinc-900 bg-zinc-900 text-zinc-50" : "border-zinc-300 bg-cartao hover:bg-zinc-100"
             }`}
           >
             {a.label}
@@ -73,7 +73,7 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
         <input name="q" defaultValue={busca} placeholder="Nº da OS, cliente, modelo, IMEI ou série" />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-zinc-200 text-zinc-500">
             <tr>

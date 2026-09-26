@@ -7,11 +7,11 @@ export function PadraoSenha({ valor, onChange, somenteLeitura }: { valor: string
 
   return (
     <div className="flex items-start gap-4">
-      <svg viewBox="0 0 180 180" className="h-40 w-40 touch-none rounded-md border border-zinc-300 bg-white">
+      <svg viewBox="0 0 180 180" className="h-40 w-40 touch-none rounded-md border border-zinc-300 bg-cartao">
         {pontos.slice(1).map((p, i) => {
           const a = pos(pontos[i]);
           const b = pos(p);
-          return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#18181b" strokeWidth={4} strokeLinecap="round" />;
+          return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--color-zinc-900)" strokeWidth={4} strokeLinecap="round" />;
         })}
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
           const { x, y } = pos(n);
@@ -23,7 +23,7 @@ export function PadraoSenha({ valor, onChange, somenteLeitura }: { valor: string
               className={somenteLeitura ? "" : "cursor-pointer"}
             >
               <circle cx={x} cy={y} r={22} fill="transparent" />
-              <circle cx={x} cy={y} r={ordem === -1 ? 8 : 12} fill={ordem === -1 ? "#d4d4d8" : "#18181b"} />
+              <circle cx={x} cy={y} r={ordem === -1 ? 8 : 12} fill={ordem === -1 ? "var(--color-zinc-300)" : "var(--color-zinc-900)"} />
               {ordem !== -1 && (
                 <text x={x} y={y + 4} textAnchor="middle" fontSize={11} fill="white">
                   {ordem + 1}

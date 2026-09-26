@@ -95,7 +95,7 @@ export function ConferenciaXml() {
   const nota = dados?.nota;
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-zinc-200 bg-white p-5">
+      <div className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <label className="campo">
           <span>Arquivo XML da nota</span>
           <input type="file" accept=".xml,text/xml,application/xml" onChange={(e) => carregar(e.target.files?.[0])} />
@@ -107,7 +107,7 @@ export function ConferenciaXml() {
 
       {nota && (
         <>
-          <div className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-5 text-sm sm:grid-cols-4">
+          <div className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 text-sm sm:grid-cols-4">
             <Info titulo="Fornecedor">
               {nota.emitente.nomeFantasia ?? nota.emitente.razaoSocial}
               <div className="text-xs text-zinc-500">
@@ -139,7 +139,7 @@ export function ConferenciaXml() {
               const unidades = Math.round(item.quantidade * (Number(l.fator) || 1));
               const qtdImeis = l.imeis.split(/[\s,;]+/).filter(Boolean).length;
               return (
-                <div key={item.numero} className={`rounded-lg border bg-white p-4 ${l.acao === "ignorar" ? "border-zinc-200 opacity-60" : "border-zinc-300"}`}>
+                <div key={item.numero} className={`rounded-lg border bg-cartao p-4 ${l.acao === "ignorar" ? "border-zinc-200 opacity-60" : "border-zinc-300"}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <div className="font-medium">
@@ -252,7 +252,7 @@ function BuscaProduto({ selecionado, onEscolher }: { selecionado: string | null;
         />
       </label>
       {termo.length >= 2 && resultados.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full rounded-md border border-zinc-200 bg-white text-sm shadow">
+        <ul className="absolute z-10 mt-1 w-full rounded-md border border-zinc-200 bg-cartao text-sm shadow">
           {resultados.map((p) => (
             <li key={p.id}>
               <button

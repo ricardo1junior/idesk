@@ -59,7 +59,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
             ›
           </Link>
           <form className="flex items-center gap-2">
-            <input type="date" name="dia" defaultValue={dia} aria-label="Ir para o dia" className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm" />
+            <input type="date" name="dia" defaultValue={dia} aria-label="Ir para o dia" className="rounded-md border border-zinc-300 bg-cartao px-3 py-1.5 text-sm" />
             <button className="btn-secundario">Ir</button>
           </form>
           {pode(usuario.perfil, "configuracoes") && (
@@ -76,7 +76,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
             key={d}
             href={`/agenda?dia=${d}`}
             aria-current={d === dia ? "date" : undefined}
-            className={`rounded-lg px-2 py-2 text-center text-xs transition ${d === dia ? "bg-azul text-white" : "bg-white text-zinc-700 hover:bg-zinc-100"} ${
+            className={`rounded-lg px-2 py-2 text-center text-xs transition ${d === dia ? "bg-azul text-white" : "bg-cartao text-zinc-700 hover:bg-zinc-100"} ${
               !config.diasSemana.includes(new Date(`${d}T12:00:00Z`).getUTCDay()) ? "opacity-50" : ""
             }`}
           >
@@ -87,7 +87,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
       </nav>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
-        <section className="rounded-lg border border-zinc-200 bg-white p-5">
+        <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">
             Horários {horarios.length > 0 && <span className="text-sm font-normal text-zinc-500">· {livres.length} livres</span>}
           </h2>
@@ -128,7 +128,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
         </section>
 
         <div className="space-y-6">
-          <section id="novo" className="rounded-lg border border-zinc-200 bg-white p-5">
+          <section id="novo" className="rounded-lg border border-zinc-200 bg-cartao p-5">
             <h2 className="titulo-secao">Novo agendamento</h2>
             {livres.length === 0 ? (
               <p className="text-sm text-zinc-500">Nenhum horário livre neste dia.</p>
@@ -144,7 +144,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
           </section>
 
           {entregas.length > 0 && (
-            <section className="rounded-lg border border-zinc-200 bg-white p-5">
+            <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
               <h2 className="titulo-secao">Entregas do dia</h2>
               <ul className="space-y-2 text-sm">
                 {entregas.map((e) => (
@@ -173,7 +173,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
       </form>
     );
     return (
-      <div className={`rounded-lg border border-zinc-200 p-3 text-sm ${inativo ? "bg-zinc-50 text-zinc-500" : "bg-white"}`}>
+      <div className={`rounded-lg border border-zinc-200 p-3 text-sm ${inativo ? "bg-zinc-50 text-zinc-500" : "bg-cartao"}`}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium">{a.clienteId ? <Link href={`/clientes/${a.clienteId}`} className="hover:underline">{a.nome}</Link> : a.nome}</span>
           <span className={`rounded-full px-2 py-0.5 text-xs ${st.cor}`}>{st.label}</span>

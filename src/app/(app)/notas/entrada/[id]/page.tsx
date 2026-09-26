@@ -40,7 +40,7 @@ export default async function NotaEntrada({ params }: PageProps<"/notas/entrada/
       </div>
       <p className="break-all text-xs text-zinc-500">Chave {nota.chave}</p>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Entradas no estoque</h2>
         {movimentos.length === 0 ? (
           <p className="text-sm text-zinc-500">Nenhum item deu entrada.</p>
@@ -64,7 +64,7 @@ export default async function NotaEntrada({ params }: PageProps<"/notas/entrada/
         <p className="mt-3 text-xs text-zinc-500">{lida.itens.length} item(ns) na nota · total {formatarReais(Number(nota.valorTotal))}</p>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
+      <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Contas a pagar</h2>
         <table className="w-full text-sm">
           <tbody>

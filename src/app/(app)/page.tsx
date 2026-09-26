@@ -65,7 +65,7 @@ export default async function Inicio() {
 
 function Indicador({ titulo, valor }: { titulo: string; valor: number | string }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5">
+    <div className="rounded-lg border border-zinc-200 bg-cartao p-5">
       <div className="text-sm text-zinc-500">{titulo}</div>
       <div className="mt-1 text-3xl font-semibold">{valor}</div>
     </div>

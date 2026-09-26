@@ -22,7 +22,7 @@ export function FormConfigLoja({ inicial }: { inicial: Inicial }) {
   const erro = (c: string) => estado.erros?.[c];
   return (
     <form action={acao} className="space-y-6">
-      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Agenda de atendimentos</h2>
         <Campo label="Abre às" erro={erro("abreAs")}>
           <input name="abreAs" type="time" defaultValue={v("abreAs")} />
@@ -50,7 +50,7 @@ export function FormConfigLoja({ inicial }: { inicial: Inicial }) {
         </div>
       </section>
 
-      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-5 sm:grid-cols-4">
+      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Entregas</h2>
         <Campo label="Endereço da loja (ponto de saída)" className="sm:col-span-3" dica="Rua, número, bairro, cidade e UF">
           <input name="endereco" defaultValue={v("endereco")} placeholder="ex.: Av. Paulista, 1000, Bela Vista, São Paulo - SP" />
