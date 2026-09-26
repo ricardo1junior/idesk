@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
 import { exigirUsuario } from "@/lib/auth";
-import { lerTema } from "@/lib/tema";
 import { PERFIS, pode, type Permissao } from "@/lib/permissoes";
 import { sair } from "../login/actions";
 import { EscolherTema } from "@/components/EscolherTema";
@@ -29,6 +27,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <div className="flex items-center gap-2 px-5 py-5 text-xl font-semibold tracking-tight">
           <span className="grid size-8 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">i</span>
           iDesk
+          <span className="ml-auto">
+            <EscolherTema />
+          </span>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
           {menu
@@ -45,10 +46,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               ),
             )}
         </nav>
-        <div className="mt-auto px-4 pb-3">
-          <EscolherTema inicial={lerTema((await cookies()).get("tema")?.value)} />
-        </div>
-        <div className="flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-3 text-sm">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-3 text-sm">
           <div>
             <div className="font-medium">{usuario.nome}</div>
             <div className="text-xs text-zinc-500">{PERFIS[usuario.perfil]}</div>

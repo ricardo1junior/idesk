@@ -96,6 +96,7 @@ main a.underline {
 @media screen {
   :root[data-tema="escuro"] {
     color-scheme: dark;
+    --escuro: 1;
     --color-zinc-50: #000000;
     --color-zinc-100: #1c1c1e;
     --color-zinc-200: #2c2c2e;
@@ -164,6 +165,7 @@ main a.underline {
 @media screen and (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
     color-scheme: dark;
+    --escuro: 1;
     --color-zinc-50: #000000;
     --color-zinc-100: #1c1c1e;
     --color-zinc-200: #2c2c2e;
@@ -234,4 +236,18 @@ main a.underline {
 }
 @media screen and (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) main .rounded-lg.border.bg-cartao { box-shadow: none; }
+}
+
+/* Chave claro/escuro: --escuro é 0 no claro e 1 no escuro. */
+:root {
+  --escuro: 0;
+}
+.chave-tema {
+  transform: translateX(calc(var(--escuro) * 1.25rem));
+}
+.icone-sol {
+  opacity: calc(1 - var(--escuro));
+}
+.icone-lua {
+  opacity: var(--escuro);
 }
