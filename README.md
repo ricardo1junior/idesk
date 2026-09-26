@@ -17,9 +17,20 @@ npm run db:migrate          # cria as tabelas
 npm run dev                 # http://localhost:3000
 ```
 
-No primeiro acesso, a tela de login pede para criar o usuário administrador. Os demais usuários são criados em **Usuários**.
+No primeiro acesso, a tela de login pede para criar o usuário administrador (com `CODIGO_PRIMEIRO_ACESSO` definido, pede também esse código). Os demais usuários são criados em **Usuários**.
 
 Testes: `npm test` · Lint: `npm run lint`
+
+### Publicar na Vercel + Neon
+
+1. Na [Neon](https://neon.tech), crie um projeto (região São Paulo, se disponível) e copie as duas conexões: a *pooled* e a direta.
+2. Na [Vercel](https://vercel.com), importe este repositório e cadastre as variáveis:
+   - `DATABASE_URL` (pooled) e `DIRECT_URL` (direta), da Neon;
+   - `APP_SECRET` (gere com `openssl rand -base64 32` e guarde; sem ela as senhas de aparelhos já salvas não abrem);
+   - `CODIGO_PRIMEIRO_ACESSO` (qualquer código só seu);
+   - as opcionais de IMEI, Focus NFe e e-mail (veja `.env.example`).
+3. Faça o deploy. O script `vercel-build` aplica as migrações do banco antes de gerar o site.
+4. Abra o link, informe o código de primeiro acesso e crie o administrador.
 
 ## Situação
 

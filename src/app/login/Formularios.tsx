@@ -23,14 +23,20 @@ export function FormLogin() {
   );
 }
 
-export function FormPrimeiroAcesso() {
+export function FormPrimeiroAcesso({ pedirCodigo }: { pedirCodigo: boolean }) {
   const [estado, acao, pendente] = useActionState<EstadoLogin, FormData>(criarAdministrador, {});
   return (
     <form action={acao} className="space-y-4">
       <p className="text-sm text-zinc-600">Primeiro acesso: crie o usuário administrador da loja.</p>
+      {pedirCodigo && (
+        <label className="campo">
+          <span>Código de primeiro acesso</span>
+          <input name="codigo" required autoComplete="off" />
+        </label>
+      )}
       <label className="campo">
         <span>Seu nome</span>
-        <input name="nome" required autoFocus />
+        <input name="nome" required autoFocus={!pedirCodigo} />
       </label>
       <label className="campo">
         <span>E-mail</span>

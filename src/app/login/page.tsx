@@ -14,7 +14,7 @@ export default async function Login() {
           <span className="grid size-10 place-items-center rounded-xl bg-zinc-900 text-lg font-semibold text-white">i</span>
           <h1 className="text-3xl font-semibold">iDesk</h1>
         </div>
-        {primeiroAcesso ? <FormPrimeiroAcesso /> : <FormLogin />}
+        {primeiroAcesso ? <FormPrimeiroAcesso pedirCodigo={!!process.env.CODIGO_PRIMEIRO_ACESSO} /> : <FormLogin />}
       </div>
     </div>
   );

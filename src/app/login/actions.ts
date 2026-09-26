@@ -30,6 +30,11 @@ const primeiroAcessoSchema = z
 // Cria o primeiro administrador. Só funciona enquanto não existir nenhum usuário.
 export async function criarAdministrador(_e: EstadoLogin, formData: FormData): Promise<EstadoLogin> {
   if ((await prisma.usuario.count()) > 0) return { erro: "O administrador já foi criado. Faça login." };
+  // Em servidor público, só quem tem o código de primeiro acesso cria o administrador.
+  const codigo = process.env.CODIGO_PRIMEIRO_ACESSO;
+  if (codigo && String(formData.get("codigo") ?? "").trim() !== codigo) {
+    return { erro: "Código de primeiro acesso incorreto.", email: String(formData.get("email") ?? "") };
+  }
   const r = primeiroAcessoSchema.safeParse(Object.fromEntries(formData));
   if (!r.success) return { erro: r.error.issues[0].message, email: String(formData.get("email") ?? "") };
   const usuario = await prisma.usuario.create({
