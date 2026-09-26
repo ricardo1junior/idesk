@@ -3,7 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { clienteSchema, type EstadoFormulario } from "@/lib/clientes";
+import { clienteSchema, prepararExtras, type EstadoFormulario } from "@/lib/clientes";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
@@ -18,9 +18,10 @@ export async function salvarCliente(
   ) as Record<string, string>;
 
   const resultado = clienteSchema.safeParse(valores);
-  if (!resultado.success) {
-    const erros: Record<string, string> = {};
-    for (const issue of resultado.error.issues) {
+  const extras = prepararExtras(valores.extras ?? null);
+  if (!resultado.success || Object.keys(extras.erros).length) {
+    const erros: Record<string, string> = { ...extras.erros };
+    for (const issue of resultado.error?.issues ?? []) {
       const campo = String(issue.path[0] ?? "form");
       erros[campo] ??= issue.message;
     }
@@ -39,11 +40,17 @@ export async function salvarCliente(
 
   let clienteId = id;
   try {
-    if (id) {
-      await prisma.cliente.update({ where: { id }, data: registro });
-    } else {
-      clienteId = (await prisma.cliente.create({ data: registro })).id;
-    }
+    clienteId = await prisma.$transaction(async (tx) => {
+      const cliente = id
+        ? await tx.cliente.update({ where: { id }, data: registro })
+        : await tx.cliente.create({ data: registro });
+      // Contatos e endereços adicionais são regravados a cada salvamento.
+      await tx.clienteContato.deleteMany({ where: { clienteId: cliente.id } });
+      await tx.clienteEndereco.deleteMany({ where: { clienteId: cliente.id } });
+      await tx.clienteContato.createMany({ data: extras.contatos.map((c) => ({ ...c, clienteId: cliente.id })) });
+      await tx.clienteEndereco.createMany({ data: extras.enderecos.map((e) => ({ ...e, clienteId: cliente.id })) });
+      return cliente.id;
+    });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return {

@@ -21,7 +21,7 @@ export async function buscarClientes(termo: string) {
         { nome: { contains: q, mode: "insensitive" } },
         { nomeFantasia: { contains: q, mode: "insensitive" } },
         ...(digitos.length >= 3
-          ? [{ documento: { contains: digitos } }, { telefone: { contains: digitos } }, { whatsapp: { contains: digitos } }]
+          ? [{ documento: { contains: digitos } }, { telefone: { contains: digitos } }, { whatsapp: { contains: digitos } }, { contatos: { some: { valor: { contains: digitos } } } }]
           : []),
       ],
     },

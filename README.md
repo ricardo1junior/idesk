@@ -25,7 +25,7 @@ Testes: `npm test` · Lint: `npm run lint`
 
 | Módulo | Situação |
 |---|---|
-| Clientes PF/PJ (CPF/CNPJ validados, busca de CEP) | pronto |
+| Clientes PF/PJ (CPF/CNPJ validados, busca de CEP, vários telefones, e-mails e endereços) | pronto |
 | Ordens de serviço (ficha do aparelho, senha criptografada, checklist, acessórios, backup, orçamento, status, impressão) | pronto |
 | Login e perfis (administrador, vendedor, técnico, financeiro) | pronto |
 | Estoque: produtos, acessórios, peças e aparelhos por IMEI/série | pronto |

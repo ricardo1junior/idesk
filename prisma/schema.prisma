@@ -79,8 +79,48 @@ model Cliente {
   aparelhos Aparelho[]
   ordens    OrdemServico[]
   vendas    Venda[]
+  contatos  ClienteContato[]
+  enderecos ClienteEndereco[]
 
   @@index([nome])
+}
+
+enum TipoContato {
+  TELEFONE
+  EMAIL
+}
+
+// Telefones e e-mails adicionais (os principais ficam no próprio Cliente).
+model ClienteContato {
+  id        String      @id @default(cuid())
+  clienteId String
+  cliente   Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  tipo      TipoContato
+  valor     String      // telefone só com dígitos ou e-mail
+  rotulo    String?     // ex.: "Trabalho", "Esposa", "Financeiro"
+  whatsapp  Boolean     @default(false)
+  ordem     Int         @default(0)
+
+  @@index([clienteId])
+  @@index([valor])
+}
+
+// Endereços adicionais (o principal fica no próprio Cliente).
+model ClienteEndereco {
+  id          String  @id @default(cuid())
+  clienteId   String
+  cliente     Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  rotulo      String? // ex.: "Comercial", "Entrega", "Cobrança"
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  uf          String? @db.Char(2)
+  ordem       Int     @default(0)
+
+  @@index([clienteId])
 }
 
 // ---------- Produtos, peças e serviços ----------
