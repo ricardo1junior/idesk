@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EnviarEmail } from "@/components/EnviarEmail";
+import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { ResumoVenda } from "@/components/ResumoVenda";
 import { exigirUsuario } from "@/lib/auth";
 import { formatarDocumento } from "@/lib/documentos";
 import { prisma } from "@/lib/db";
 import { linkFocus } from "@/lib/nfe/focus";
 import { pode } from "@/lib/permissoes";
+import { enviarEmailVenda } from "../../email/actions";
 import { CancelarVenda } from "./CancelarVenda";
 import { carregarVenda } from "./dados";
 import { NotasDaVenda } from "./NotasDaVenda";
@@ -41,10 +44,16 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
             {venda.criadoEm.toLocaleString("pt-BR")} · vendedor {venda.vendedor?.nome ?? "-"}
           </p>
         </div>
-        <div className="flex items-start gap-2">
+        <div className="flex flex-wrap items-start gap-2">
           <Link href={`/vendas/${venda.id}/imprimir`} className="btn-secundario">
             Imprimir recibo
           </Link>
+          {venda.cliente && (
+            <EnviarEmail
+              emails={[...new Set([venda.cliente.email, ...venda.cliente.contatos.filter((c) => c.tipo === "EMAIL").map((c) => c.valor)].filter((e): e is string => !!e))]}
+              enviar={enviarEmailVenda.bind(null, venda.id)}
+            />
+          )}
           {!cancelada && pode(usuario.perfil, "cancelarVenda") && <CancelarVenda id={venda.id} />}
         </div>
       </div>
@@ -55,9 +64,13 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
           <Link href={`/clientes/${venda.cliente.id}`} className="font-medium hover:underline">
             {venda.cliente.nome} <span className="font-mono text-xs text-zinc-500">{formatarDocumento(venda.cliente.documento)}</span>
           </Link>
-        ) : (
-          <span className="text-sm">Consumidor não identificado</span>
+        ) : null}
+        {venda.cliente && (venda.cliente.whatsapp || venda.cliente.telefone) && (
+          <div className="mt-1 text-sm">
+            <LinkWhatsApp telefone={(venda.cliente.whatsapp || venda.cliente.telefone)!} />
+          </div>
         )}
+        {!venda.cliente && <span className="text-sm">Consumidor não identificado</span>}
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5">

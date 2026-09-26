@@ -2,6 +2,7 @@ import { exigirUsuario } from "@/lib/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClienteForm } from "@/components/ClienteForm";
+import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { prisma } from "@/lib/db";
 import { formatarCep, formatarTelefone } from "@/lib/documentos";
 import { pode } from "@/lib/permissoes";
@@ -44,6 +45,10 @@ export default async function EditarCliente({ params, searchParams }: PageProps<
           {pode(usuario.perfil, "excluirCliente") && <ExcluirCliente id={cliente.id} />}
         </div>
       </div>
+      <ContatosRapidos
+        telefones={[...new Set([cliente.whatsapp, cliente.telefone, ...contatos.filter((c) => c.tipo === "TELEFONE").map((c) => c.valor)].filter((t): t is string => !!t))]}
+        emails={[...new Set([cliente.email, ...contatos.filter((c) => c.tipo === "EMAIL").map((c) => c.valor)].filter((e): e is string => !!e))]}
+      />
       {salvo && (
         <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Cliente salvo.</div>
       )}
@@ -63,6 +68,22 @@ export default async function EditarCliente({ params, searchParams }: PageProps<
           uf: e.uf ?? "",
         }))}
       />
+    </div>
+  );
+}
+
+function ContatosRapidos({ telefones, emails }: { telefones: string[]; emails: string[] }) {
+  if (!telefones.length && !emails.length) return null;
+  return (
+    <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-lg bg-white px-5 py-3 text-sm shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+      {telefones.map((t) => (
+        <LinkWhatsApp key={t} telefone={t} />
+      ))}
+      {emails.map((e) => (
+        <a key={e} href={`mailto:${e}`} className="text-link hover:underline">
+          {e}
+        </a>
+      ))}
     </div>
   );
 }

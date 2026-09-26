@@ -1,7 +1,8 @@
 import { exigirUsuario } from "@/lib/auth";
 import Link from "next/link";
+import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { prisma } from "@/lib/db";
-import { formatarDocumento, formatarTelefone, somenteDigitos } from "@/lib/documentos";
+import { formatarDocumento, somenteDigitos } from "@/lib/documentos";
 
 export default async function Clientes({ searchParams }: PageProps<"/clientes">) {
   await exigirUsuario("clientes");
@@ -62,7 +63,7 @@ export default async function Clientes({ searchParams }: PageProps<"/clientes">)
                 </td>
                 <td className="px-4 py-3">{c.tipo}</td>
                 <td className="px-4 py-3 font-mono text-xs">{formatarDocumento(c.documento)}</td>
-                <td className="px-4 py-3">{c.whatsapp || c.telefone ? formatarTelefone(c.whatsapp || c.telefone!) : "-"}</td>
+                <td className="px-4 py-3">{c.whatsapp || c.telefone ? <LinkWhatsApp telefone={c.whatsapp || c.telefone!} /> : "-"}</td>
                 <td className="px-4 py-3">{c.cidade ? `${c.cidade}/${c.uf ?? ""}` : "-"}</td>
               </tr>
             ))}

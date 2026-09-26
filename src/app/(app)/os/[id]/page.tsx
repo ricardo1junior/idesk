@@ -1,7 +1,9 @@
 import { exigirUsuario } from "@/lib/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EnviarEmail } from "@/components/EnviarEmail";
 import { FichaAparelho } from "@/components/FichaAparelho";
+import { IconeWhatsApp, LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { StatusBadge } from "@/components/StatusBadge";
 import { VerificarImei } from "@/components/VerificarImei";
 import { formatarDocumento } from "@/lib/documentos";
@@ -9,6 +11,7 @@ import { formatarMoeda, STATUS_OS, TIPOS_SENHA } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
 import { definirDesconto, mudarStatus, removerItem } from "../actions";
+import { enviarEmailOS } from "../../email/actions";
 import { carregarOS } from "./dados";
 import { NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
 
@@ -37,21 +40,20 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           </h1>
           <p className="text-sm text-zinc-500">Aberta em {os.criadoEm.toLocaleString("pt-BR")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-start gap-2">
           {whatsapp && (
-            <a
-              className="btn-secundario"
-              target="_blank"
-              href={`https://wa.me/55${whatsapp}?text=${encodeURIComponent(
-                `Olá ${os.cliente.nome.split(" ")[0]}, sua OS #${os.numero} (${os.aparelho?.modelo ?? "aparelho"}) está: ${STATUS_OS[os.status].label}. Total: ${formatarMoeda(os.total)}.`,
-              )}`}
+            <LinkWhatsApp
+              className="btn-secundario gap-2"
+              telefone={whatsapp}
+              mensagem={`Olá ${os.cliente.nome.split(" ")[0]}, sua OS #${os.numero} (${os.aparelho?.modelo ?? "aparelho"}) está: ${STATUS_OS[os.status].label}. Total: ${formatarMoeda(os.total)}.`}
             >
-              WhatsApp
-            </a>
+              <IconeWhatsApp /> WhatsApp
+            </LinkWhatsApp>
           )}
           <Link href={`/os/${os.id}/imprimir`} className="btn-secundario">
             Imprimir
           </Link>
+          <EnviarEmail emails={emailsDoCliente(os.cliente)} enviar={enviarEmailOS.bind(null, os.id)} />
         </div>
       </div>
 
@@ -61,7 +63,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           {os.cliente.nome}
         </Link>
         <div className="text-sm text-zinc-500">
-          {formatarDocumento(os.cliente.documento)} · {os.cliente.whatsapp || os.cliente.telefone || "sem telefone"}
+          {formatarDocumento(os.cliente.documento)} · {whatsapp ? <LinkWhatsApp telefone={whatsapp} /> : "sem telefone"}
         </div>
       </section>
 
@@ -202,4 +204,8 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
       </section>
     </div>
   );
+}
+
+function emailsDoCliente(c: { email: string | null; contatos: { tipo: string; valor: string }[] }) {
+  return [...new Set([c.email, ...c.contatos.filter((x) => x.tipo === "EMAIL").map((x) => x.valor)].filter((e): e is string => !!e))];
 }

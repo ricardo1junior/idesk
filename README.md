@@ -63,3 +63,9 @@ Toda venda finalizada gera lançamentos de entrada (um por parcela: crédito a c
 4. Emita em **homologação** (sem valor fiscal) até conferir tudo; depois troque o ambiente para produção.
 
 Na tela da venda, o botão sugere NFC-e no balcão e NF-e para empresa com inscrição estadual ou cliente de outro estado. Os produtos precisam ter NCM cadastrado. Nota autorizada precisa ser cancelada antes de cancelar a venda.
+
+## WhatsApp e e-mail
+
+Clicar no telefone do cliente (lista de clientes, ficha do cliente, OS e venda) abre a conversa no WhatsApp Web no computador ou no aplicativo no celular.
+
+Os botões **Enviar por e-mail** na OS e na venda mandam um resumo (situação, aparelho, orçamento, itens, garantia, pagamentos e link da nota fiscal) para um dos e-mails cadastrados do cliente. Configure o SMTP no `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_REMETENTE`). No Gmail, use uma senha de app. O envio da OS fica registrado no andamento.

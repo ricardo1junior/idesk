@@ -4,7 +4,7 @@ export async function carregarOS(id: string) {
   return prisma.ordemServico.findUnique({
     where: { id },
     include: {
-      cliente: true,
+      cliente: { include: { contatos: true } },
       aparelho: true,
       itens: { orderBy: { id: "asc" } },
       historico: { orderBy: { criadoEm: "desc" } },

@@ -4,7 +4,7 @@ export async function carregarVenda(id: string) {
   return prisma.venda.findUnique({
     where: { id },
     include: {
-      cliente: true,
+      cliente: { include: { contatos: true } },
       vendedor: { select: { nome: true } },
       itens: { include: { aparelho: true }, orderBy: { id: "asc" } },
       pagamentos: { include: { aparelhoTroca: true } },
