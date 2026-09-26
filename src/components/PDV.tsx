@@ -7,6 +7,8 @@ import { formatarDocumento } from "@/lib/documentos";
 import { CONDICOES, paraNumero } from "@/lib/estoque";
 import { calcularTotais, centavos, FORMAS_PAGAMENTO, formatarReais, somaPagamentos, totalItem } from "@/lib/vendas";
 import { COM_VENCIMENTO } from "@/lib/financeiro";
+import { AvaliacaoTroca } from "./AvaliacaoTroca";
+import { ListaCapacidades, ListaModelosApple } from "./ListaModelosApple";
 import { BuscaCliente } from "./OSForm";
 import { VerificarImei } from "./VerificarImei";
 
@@ -204,7 +206,7 @@ export function PDV() {
           <div className="space-y-4">
             {pagamentos.map((p) => (
               <div key={p.id} className="rounded-md border border-zinc-200 p-3">
-                <div className="grid items-end gap-3 sm:grid-cols-[1fr_9rem_7rem_10rem_auto]">
+                <div className={`grid items-end gap-3 ${COM_VENCIMENTO.includes(p.forma) ? "sm:grid-cols-[1fr_8rem_5rem_9rem_auto]" : "sm:grid-cols-[1fr_9rem_7rem_auto]"}`}>
                   <div className="text-sm font-medium">{FORMAS_PAGAMENTO[p.forma]}</div>
                   <label className="campo">
                     <span>{p.forma === "TROCA" ? "Valor avaliado" : "Valor"}</span>
@@ -224,13 +226,11 @@ export function PDV() {
                   ) : (
                     <div />
                   )}
-                  {COM_VENCIMENTO.includes(p.forma) ? (
+                  {COM_VENCIMENTO.includes(p.forma) && (
                     <label className="campo">
                       <span>1º vencimento</span>
                       <input type="date" value={p.primeiroVencimento} onChange={(e) => alterarPag(p.id, { primeiroVencimento: e.target.value })} />
                     </label>
-                  ) : (
-                    <div />
                   )}
                   <button type="button" className="pb-2 text-sm text-zinc-500 hover:text-red-600" onClick={() => setPagamentos((a) => a.filter((x) => x.id !== p.id))}>
                     Remover
@@ -362,11 +362,11 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
     <div className="mt-3 grid gap-3 border-t border-zinc-100 pt-3 sm:grid-cols-4">
       <label className="campo sm:col-span-2">
         <span>Modelo</span>
-        <input {...campo("modelo")} list="modelos-troca" placeholder="ex.: iPhone 12" />
+        <input {...campo("modelo")} list="modelos-apple" autoComplete="off" placeholder="ex.: iPhone 12" />
       </label>
       <label className="campo">
         <span>Capacidade</span>
-        <input {...campo("capacidade")} placeholder="128 GB" />
+        <input {...campo("capacidade")} list="capacidades-troca" autoComplete="off" placeholder="128 GB" />
       </label>
       <label className="campo">
         <span>Cor</span>
@@ -394,6 +394,7 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
         <span>Bateria (%)</span>
         <input {...campo("saudeBateria")} inputMode="numeric" />
       </label>
+      <AvaliacaoTroca modelo={troca.modelo} capacidade={troca.capacidade} />
       <div className="sm:col-span-4">
         <VerificarImei imei={troca.imei.trim()} />
       </div>
@@ -409,11 +410,8 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
         <input type="checkbox" checked={troca.procedenciaDeclarada} onChange={(e) => onChange({ ...troca, procedenciaDeclarada: e.target.checked })} />
         Cliente declarou a procedência (é dono do aparelho)
       </label>
-      <datalist id="modelos-troca">
-        {["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16", "iPhone 17"].flatMap((m) =>
-          ["", " Pro", " Pro Max"].map((s) => <option key={m + s} value={m + s} />),
-        )}
-      </datalist>
+      <ListaModelosApple />
+      <ListaCapacidades id="capacidades-troca" modelo={troca.modelo} />
     </div>
   );
 }

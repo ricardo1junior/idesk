@@ -3,6 +3,7 @@
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
+import { resumirPrecos } from "@/lib/avaliacao-troca";
 import { categoriaId, parcelarPagamento } from "@/lib/financeiro";
 import { prisma } from "@/lib/db";
 import { somenteDigitos } from "@/lib/documentos";
@@ -275,3 +276,27 @@ export async function cancelarVenda(id: string): Promise<{ erro?: string }> {
   return {};
 }
 
+
+// Quanto a loja já pagou em trocas e por quanto vendeu seminovos do mesmo modelo/capacidade.
+export async function avaliarTroca(modelo: string, capacidade: string) {
+  await exigirUsuario("vendas");
+  const m = modelo.trim();
+  if (m.length < 3) return { pagoEmTrocas: null, vendidoSeminovo: null };
+  const filtro: Prisma.AparelhoWhereInput = {
+    modelo: { equals: m, mode: "insensitive" },
+    ...(capacidade.trim() ? { capacidade: { equals: capacidade.trim(), mode: "insensitive" } } : {}),
+  };
+  const [trocas, vendidos] = await Promise.all([
+    prisma.aparelho.findMany({ where: { ...filtro, trocaEm: { isNot: null } }, select: { custo: true }, orderBy: { criadoEm: "desc" }, take: 50 }),
+    prisma.itemVenda.findMany({
+      where: { aparelho: { ...filtro, condicao: { not: "NOVO" } }, venda: { status: "FINALIZADA" } },
+      select: { valorUnit: true, desconto: true },
+      orderBy: { venda: { criadoEm: "desc" } },
+      take: 50,
+    }),
+  ]);
+  return {
+    pagoEmTrocas: resumirPrecos(trocas.map((t) => Number(t.custo ?? 0))),
+    vendidoSeminovo: resumirPrecos(vendidos.map((i) => Number(i.valorUnit) - Number(i.desconto))),
+  };
+}
