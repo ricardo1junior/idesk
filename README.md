@@ -11,11 +11,12 @@ Next.js 16 (App Router) · TypeScript · Tailwind CSS · PostgreSQL · Prisma ·
 Requisitos: Node 20+ e um PostgreSQL.
 
 ```bash
-cp .env.example .env        # ajuste DATABASE_URL
 npm install
-npm run db:migrate          # cria as tabelas
+npm run configurar          # pede a conexão do banco (ex.: Neon), cria o .env e as tabelas
 npm run dev                 # http://localhost:3000
 ```
+
+Ou manualmente: copie `.env.example` para `.env`, ajuste `DATABASE_URL`/`DIRECT_URL` e rode `npm run db:migrate`.
 
 No primeiro acesso, a tela de login pede para criar o usuário administrador (com `CODIGO_PRIMEIRO_ACESSO` definido, pede também esse código). Os demais usuários são criados em **Usuários**.
 
