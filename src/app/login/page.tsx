@@ -9,8 +9,11 @@ export default async function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6">
-        <h1 className="mb-6 text-2xl font-bold">iDesk</h1>
+      <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl bg-zinc-900 text-lg font-semibold text-white">i</span>
+          <h1 className="text-3xl font-semibold">iDesk</h1>
+        </div>
         {primeiroAcesso ? <FormPrimeiroAcesso /> : <FormLogin />}
       </div>
     </div>

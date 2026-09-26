@@ -58,7 +58,7 @@ export function ResumoVenda({ venda }: { venda: VendaCompleta }) {
       </div>
 
       <div>
-        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Pagamentos</div>
+        <div className="mb-1 text-xs font-medium text-zinc-500">Pagamentos</div>
         {venda.pagamentos.map((p) => (
           <div key={p.id} className="flex justify-between border-t border-zinc-100 py-1.5">
             <span>

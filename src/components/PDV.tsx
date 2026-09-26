@@ -129,7 +129,7 @@ export function PDV() {
           <h2 className="titulo-secao">Itens</h2>
           <BuscaProduto onEscolher={adicionar} />
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[36rem] table-fixed text-sm">
+            <table className="w-full min-w-[32rem] table-fixed text-sm">
               <thead className="text-left text-zinc-500">
                 <tr>
                   <th className="py-2 font-medium">Produto</th>

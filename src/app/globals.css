@@ -1,11 +1,41 @@
 @import "tailwindcss";
 
+/* Visual inspirado no site da Apple: fonte do sistema (SF Pro nos aparelhos Apple), cinzas neutros,
+   azul de destaque, cantos bem arredondados e botões em pílula. */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+
+  --color-zinc-50: #f5f5f7;
+  --color-zinc-100: #f0f0f2;
+  --color-zinc-200: #e8e8ed;
+  --color-zinc-300: #d2d2d7;
+  --color-zinc-400: #86868b;
+  --color-zinc-500: #6e6e73;
+  --color-zinc-600: #515154;
+  --color-zinc-700: #424245;
+  --color-zinc-800: #333336;
+  --color-zinc-900: #1d1d1f;
+
+  --color-azul: #0071e3;
+  --color-azul-escuro: #0077ed;
+  --color-link: #0066cc;
+
+  --radius-md: 0.75rem;
+  --radius-lg: 1.125rem;
 }
 
 body {
   @apply bg-zinc-50 text-zinc-900;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  letter-spacing: -0.025em;
+}
+
+main a.underline {
+  @apply text-link no-underline hover:underline;
 }
 
 @layer components {
@@ -18,7 +48,7 @@ body {
   .campo input,
   .campo select,
   .campo textarea {
-    @apply rounded-md border border-zinc-300 bg-white px-3 py-2 outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900;
+    @apply rounded-md border border-zinc-300 bg-white px-3 py-2 outline-none transition focus:border-azul focus:ring-4 focus:ring-azul/20;
   }
   .campo-erro input {
     @apply border-red-500;
@@ -27,19 +57,19 @@ body {
     @apply inline-block cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs select-none;
   }
   .chip > input:checked + span {
-    @apply border-zinc-900 bg-zinc-900 text-white;
+    @apply border-azul bg-azul text-white;
   }
   .chip > input:focus-visible + span {
     @apply ring-2 ring-zinc-400;
   }
   .titulo-secao {
-    @apply mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500;
+    @apply mb-4 text-lg font-semibold tracking-tight text-zinc-900;
   }
   .btn-primario {
-    @apply rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-full bg-azul px-5 py-2 text-sm font-normal text-white transition hover:bg-azul-escuro disabled:opacity-40;
   }
   .btn-secundario {
-    @apply rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-100;
+    @apply inline-flex items-center justify-center rounded-full bg-zinc-200 px-5 py-2 text-sm font-normal text-zinc-900 transition hover:bg-zinc-300/70 disabled:opacity-40;
   }
 }
 
@@ -49,5 +79,12 @@ body {
   }
   @page {
     margin: 12mm;
+  }
+}
+
+/* Cartões sem borda, como na Apple: branco sobre o cinza claro com sombra leve. */
+@layer components {
+  main .rounded-lg.border.bg-white {
+    @apply border-transparent shadow-[0_2px_12px_rgba(0,0,0,0.04)];
   }
 }

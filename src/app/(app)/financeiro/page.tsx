@@ -91,7 +91,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
       </div>
 
       <details className="rounded-lg border border-zinc-200 bg-white p-5">
-        <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-zinc-500">Novo lançamento (despesa ou receita)</summary>
+        <summary className="cursor-pointer text-sm font-semibold text-zinc-500">Novo lançamento (despesa ou receita)</summary>
         <div className="mt-4">
           <NovoLancamento categorias={categorias} />
         </div>
@@ -163,7 +163,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
                         {l.status === "PENDENTE" && (
                           <form action={baixarLancamento.bind(null, l.id)} className="flex items-center justify-end gap-1">
                             <input type="date" name="data" defaultValue={new Date().toISOString().slice(0, 10)} className="w-32 rounded border border-zinc-300 px-1 py-0.5 text-xs" />
-                            <button className="rounded bg-zinc-900 px-2 py-1 text-xs text-white">{l.tipo === "ENTRADA" ? "Recebido" : "Pago"}</button>
+                            <button className="rounded-full bg-azul px-3 py-1 text-xs text-white hover:bg-azul-escuro">{l.tipo === "ENTRADA" ? "Recebido" : "Pago"}</button>
                           </form>
                         )}
                         {l.status === "PAGO" && !l.vendaId && (

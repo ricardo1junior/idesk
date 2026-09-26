@@ -75,12 +75,12 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
         />
         {os.aparelho?.imei && (
           <div className="mt-4 border-t border-zinc-100 pt-4">
-            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Restrições e garantia Apple</div>
+            <div className="mb-2 text-xs font-medium text-zinc-500">Restrições e garantia Apple</div>
             <VerificarImei imei={os.aparelho.imei} aparelhoId={os.aparelho.id} />
           </div>
         )}
         <div className="mt-4 text-sm">
-          <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">Defeito relatado</div>
+          <div className="text-xs font-medium text-zinc-500">Defeito relatado</div>
           <p className="whitespace-pre-line">{os.defeitoRelatado}</p>
         </div>
       </section>

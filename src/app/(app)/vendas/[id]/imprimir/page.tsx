@@ -33,7 +33,7 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
       </header>
 
       <section className="mb-4">
-        <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold uppercase tracking-wide">Cliente</h2>
+        <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold">Cliente</h2>
         {c ? (
           <div>
             {c.nome} · {c.tipo === "PF" ? "CPF" : "CNPJ"} {formatarDocumento(c.documento)}
@@ -44,7 +44,7 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
       </section>
 
       <section className="mb-4">
-        <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold uppercase tracking-wide">Itens e pagamento</h2>
+        <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold">Itens e pagamento</h2>
         <ResumoVenda venda={venda} />
       </section>
 
@@ -52,7 +52,7 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
         const a = p.aparelhoTroca!;
         return (
           <section key={p.id} className="mb-4 break-inside-avoid">
-            <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold uppercase tracking-wide">Termo de entrega de aparelho usado na troca</h2>
+            <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold">Termo de entrega de aparelho usado na troca</h2>
             <p className="text-xs leading-relaxed">
               Eu, {c?.nome}, {c?.tipo === "PF" ? "CPF" : "CNPJ"} {c && formatarDocumento(c.documento)}, declaro ser o legítimo proprietário do aparelho{" "}
               <b>

@@ -126,7 +126,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
 
       {editar && (
         <details className="rounded-lg border border-zinc-200 bg-white p-5">
-          <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-zinc-500">Editar cadastro</summary>
+          <summary className="cursor-pointer text-sm font-semibold text-zinc-500">Editar cadastro</summary>
           <div className="mt-4">
             <ProdutoForm key={String(produto.precoVenda) + produto.descricao} id={produto.id} inicial={inicial} />
           </div>

@@ -116,7 +116,7 @@ export default async function ImprimirOS({ params }: PageProps<"/os/[id]/imprimi
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section className="mb-4 break-inside-avoid">
-      <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold uppercase tracking-wide">{titulo}</h2>
+      <h2 className="mb-1 border-b border-zinc-300 text-xs font-bold">{titulo}</h2>
       {children}
     </section>
   );

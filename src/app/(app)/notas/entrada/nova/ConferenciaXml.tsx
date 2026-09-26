@@ -225,7 +225,7 @@ export function ConferenciaXml() {
 function Info({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{titulo}</div>
+      <div className="text-xs font-semibold text-zinc-500">{titulo}</div>
       <div className="mt-1">{children}</div>
     </div>
   );

@@ -21,7 +21,7 @@ export function FichaAparelho({ os, senha }: { os: OSCompleta; senha?: React.Rea
       </dl>
       <Dado rotulo="Marcas de uso" valor={os.marcasUso ?? "Nenhuma registrada"} />
       <div>
-        <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Checklist de entrada</div>
+        <div className="mb-1 text-xs font-medium text-zinc-500">Checklist de entrada</div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3">
           {CHECKLIST.map((item) => {
             const r = checklist[item.id] ?? "NAO_TESTADO";
@@ -42,7 +42,7 @@ export function FichaAparelho({ os, senha }: { os: OSCompleta; senha?: React.Rea
 function Dado({ rotulo, valor, mono }: { rotulo: string; valor?: React.ReactNode; mono?: boolean }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">{rotulo}</dt>
+      <dt className="text-xs font-medium text-zinc-500">{rotulo}</dt>
       <dd className={mono ? "font-mono" : ""}>{valor || "-"}</dd>
     </div>
   );
