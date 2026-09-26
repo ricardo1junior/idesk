@@ -7,6 +7,7 @@ import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarDocumento } from "@/lib/documentos";
 import { ACESSORIOS, CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA } from "@/lib/os";
 import { Campo, Secao } from "./Campos";
+import { ListaCapacidades, ListaModelosApple } from "./ListaModelosApple";
 import { FotosAparelho, fotosParaEnvio, type FotoEnviada } from "./FotosAparelho";
 import { PadraoSenha } from "./PadraoSenha";
 import { VerificarImei } from "./VerificarImei";
@@ -23,6 +24,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
   const [senha, setSenha] = useState(v.senha ?? "");
   const [backup, setBackup] = useState(v.precisaBackup === "sim");
   const [imei, setImei] = useState(v.imei ?? "");
+  const [modelo, setModelo] = useState(v.modelo ?? "");
   const [fotos, setFotos] = useState<FotoEnviada[]>([]);
 
   return (
@@ -48,13 +50,13 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
 
       <Secao titulo="Aparelho">
         <Campo label="Modelo" erro={erro("modelo")} className="sm:col-span-2">
-          <input name="modelo" defaultValue={v.modelo} placeholder="ex.: iPhone 13 Pro" list="modelos" required />
+          <input name="modelo" defaultValue={v.modelo} onChange={(e) => setModelo(e.target.value)} placeholder="ex.: iPhone 13 Pro" list="modelos-apple" autoComplete="off" required />
         </Campo>
         <Campo label="Cor">
           <input name="cor" defaultValue={v.cor} />
         </Campo>
         <Campo label="Capacidade">
-          <input name="capacidade" defaultValue={v.capacidade} placeholder="ex.: 128 GB" />
+          <input name="capacidade" defaultValue={v.capacidade} placeholder="ex.: 128 GB" list="capacidades-apple" autoComplete="off" />
         </Campo>
         <Campo label="IMEI" erro={erro("imei")} dica="*#06# no teclado mostra o IMEI">
           <input name="imei" value={imei} onChange={(e) => setImei(e.target.value.trim())} inputMode="numeric" maxLength={15} />
@@ -199,11 +201,8 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
         {estado.erros && <span className="text-sm text-red-600">Corrija os campos destacados.</span>}
       </div>
 
-      <datalist id="modelos">
-        {MODELOS.map((m) => (
-          <option key={m} value={m} />
-        ))}
-      </datalist>
+      <ListaModelosApple />
+      <ListaCapacidades modelo={modelo} />
     </form>
   );
 }
@@ -243,14 +242,3 @@ export function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: Cliente
     </div>
   );
 }
-
-const MODELOS = [
-  "iPhone 11", "iPhone 11 Pro", "iPhone 11 Pro Max", "iPhone SE (2ª geração)", "iPhone SE (3ª geração)",
-  "iPhone 12", "iPhone 12 mini", "iPhone 12 Pro", "iPhone 12 Pro Max",
-  "iPhone 13", "iPhone 13 mini", "iPhone 13 Pro", "iPhone 13 Pro Max",
-  "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max",
-  "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max",
-  "iPhone 16", "iPhone 16 Plus", "iPhone 16 Pro", "iPhone 16 Pro Max", "iPhone 16e",
-  "iPhone 17", "iPhone 17 Pro", "iPhone 17 Pro Max", "iPhone Air",
-  "iPad", "iPad Air", "iPad Pro", "iPad mini", "MacBook Air", "MacBook Pro", "iMac", "Apple Watch", "AirPods",
-];

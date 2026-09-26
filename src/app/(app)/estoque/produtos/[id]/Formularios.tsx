@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Campo } from "@/components/Campos";
+import { ListaCapacidades, ListaModelosApple } from "@/components/ListaModelosApple";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { CONDICOES } from "@/lib/estoque";
 import { entradaAparelho, movimentarEstoque } from "../../actions";
@@ -37,13 +38,16 @@ export function EntradaAparelhoForm({ produtoId, modelo }: { produtoId: string; 
   const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(entradaAparelho.bind(null, produtoId), {});
   const v = estado.valores ?? {};
   const erro = (c: string) => estado.erros?.[c];
+  const [modeloAtual, setModeloAtual] = useState(v.modelo ?? modelo);
   return (
     <form action={acao} key={estado.mensagem} className="grid gap-3 sm:grid-cols-4">
+      <ListaModelosApple />
+      <ListaCapacidades modelo={modeloAtual} />
       <Campo label="Modelo" erro={erro("modelo")}>
-        <input name="modelo" defaultValue={v.modelo ?? modelo} required />
+        <input name="modelo" defaultValue={v.modelo ?? modelo} onChange={(e) => setModeloAtual(e.target.value)} list="modelos-apple" autoComplete="off" required />
       </Campo>
       <Campo label="Capacidade">
-        <input name="capacidade" defaultValue={v.capacidade} placeholder="128 GB" />
+        <input name="capacidade" defaultValue={v.capacidade} placeholder="128 GB" list="capacidades-apple" autoComplete="off" />
       </Campo>
       <Campo label="Cor">
         <input name="cor" defaultValue={v.cor} />

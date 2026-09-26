@@ -5,6 +5,7 @@ import { salvarProduto } from "@/app/(app)/estoque/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { TIPOS_PRODUTO } from "@/lib/estoque";
 import { Campo, Secao } from "./Campos";
+import { ListaModelosApple } from "./ListaModelosApple";
 
 export function ProdutoForm({ id, inicial = {} }: { id?: string; inicial?: Record<string, string> }) {
   const [estado, acao, salvando] = useActionState<EstadoFormulario, FormData>(salvarProduto.bind(null, id ?? null), {});
@@ -29,7 +30,8 @@ export function ProdutoForm({ id, inicial = {} }: { id?: string; inicial?: Recor
           <input name="descricao" defaultValue={v.descricao} placeholder={tipo === "APARELHO" ? "ex.: iPhone 15 128GB" : "ex.: Capa MagSafe iPhone 15"} required />
         </Campo>
         <Campo label="Modelo" dica={tipo === "APARELHO" ? "Usado para achar o produto na troca" : undefined}>
-          <input name="modelo" defaultValue={v.modelo} placeholder="ex.: iPhone 15" />
+          <input name="modelo" defaultValue={v.modelo} placeholder="ex.: iPhone 15" list="modelos-apple" autoComplete="off" />
+          <ListaModelosApple />
         </Campo>
         <Campo label="Marca">
           <input name="marca" defaultValue={v.marca ?? "Apple"} />
