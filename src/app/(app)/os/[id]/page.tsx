@@ -21,6 +21,8 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const pago = os.lancamentos.reduce((s, l) => s + Number(l.valor), 0);
   const restante = Math.round((Number(os.total) - pago) * 100) / 100;
   const subtotal = os.itens.reduce((s, i) => s + Number(i.valorUnit) * i.quantidade, 0);
+  const editar = pode(usuario.perfil, "editarOS");
+  const receber = pode(usuario.perfil, "receberOS");
   const whatsapp = (os.cliente.whatsapp || os.cliente.telefone || "").replace(/\D/g, "");
 
   return (
@@ -73,7 +75,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             ) : undefined
           }
         />
-        {os.aparelho?.imei && (
+        {os.aparelho?.imei && pode(usuario.perfil, "verificarImei") && (
           <div className="mt-4 border-t border-zinc-100 pt-4">
             <div className="mb-2 text-xs font-medium text-zinc-500">Restrições e garantia Apple</div>
             <VerificarImei imei={os.aparelho.imei} aparelhoId={os.aparelho.id} />
@@ -97,11 +99,13 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
                 </td>
                 <td className="w-32 py-2 text-right">{formatarMoeda(Number(i.valorUnit) * i.quantidade)}</td>
                 <td className="w-10 py-2 text-right">
-                  <form action={removerItem.bind(null, os.id, i.id)}>
-                    <button className="text-zinc-400 hover:text-red-600" aria-label="Remover item">
-                      ×
-                    </button>
-                  </form>
+                  {editar && (
+                    <form action={removerItem.bind(null, os.id, i.id)}>
+                      <button className="text-zinc-400 hover:text-red-600" aria-label="Remover item">
+                        ×
+                      </button>
+                    </form>
+                  )}
                 </td>
               </tr>
             ))}
@@ -112,16 +116,20 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             )}
           </tbody>
         </table>
-        <NovoItem osId={os.id} />
+        {editar && <NovoItem osId={os.id} />}
         <div className="mt-4 flex flex-wrap items-end justify-end gap-6 text-sm">
           <div>Subtotal: {formatarMoeda(subtotal)}</div>
-          <form key={os.desconto.toString()} action={definirDesconto.bind(null, os.id)} className="flex items-end gap-2">
-            <label className="campo w-28">
-              <span>Desconto</span>
-              <input name="desconto" inputMode="decimal" defaultValue={Number(os.desconto).toFixed(2).replace(".", ",")} />
-            </label>
-            <button className="btn-secundario">Aplicar</button>
-          </form>
+          {editar ? (
+            <form key={os.desconto.toString()} action={definirDesconto.bind(null, os.id)} className="flex items-end gap-2">
+              <label className="campo w-28">
+                <span>Desconto</span>
+                <input name="desconto" inputMode="decimal" defaultValue={Number(os.desconto).toFixed(2).replace(".", ",")} />
+              </label>
+              <button className="btn-secundario">Aplicar</button>
+            </form>
+          ) : (
+            Number(os.desconto) > 0 && <div>Desconto: {formatarMoeda(os.desconto)}</div>
+          )}
           <div className="text-lg font-semibold">Total: {formatarMoeda(os.total)}</div>
         </div>
       </section>
@@ -146,7 +154,9 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             </tbody>
           </table>
         )}
-        {restante > 0 ? (
+        {restante > 0 && !receber ? (
+          <p className="text-sm text-zinc-500">Falta receber {formatarMoeda(restante)}.</p>
+        ) : restante > 0 ? (
           <PagamentoOS osId={os.id} sugerido={restante.toFixed(2).replace(".", ",")} />
         ) : (
           <p className="text-sm text-green-700">{Number(os.total) > 0 ? "OS paga." : "Lance os serviços e peças para registrar o pagamento."}</p>
@@ -155,6 +165,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 className="titulo-secao">Andamento</h2>
+        {editar && (
         <form key={os.atualizadoEm.toISOString()} action={mudarStatus.bind(null, os.id)} className="grid gap-3 sm:grid-cols-4">
           <label className="campo">
             <span>Novo status</span>
@@ -178,6 +189,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             <button className="btn-primario">Atualizar</button>
           </div>
         </form>
+        )}
         <ol className="mt-5 space-y-2 border-l border-zinc-200 pl-4 text-sm">
           {os.historico.map((h) => (
             <li key={h.id}>

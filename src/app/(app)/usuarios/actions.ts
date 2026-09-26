@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PERFIS } from "@/lib/permissoes";
 import { gerarHash } from "@/lib/senha";
 
 export type EstadoUsuario = { erro?: string; ok?: string };
@@ -12,7 +13,7 @@ export type EstadoUsuario = { erro?: string; ok?: string };
 const novoUsuarioSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome"),
   email: z.email("E-mail inválido").transform((v) => v.toLowerCase()),
-  perfil: z.enum(["ADMIN", "VENDEDOR", "TECNICO", "FINANCEIRO"]),
+  perfil: z.enum(["ADMIN", "VENDEDOR", "TECNICO", "FINANCEIRO", "ESTAGIARIO"]),
   senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres"),
 });
 
@@ -35,6 +36,7 @@ export async function criarUsuario(_e: EstadoUsuario, formData: FormData): Promi
 export async function alterarUsuario(id: string, formData: FormData) {
   const eu = await exigirUsuario("usuarios");
   const perfil = String(formData.get("perfil")) as Perfil;
+  if (!(perfil in PERFIS)) return;
   const ativo = formData.get("ativo") === "on";
   const novaSenha = String(formData.get("novaSenha") ?? "");
   // Ninguém tira o próprio acesso de administrador nem se desativa.

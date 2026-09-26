@@ -17,6 +17,7 @@ enum Perfil {
   VENDEDOR
   TECNICO
   FINANCEIRO
+  ESTAGIARIO
 }
 
 model Usuario {

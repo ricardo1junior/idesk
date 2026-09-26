@@ -1,8 +1,11 @@
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { PERFIS } from "@/lib/permissoes";
+import type { Perfil } from "@prisma/client";
+import { DESCRICAO_PERMISSOES, PERFIS, pode, type Permissao } from "@/lib/permissoes";
 import { alterarUsuario } from "./actions";
 import { NovoUsuario } from "./NovoUsuario";
+
+const perfis = Object.keys(PERFIS) as Perfil[];
 
 export default async function Usuarios() {
   const eu = await exigirUsuario("usuarios");
@@ -55,14 +58,34 @@ export default async function Usuarios() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5 text-sm text-zinc-600">
+      <section className="rounded-lg border border-zinc-200 bg-white p-5">
         <h2 className="titulo-secao">O que cada perfil pode fazer</h2>
-        <ul className="list-disc space-y-1 pl-5">
-          <li><b>Administrador:</b> tudo, incluindo usuários, excluir clientes e cancelar vendas.</li>
-          <li><b>Vendedor:</b> clientes, vendas, ordens de serviço e consulta de estoque.</li>
-          <li><b>Técnico:</b> clientes, ordens de serviço (e ver a senha do aparelho) e consulta de estoque.</li>
-          <li><b>Financeiro:</b> clientes, vendas (incluindo cancelar), estoque e preços de produtos.</li>
-        </ul>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[40rem] text-sm">
+            <thead>
+              <tr className="text-zinc-500">
+                <th className="py-2 text-left font-medium">Permissão</th>
+                {perfis.map((p) => (
+                  <th key={p} className="px-2 py-2 text-center font-medium">
+                    {PERFIS[p]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(Object.keys(DESCRICAO_PERMISSOES) as Permissao[]).map((perm) => (
+                <tr key={perm} className="border-t border-zinc-100">
+                  <td className="py-2">{DESCRICAO_PERMISSOES[perm]}</td>
+                  {perfis.map((p) => (
+                    <td key={p} className="px-2 py-2 text-center">
+                      {pode(p, perm) ? <span className="text-green-600" aria-label="sim">●</span> : <span className="text-zinc-300" aria-label="não">–</span>}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

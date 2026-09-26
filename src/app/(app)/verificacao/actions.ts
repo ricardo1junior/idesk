@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { pode } from "@/lib/permissoes";
 import { ultimasVerificacoes } from "@/lib/verificacao";
 import { consultarImei, servicosConfigurados } from "@/lib/verificacao/servicos";
 
@@ -25,6 +26,7 @@ export async function historicoImei(imei: string): Promise<RespostaVerificacao> 
 // Faz a consulta paga nos serviços configurados e guarda o resultado.
 export async function verificarImei(imei: string, aparelhoId?: string): Promise<RespostaVerificacao> {
   const usuario = await exigirUsuario();
+  if (!pode(usuario.perfil, "verificarImei")) return { configurado: true, erro: "Seu perfil não pode fazer consultas de IMEI. Peça a um vendedor ou técnico.", itens: [] };
   if (!/^\d{15}$/.test(imei)) return { configurado: true, erro: "IMEI deve ter 15 dígitos", itens: [] };
   if (!servicosConfigurados().length) return { configurado: false, itens: [] };
 

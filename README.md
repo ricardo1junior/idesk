@@ -27,7 +27,7 @@ Testes: `npm test` · Lint: `npm run lint`
 |---|---|
 | Clientes PF/PJ (CPF/CNPJ validados, busca de CEP, vários telefones, e-mails e endereços) | pronto |
 | Ordens de serviço (ficha do aparelho, senha criptografada, checklist, acessórios, backup, orçamento, status, impressão) | pronto |
-| Login e perfis (administrador, vendedor, técnico, financeiro) | pronto |
+| Login e perfis (administrador, vendedor, técnico, financeiro, estagiário) com tabela de permissões em Usuários | pronto |
 | Estoque: produtos, acessórios, peças e aparelhos por IMEI/série | pronto |
 | Vendas: quantidade, desconto por item e geral (R$ ou %), vários pagamentos, troca de aparelho, recibo, cancelamento | pronto |
 | Verificação de IMEI (Anatel roubo/furto, iCloud, blacklist GSMA, garantia Apple) com bloqueio da troca | pronto (precisa das chaves) |

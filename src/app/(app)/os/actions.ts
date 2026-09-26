@@ -121,7 +121,7 @@ export async function abrirOS(_estado: EstadoFormulario, formData: FormData): Pr
 }
 
 export async function mudarStatus(osId: string, formData: FormData) {
-  await exigirUsuario("os");
+  await exigirUsuario("editarOS");
   const status = String(formData.get("status")) as StatusOS;
   if (!(status in STATUS_OS)) return;
   const nota = String(formData.get("nota") ?? "").trim() || null;
@@ -151,7 +151,7 @@ async function recalcularTotal(tx: Prisma.TransactionClient, osId: string) {
 }
 
 export async function adicionarItem(osId: string, _estado: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
-  await exigirUsuario("os");
+  await exigirUsuario("editarOS");
   const valores = Object.fromEntries([...formData.entries()].map(([k, v]) => [k, String(v)]));
   const r = itemOSSchema.safeParse(valores);
   if (!r.success) {
@@ -171,7 +171,7 @@ export async function adicionarItem(osId: string, _estado: EstadoFormulario, for
 }
 
 export async function removerItem(osId: string, itemId: string) {
-  await exigirUsuario("os");
+  await exigirUsuario("editarOS");
   await prisma.$transaction(async (tx) => {
     await tx.itemOS.delete({ where: { id: itemId, osId } });
     await recalcularTotal(tx, osId);
@@ -180,7 +180,7 @@ export async function removerItem(osId: string, itemId: string) {
 }
 
 export async function definirDesconto(osId: string, formData: FormData) {
-  await exigirUsuario("os");
+  await exigirUsuario("editarOS");
   const bruto = String(formData.get("desconto") ?? "0").replace(/\./g, "").replace(",", ".");
   const desconto = Number(bruto);
   if (!Number.isFinite(desconto) || desconto < 0) return;
@@ -192,7 +192,7 @@ export async function definirDesconto(osId: string, formData: FormData) {
 }
 
 export async function registrarPagamentoOS(osId: string, _e: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
-  const usuario = await exigirUsuario("os");
+  const usuario = await exigirUsuario("receberOS");
   const forma = String(formData.get("forma")) as FormaPagamento;
   const valor = paraNumero(formData.get("valor"));
   const parcelas = Math.max(1, Math.trunc(paraNumero(formData.get("parcelas")) || 1));
