@@ -23,10 +23,31 @@ body {
   .campo-erro input {
     @apply border-red-500;
   }
+  .chip > span {
+    @apply inline-block cursor-pointer rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs select-none;
+  }
+  .chip > input:checked + span {
+    @apply border-zinc-900 bg-zinc-900 text-white;
+  }
+  .chip > input:focus-visible + span {
+    @apply ring-2 ring-zinc-400;
+  }
+  .titulo-secao {
+    @apply mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500;
+  }
   .btn-primario {
     @apply rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50;
   }
   .btn-secundario {
     @apply rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium hover:bg-zinc-100;
+  }
+}
+
+@media print {
+  body {
+    @apply bg-white;
+  }
+  @page {
+    margin: 12mm;
   }
 }

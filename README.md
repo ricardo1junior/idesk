@@ -24,8 +24,8 @@ Testes: `npm test` · Lint: `npm run lint`
 | Módulo | Situação |
 |---|---|
 | Clientes PF/PJ (CPF/CNPJ validados, busca de CEP) | pronto |
-| Modelo de dados de aparelhos, OS, vendas e estoque | pronto (sem telas) |
-| Ordens de serviço | a fazer |
+| Modelo de dados de vendas e estoque | pronto (sem telas) |
+| Ordens de serviço (ficha do aparelho, senha criptografada, checklist, acessórios, backup, orçamento, status, impressão) | pronto |
 | Vendas / PDV | a fazer |
 | Estoque | a fazer |
 | Login e perfis | a fazer |

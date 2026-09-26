@@ -161,6 +161,14 @@ model Aparelho {
 
 // ---------- Ordens de serviço ----------
 
+enum TipoSenha {
+  NENHUMA
+  NUMERICA
+  ALFANUMERICA
+  PADRAO      // desenho: sequência de pontos 1 a 9
+  NAO_INFORMADA
+}
+
 enum StatusOS {
   ABERTA
   EM_ANALISE
@@ -184,9 +192,14 @@ model OrdemServico {
   status          StatusOS @default(ABERTA)
   defeitoRelatado String
   diagnostico     String?
-  checklist       Json?    // itens verificados na entrada (tela, Face ID, câmeras...)
+  checklist       Json?    // { "tela": "OK" | "DEFEITO" | "NAO_TESTADO", ... } na entrada
   icloudBloqueado Boolean?
-  senhaAparelho   String?  // guardar criptografado na aplicação
+  tipoSenha       TipoSenha @default(NENHUMA)
+  senhaAparelho   String?  // criptografada (AES-256-GCM) com APP_SECRET
+  marcasUso       String?  // riscos, amassados, trincas já existentes
+  acessorios      String[] // o que o cliente deixou junto (capa, carregador...)
+  precisaBackup   Boolean  @default(false)
+  backupObs       String?  // ex.: "fazer backup das fotos antes do reparo"
   previsaoEntrega DateTime?
   garantiaDias    Int      @default(90)
   desconto        Decimal  @default(0) @db.Decimal(12, 2)

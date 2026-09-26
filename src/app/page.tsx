@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export default async function Inicio() {
-  const [clientes, pf, pj] = await Promise.all([
+  const [osAbertas, clientes, pf, pj] = await Promise.all([
+    prisma.ordemServico.count({ where: { status: { notIn: ["ENTREGUE", "CANCELADA"] } } }),
     prisma.cliente.count(),
     prisma.cliente.count({ where: { tipo: "PF" } }),
     prisma.cliente.count({ where: { tipo: "PJ" } }),
@@ -13,14 +14,20 @@ export default async function Inicio() {
   return (
     <div className="max-w-4xl space-y-6">
       <h1 className="text-2xl font-semibold">Início</h1>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Indicador titulo="OS em andamento" valor={osAbertas} />
         <Indicador titulo="Clientes" valor={clientes} />
         <Indicador titulo="Pessoa física" valor={pf} />
         <Indicador titulo="Pessoa jurídica" valor={pj} />
       </div>
-      <Link href="/clientes/novo" className="btn-primario inline-block">
-        Novo cliente
-      </Link>
+      <div className="flex gap-2">
+        <Link href="/os/nova" className="btn-primario">
+          Nova OS
+        </Link>
+        <Link href="/clientes/novo" className="btn-secundario">
+          Novo cliente
+        </Link>
+      </div>
     </div>
   );
 }

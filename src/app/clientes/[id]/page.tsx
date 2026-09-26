@@ -27,7 +27,12 @@ export default async function EditarCliente({ params, searchParams }: PageProps<
           </Link>
           <h1 className="text-2xl font-semibold">{cliente.nome}</h1>
         </div>
-        <ExcluirCliente id={cliente.id} />
+        <div className="flex items-start gap-2">
+          <Link href={`/os/nova?cliente=${cliente.id}`} className="btn-primario">
+            Nova OS
+          </Link>
+          <ExcluirCliente id={cliente.id} />
+        </div>
       </div>
       {salvo && (
         <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">Cliente salvo.</div>

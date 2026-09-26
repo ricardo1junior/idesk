@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { salvarCliente } from "@/app/clientes/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarCep, formatarDocumento, somenteDigitos } from "@/lib/documentos";
+import { Campo, Secao } from "./Campos";
 
 type Props = {
   id?: string;
@@ -173,36 +174,5 @@ export function ClienteForm({ id, inicial = {} }: Props) {
         {estado.erros && <span className="text-sm text-red-600">Corrija os campos destacados.</span>}
       </div>
     </form>
-  );
-}
-
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5">
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500">{titulo}</h2>
-      <div className="grid gap-4 sm:grid-cols-4">{children}</div>
-    </section>
-  );
-}
-
-function Campo({
-  label,
-  erro,
-  dica,
-  className = "",
-  children,
-}: {
-  label: string;
-  erro?: string;
-  dica?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={`campo ${erro ? "campo-erro" : ""} ${className}`}>
-      <span>{label}</span>
-      {children}
-      {erro ? <small className="text-red-600">{erro}</small> : dica && <small className="text-zinc-500">{dica}</small>}
-    </label>
   );
 }

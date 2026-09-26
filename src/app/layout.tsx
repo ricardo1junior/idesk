@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const menu = [
   { href: "/", label: "Início" },
   { href: "/clientes", label: "Clientes" },
-  { href: "#", label: "Ordens de serviço", embreve: true },
+  { href: "/os", label: "Ordens de serviço" },
   { href: "#", label: "Vendas", embreve: true },
   { href: "#", label: "Estoque", embreve: true },
   { href: "#", label: "Notas fiscais", embreve: true },
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className="h-full antialiased">
       <body className="flex min-h-full flex-col md:flex-row">
-        <aside className="border-b border-zinc-200 bg-white md:w-56 md:border-r md:border-b-0">
+        <aside className="print:hidden border-b border-zinc-200 bg-white md:w-56 md:border-r md:border-b-0">
           <div className="px-5 py-4 text-lg font-bold tracking-tight">iDesk</div>
           <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
             {menu.map((item) =>
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             )}
           </nav>
         </aside>
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="flex-1 p-4 md:p-8 print:p-0">{children}</main>
       </body>
     </html>
   );
