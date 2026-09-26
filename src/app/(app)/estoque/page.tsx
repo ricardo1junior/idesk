@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { CONDICOES, TIPOS_PRODUTO } from "@/lib/estoque";
 import { formatarMoeda } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
+import { ImportarCatalogo } from "./ImportarCatalogo";
 
 export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
   const usuario = await exigirUsuario("estoque");
@@ -18,9 +19,12 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Estoque</h1>
         {pode(usuario.perfil, "editarProdutos") && (
-          <Link href="/estoque/produtos/novo" className="btn-primario">
-            Novo produto
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <ImportarCatalogo />
+            <Link href="/estoque/produtos/novo" className="btn-primario">
+              Novo produto
+            </Link>
+          </div>
         )}
       </div>
 

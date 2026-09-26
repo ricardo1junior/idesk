@@ -114,3 +114,20 @@ export function capacidadesDoModelo(modelo: string | undefined): string[] {
   const achado = modelo && MODELOS_APPLE.find((m) => m.nome.toLowerCase() === modelo.trim().toLowerCase());
   return (achado && achado.capacidades) || GB(64, 128, 256, 512, 1024);
 }
+
+const ACESSORIOS_OUTROS = /^(AirTag|Apple Pencil|Magic )/;
+
+/** Produtos a criar a partir do catálogo: um por modelo (a capacidade fica em cada aparelho). */
+export function produtosDoCatalogo(): { descricao: string; modelo: string; tipo: "APARELHO" | "ACESSORIO" }[] {
+  return MODELOS_APPLE.map((m) => ({
+    descricao: m.nome,
+    modelo: m.nome,
+    tipo: m.categoria === "Outros" && ACESSORIOS_OUTROS.test(m.nome) ? "ACESSORIO" : "APARELHO",
+  }));
+}
+
+/** Tira do catálogo o que já existe no estoque (compara modelo ou descrição, sem maiúsculas). */
+export function faltandoNoEstoque<T extends { modelo: string }>(catalogo: T[], existentes: { modelo: string | null; descricao: string }[]): T[] {
+  const ja = new Set(existentes.flatMap((p) => [p.modelo, p.descricao]).filter(Boolean).map((s) => s!.trim().toLowerCase()));
+  return catalogo.filter((c) => !ja.has(c.modelo.toLowerCase()));
+}

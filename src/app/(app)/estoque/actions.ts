@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirUsuario } from "@/lib/auth";
+import { faltandoNoEstoque, produtosDoCatalogo } from "@/lib/catalogo-apple";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { prisma } from "@/lib/db";
 import { aparelhoSchema, paraNumero, produtoSchema } from "@/lib/estoque";
@@ -101,4 +102,15 @@ export async function entradaAparelho(produtoId: string, _e: EstadoFormulario, f
   revalidatePath(`/estoque/produtos/${produtoId}`);
   revalidatePath("/estoque");
   return { mensagem: "Aparelho adicionado ao estoque." };
+}
+
+// Cria um produto (preço zerado) para cada modelo do catálogo Apple que ainda não está no estoque.
+export async function importarCatalogoApple(): Promise<{ criados: number; jaExistiam: number }> {
+  await exigirUsuario("editarProdutos");
+  const catalogo = produtosDoCatalogo();
+  const existentes = await prisma.produto.findMany({ select: { modelo: true, descricao: true } });
+  const novos = faltandoNoEstoque(catalogo, existentes);
+  if (novos.length) await prisma.produto.createMany({ data: novos.map((p) => ({ ...p, marca: "Apple" })) });
+  revalidatePath("/estoque");
+  return { criados: novos.length, jaExistiam: catalogo.length - novos.length };
 }
