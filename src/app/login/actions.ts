@@ -40,7 +40,7 @@ export async function criarAdministrador(_e: EstadoLogin, formData: FormData): P
   const nomeLoja = String(formData.get("loja") ?? "").trim() || "Minha loja";
   // Instalação nova: cria a primeira loja e o dono do sistema.
   const usuario = await prisma.$transaction(async (tx) => {
-    const empresa = await tx.empresa.create({ data: { nome: nomeLoja } });
+    const empresa = await tx.empresa.create({ data: { nome: nomeLoja, isenta: true } });
     return tx.usuario.create({
       data: { empresaId: empresa.id, nome: r.data.nome, email: r.data.email, senhaHash: await gerarHash(r.data.senha), perfil: "ADMIN", superAdmin: true },
     });

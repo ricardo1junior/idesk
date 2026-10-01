@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { exigirSuperAdmin } from "@/lib/auth";
+import { atualizarCarteira, configSistema } from "@/lib/carteira";
+import { SITUACOES } from "@/lib/carteira-regras";
 import { prismaBase } from "@/lib/db";
+import { formatarReais } from "@/lib/vendas";
+import { FormConfigSistema } from "./FormsCarteira";
 import { FormNovaLoja } from "./FormNovaLoja";
 import { alternarLoja } from "./actions";
 
@@ -11,6 +16,7 @@ export default async function LojasDoSistema() {
     prismaBase.venda.groupBy({ by: ["empresaId"], _count: true }),
     prismaBase.ordemServico.groupBy({ by: ["empresaId"], _count: true }),
   ]);
+  const [carteiras, config] = await Promise.all([Promise.all(lojas.map((l) => atualizarCarteira(l.id))), configSistema()]);
   const conta = (lista: { empresaId: string; _count: number }[], id: string) => lista.find((x) => x.empresaId === id)?._count ?? 0;
 
   return (
@@ -29,20 +35,27 @@ export default async function LojasDoSistema() {
               <th className="px-4 py-3 text-right font-medium">Usuários</th>
               <th className="px-4 py-3 text-right font-medium">Vendas</th>
               <th className="px-4 py-3 text-right font-medium">OS</th>
+              <th className="px-4 py-3 text-right font-medium">Saldo</th>
               <th className="px-4 py-3 font-medium">Situação</th>
             </tr>
           </thead>
           <tbody>
-            {lojas.map((l) => (
+            {lojas.map((l, i) => (
               <tr key={l.id} className="border-t border-zinc-100">
                 <td className="px-4 py-3">
-                  <div className="font-medium">{l.nome}</div>
+                  <Link href={`/sistema/${l.id}`} className="font-medium text-link hover:underline">
+                    {l.nome}
+                  </Link>
                   {l.email && <div className="text-xs text-zinc-500">{l.email}</div>}
                 </td>
                 <td className="px-4 py-3">{l.criadoEm.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</td>
                 <td className="px-4 py-3 text-right">{conta(usuarios, l.id)}</td>
                 <td className="px-4 py-3 text-right">{conta(vendas, l.id)}</td>
                 <td className="px-4 py-3 text-right">{conta(ordens, l.id)}</td>
+                <td className="px-4 py-3 text-right">
+                  <div className={carteiras[i].saldo < 0 ? "text-red-600" : ""}>{carteiras[i].isenta ? "-" : formatarReais(carteiras[i].saldo)}</div>
+                  <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs ${SITUACOES[carteiras[i].situacao].tom}`}>{SITUACOES[carteiras[i].situacao].label}</span>
+                </td>
                 <td className="px-4 py-3">
                   {l.id === eu.empresaId ? (
                     <span className="text-xs text-zinc-500">Sua loja</span>
@@ -60,6 +73,14 @@ export default async function LojasDoSistema() {
       </div>
 
       <FormNovaLoja />
+      <FormConfigSistema
+        config={{
+          diariaPadrao: Number(config.diariaPadrao),
+          diasTolerancia: config.diasTolerancia,
+          creditoBoasVindas: Number(config.creditoBoasVindas),
+          recargaMinima: Number(config.recargaMinima),
+        }}
+      />
     </div>
   );
 }

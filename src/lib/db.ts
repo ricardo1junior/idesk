@@ -130,6 +130,16 @@ async function atualizar(modelo: string, dados: unknown, empresaId: string) {
   return d;
 }
 
+const ESCRITAS = new Set(["create", "createMany", "createManyAndReturn", "update", "updateMany", "updateManyAndReturn", "upsert", "delete", "deleteMany"]);
+// A carteira continua gravando mesmo com o saldo esgotado (é como a loja sai dessa situação).
+const LIVRES_NO_MODO_CONSULTA = new Set(["MovimentoCredito", "Recarga"]);
+
+export class ErroSomenteConsulta extends Error {
+  constructor() {
+    super("Saldo esgotado: a loja está em modo consulta. Recarregue os créditos em Assinatura para voltar a cadastrar.");
+  }
+}
+
 const COM_WHERE = new Set([
   "findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy",
   "update", "updateMany", "updateManyAndReturn", "delete", "deleteMany", "upsert",
@@ -146,6 +156,10 @@ export const prisma = base.$extends({
       async $allOperations({ model, operation, args, query }) {
         if (!DA_LOJA.has(model)) return query(args);
         const empresaId = await empresaAtualId();
+        if (ESCRITAS.has(operation) && !LIVRES_NO_MODO_CONSULTA.has(model)) {
+          const { carteiraDaLoja } = await import("./carteira");
+          if ((await carteiraDaLoja(empresaId)).situacao === "CONSULTA") throw new ErroSomenteConsulta();
+        }
         const a = { ...(args as Dados) };
         if (COM_WHERE.has(operation)) a.where = { ...((a.where as Dados) ?? {}), empresaId };
         if (operation === "create") a.data = await preencher(model, a.data, empresaId);

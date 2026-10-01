@@ -16,7 +16,7 @@ datasource db {
 // Cada loja só enxerga os próprios dados: as tabelas têm empresaId, preenchido e filtrado
 // automaticamente pelo cliente do Prisma em src/lib/db.ts.
 model Empresa {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   nome           String // nome que aparece no sistema, na impressão e nos e-mails
   razaoSocial    String?
   documento      String? // CNPJ ou CPF, só dígitos
@@ -27,17 +27,84 @@ model Empresa {
   corDestaque    String? // ex.: "#0071e3"
   logo           Bytes?
   logoTipo       String? // ex.: "image/png"
-  logoVersao     Int      @default(0)
+  logoVersao     Int       @default(0)
   // E-mail próprio da loja; sem isso vale o SMTP do servidor
   smtpHost       String?
   smtpPorta      Int?
-  smtpSeguro     Boolean  @default(false)
+  smtpSeguro     Boolean   @default(false)
   smtpUsuario    String?
   smtpSenha      String? // criptografada com APP_SECRET
   emailRemetente String?
-  ativa          Boolean  @default(true)
-  criadoEm       DateTime @default(now())
-  atualizadoEm   DateTime @updatedAt
+  ativa          Boolean   @default(true)
+  // Assinatura por créditos: saldo pré-pago, descontado por dia de uso
+  isenta         Boolean   @default(false) // não paga (a loja do dono do sistema)
+  diaria         Decimal?  @db.Decimal(10, 2) // valor próprio; vazio usa o padrão do sistema
+  cobradoAte     DateTime? @db.Date // último dia já descontado
+  asaasClienteId String?
+  criadoEm       DateTime  @default(now())
+  atualizadoEm   DateTime  @updatedAt
+}
+
+// Configuração geral do sistema (registro único "sistema"), editada pelo dono.
+model ConfigSistema {
+  id                String  @id @default("sistema")
+  diariaPadrao      Decimal @default(3.30) @db.Decimal(10, 2)
+  diasTolerancia    Int     @default(3) // dias de uso com saldo negativo antes do modo consulta
+  creditoBoasVindas Decimal @default(23.10) @db.Decimal(10, 2) // crédito de teste para loja nova
+  recargaMinima     Decimal @default(20) @db.Decimal(10, 2)
+}
+
+enum TipoCredito {
+  RECARGA
+  DIARIA
+  BONUS
+  AJUSTE
+}
+
+// Extrato da carteira de cada loja: créditos positivos, diárias negativas. Saldo = soma.
+model MovimentoCredito {
+  id         String      @id @default(cuid())
+  empresaId  String
+  tipo       TipoCredito
+  valor      Decimal     @db.Decimal(10, 2)
+  descricao  String
+  referencia String // evita lançar duas vezes: "diaria:2026-10-01", "asaas:pay_123"
+  usuarioId  String?
+  criadoEm   DateTime    @default(now())
+
+  @@unique([empresaId, referencia])
+  @@index([empresaId, criadoEm])
+}
+
+enum FormaRecarga {
+  PIX
+  BOLETO
+  CARTAO
+}
+
+enum StatusRecarga {
+  PENDENTE
+  PAGA
+  CANCELADA
+}
+
+// Cobrança gerada no Asaas para a loja colocar créditos.
+model Recarga {
+  id           String        @id @default(cuid())
+  empresaId    String
+  valor        Decimal       @db.Decimal(10, 2)
+  forma        FormaRecarga
+  status       StatusRecarga @default(PENDENTE)
+  cobrancaId   String        @unique // id do pagamento no Asaas
+  link         String? // página de pagamento (boleto e cartão)
+  pixCopiaCola String?
+  pixQrCode    String? // imagem PNG em base64
+  vencimento   DateTime      @db.Date
+  pagaEm       DateTime?
+  usuarioId    String?
+  criadoEm     DateTime      @default(now())
+
+  @@index([empresaId, criadoEm])
 }
 
 // Próximo número de OS, venda e entrega de cada loja.

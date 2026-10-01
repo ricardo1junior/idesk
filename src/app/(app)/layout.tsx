@@ -4,6 +4,8 @@ import { sair } from "../login/actions";
 import { EscolherTema } from "@/components/EscolherTema";
 import { empresaAtual, urlLogo } from "@/lib/empresa";
 import { estiloCor } from "@/lib/empresa-dados";
+import { carteiraDaLoja } from "@/lib/carteira";
+import Link from "next/link";
 import { ItemMenu } from "./ItemMenu";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
@@ -18,12 +20,15 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
   { href: "/entregas", label: "Entregas", permissao: "entregas" },
   { href: "/usuarios", label: "Usuários", permissao: "usuarios" },
   { href: "/configuracoes", label: "Configurações", permissao: "configuracoes" },
+  { href: "/assinatura", label: "Assinatura", permissao: "assinatura" },
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = await exigirUsuario();
   const empresa = await empresaAtual();
   const logo = urlLogo(empresa);
+  const carteira = await carteiraDaLoja(usuario.empresaId);
+  const podeRecarregar = pode(usuario.perfil, "assinatura");
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row" style={estiloCor(empresa.corDestaque)}>
@@ -45,6 +50,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
           {menu
             .filter((item) => !item.permissao || pode(usuario.perfil, item.permissao))
+            .filter((item) => item.href !== "/assinatura" || !carteira.isenta)
             .concat(usuario.superAdmin ? [{ href: "/sistema", label: "Lojas do sistema" }] : [])
             .map((item) =>
               item.embreve ? (
@@ -68,7 +74,37 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </form>
         </div>
       </aside>
-      <main className="min-w-0 flex-1 p-4 md:p-10 print:p-0">{children}</main>
+      <main className="min-w-0 flex-1 p-4 md:p-10 print:p-0">
+        <AvisoSaldo situacao={carteira.situacao} dias={carteira.diasRestantes} podeRecarregar={podeRecarregar} />
+        {children}
+      </main>
+    </div>
+  );
+}
+
+function AvisoSaldo({ situacao, dias, podeRecarregar }: { situacao: string; dias: number; podeRecarregar: boolean }) {
+  let texto: string;
+  let tom = "border-amber-300 bg-amber-50 text-amber-900";
+  if (situacao === "CONSULTA") {
+    texto = "Os créditos do sistema acabaram. Dá para consultar tudo, mas cadastros e vendas ficam bloqueados até a recarga.";
+    tom = "border-red-300 bg-red-50 text-red-900";
+  } else if (situacao === "TOLERANCIA") {
+    texto = "Os créditos do sistema acabaram. Recarregue para não entrar em modo consulta.";
+  } else if (situacao === "ATIVA" && dias <= 5) {
+    texto = dias === 0 ? "Os créditos do sistema acabam hoje." : `Os créditos do sistema acabam em ${dias} ${dias === 1 ? "dia" : "dias"}.`;
+  } else {
+    return null;
+  }
+  return (
+    <div className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm print:hidden ${tom}`}>
+      <span>{texto}</span>
+      {podeRecarregar ? (
+        <Link href="/assinatura" className="font-medium underline">
+          Recarregar créditos
+        </Link>
+      ) : (
+        <span className="text-xs">Peça ao administrador para recarregar.</span>
+      )}
     </div>
   );
 }

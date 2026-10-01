@@ -28,6 +28,7 @@ const REGRAS = {
   entregas: ["VENDEDOR", "TECNICO", "FINANCEIRO", "ESTAGIARIO"],
   configuracoes: [],
   usuarios: [],
+  assinatura: ["FINANCEIRO"],
 } satisfies Record<string, Perfil[]>;
 
 export type Permissao = keyof typeof REGRAS;
@@ -50,8 +51,9 @@ export const DESCRICAO_PERMISSOES: Record<Permissao, string> = {
   emitirNota: "Emitir nota fiscal da venda",
   agenda: "Agenda de atendimentos",
   entregas: "Entregas e coletas",
-  configuracoes: "Configurações da loja (endereço e horários)",
+  configuracoes: "Configurações da loja (dados, logo, e-mail e horários)",
   usuarios: "Gerenciar usuários",
+  assinatura: "Ver saldo e recarregar créditos do sistema",
 };
 
 export function pode(perfil: Perfil, permissao: Permissao): boolean {
