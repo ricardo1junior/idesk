@@ -30,7 +30,7 @@ export async function verificarImei(imei: string, aparelhoId?: string): Promise<
   if (!/^\d{15}$/.test(imei)) return { configurado: true, erro: "IMEI deve ter 15 dígitos", itens: [] };
   if (!servicosConfigurados().length) return { configurado: false, itens: [] };
 
-  const aparelho = aparelhoId ? null : await prisma.aparelho.findUnique({ where: { imei }, select: { id: true } });
+  const aparelho = aparelhoId ? null : await prisma.aparelho.findFirst({ where: { imei }, select: { id: true } });
   const consultas = await consultarImei(imei);
   const salvas = await prisma.$transaction(
     consultas.map((c) =>

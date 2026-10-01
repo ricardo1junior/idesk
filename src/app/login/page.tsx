@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { usuarioAtual } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { prismaBase as prisma } from "@/lib/db";
 import { FormLogin, FormPrimeiroAcesso } from "./Formularios";
 
 export default async function Login() {

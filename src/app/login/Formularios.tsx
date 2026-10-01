@@ -35,6 +35,10 @@ export function FormPrimeiroAcesso({ pedirCodigo }: { pedirCodigo: boolean }) {
         </label>
       )}
       <label className="campo">
+        <span>Nome da loja</span>
+        <input name="loja" required />
+      </label>
+      <label className="campo">
         <span>Seu nome</span>
         <input name="nome" required autoFocus={!pedirCodigo} />
       </label>

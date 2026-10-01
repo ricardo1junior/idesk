@@ -1,5 +1,7 @@
 import "server-only";
 import type { AmbienteFiscal, ModeloNota } from "@prisma/client";
+import { descriptografar } from "@/lib/cripto";
+import { prisma } from "@/lib/db";
 import { interpretar, type RespostaNota } from "./focus-interpretar";
 
 export type { RespostaNota };
@@ -18,19 +20,23 @@ export function linkFocus(ambiente: AmbienteFiscal, caminho: string | null) {
   return /^https?:/.test(caminho) ? caminho : `${urlBase(ambiente)}${caminho}`;
 }
 
-function token(ambiente: AmbienteFiscal) {
+// Token da própria loja (Configuração fiscal); sem ele, o do servidor.
+async function token(ambiente: AmbienteFiscal) {
+  const empresa = await prisma.empresaFiscal.findFirst({ select: { focusTokenHomologacao: true, focusTokenProducao: true } });
+  const daLoja = ambiente === "PRODUCAO" ? empresa?.focusTokenProducao : empresa?.focusTokenHomologacao;
+  if (daLoja) return descriptografar(daLoja);
   return (ambiente === "PRODUCAO" ? process.env.FOCUSNFE_TOKEN_PRODUCAO : process.env.FOCUSNFE_TOKEN_HOMOLOGACAO) || process.env.FOCUSNFE_TOKEN || null;
 }
 
-export function focusConfigurado(ambiente: AmbienteFiscal) {
-  return !!token(ambiente);
+export async function focusConfigurado(ambiente: AmbienteFiscal) {
+  return !!(await token(ambiente));
 }
 
 const caminho = (modelo: ModeloNota) => (modelo === "NFCE" ? "nfce" : "nfe");
 
 async function chamar(ambiente: AmbienteFiscal, metodo: string, rota: string, corpo?: unknown): Promise<RespostaNota> {
-  const t = token(ambiente);
-  if (!t) return { status: "ERRO", mensagem: "Emissão não configurada: defina FOCUSNFE_TOKEN no servidor." };
+  const t = await token(ambiente);
+  if (!t) return { status: "ERRO", mensagem: "Emissão não configurada: informe o token da Focus NFe em Notas fiscais > Configuração." };
   let resp: Response;
   try {
     resp = await fetch(`${urlBase(ambiente)}${rota}`, {

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { agendamentoSchema, conflitoAgendamento, STATUS_AGENDAMENTO } from "@/lib/agenda";
 import { exigirUsuario } from "@/lib/auth";
 import type { EstadoFormulario } from "@/lib/clientes";
-import { prisma } from "@/lib/db";
+import { empresaAtualId, prisma } from "@/lib/db";
 import { somenteDigitos } from "@/lib/documentos";
 import { configLoja } from "@/lib/loja";
 import { dataHoraLocal, somarDias } from "@/lib/tempo";
@@ -48,7 +48,7 @@ export async function criarAgendamento(_e: EstadoFormulario, formData: FormData)
   try {
     await prisma.$transaction(async (tx) => {
       // Um agendamento por vez para o mesmo dia, evitando dois atendentes pegarem a mesma vaga ao mesmo tempo.
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"agenda:" + d.dia}))`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"agenda:" + (await empresaAtualId()) + ":" + d.dia}))`;
       const marcados = await tx.agendamento.findMany({
         where: { inicio: { lt: dataHoraLocal(somarDias(d.dia, 1), "00:00") }, fim: { gt: dataHoraLocal(d.dia, "00:00") } },
         select: { inicio: true, fim: true, status: true },

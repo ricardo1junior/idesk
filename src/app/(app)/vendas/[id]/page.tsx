@@ -21,7 +21,7 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
   const cancelada = venda.status === "CANCELADA";
   const [notas, empresa] = await Promise.all([
     prisma.notaFiscal.findMany({ where: { vendaId: id }, orderBy: { criadoEm: "asc" } }),
-    prisma.empresaFiscal.findUnique({ where: { id: "empresa" }, select: { uf: true } }),
+    prisma.empresaFiscal.findFirst({ select: { uf: true } }),
   ]);
   // NF-e para empresa com IE ou cliente de outro estado; NFC-e no balcão.
   const sugerido =

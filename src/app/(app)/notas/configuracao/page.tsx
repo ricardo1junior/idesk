@@ -6,7 +6,7 @@ import { FormEmpresaFiscal } from "./FormEmpresaFiscal";
 
 export default async function ConfiguracaoFiscal() {
   await exigirUsuario("notasFiscais");
-  const empresa = await prisma.empresaFiscal.findUnique({ where: { id: "empresa" } });
+  const empresa = await prisma.empresaFiscal.findFirst();
   const ambiente = empresa?.ambiente ?? "HOMOLOGACAO";
   return (
     <div className="max-w-4xl space-y-6">
@@ -19,16 +19,21 @@ export default async function ConfiguracaoFiscal() {
       <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         Os códigos abaixo vêm preenchidos para o <b>Simples Nacional</b> (CSOSN 102, CFOP 5102/6102, PIS/COFINS 07). Confirme cada um com o seu contador
         antes de mudar para produção. O certificado digital A1, as séries e o CSC da NFC-e são cadastrados no painel da Focus NFe.
-        {!focusConfigurado(ambiente) && (
-          <p className="mt-2 font-medium">A chave da Focus NFe ainda não foi configurada no servidor (FOCUSNFE_TOKEN). Sem ela, a emissão mostra um aviso e não envia nada.</p>
+        {!(await focusConfigurado(ambiente)) && (
+          <p className="mt-2 font-medium">O token da Focus NFe desta loja ainda não foi informado (campo no fim da página). Sem ele, a emissão mostra um aviso e não envia nada.</p>
         )}
       </div>
       <FormEmpresaFiscal
         empresa={
           empresa
-            ? Object.fromEntries(Object.entries(empresa).map(([k, v]) => [k, v == null ? "" : String(v)]))
+            ? Object.fromEntries(
+                Object.entries(empresa)
+                  .filter(([k]) => !k.startsWith("focusToken"))
+                  .map(([k, v]) => [k, v == null ? "" : String(v)]),
+              )
             : undefined
         }
+        tokens={{ homologacao: !!empresa?.focusTokenHomologacao, producao: !!empresa?.focusTokenProducao }}
       />
     </div>
   );

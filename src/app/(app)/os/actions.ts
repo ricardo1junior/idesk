@@ -1,5 +1,6 @@
 "use server";
 
+import type { Tx } from "@/lib/db";
 import { Prisma, type FormaPagamento, type StatusOS } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -71,8 +72,8 @@ export async function abrirOS(_estado: EstadoFormulario, formData: FormData): Pr
     osId = await prisma.$transaction(async (tx) => {
       // Reaproveita o cadastro do aparelho quando o IMEI/serial já é conhecido.
       const existente =
-        (d.imei && (await tx.aparelho.findUnique({ where: { imei: d.imei } }))) ||
-        (d.serial && (await tx.aparelho.findUnique({ where: { serial: d.serial } }))) ||
+        (d.imei && (await tx.aparelho.findFirst({ where: { imei: d.imei } }))) ||
+        (d.serial && (await tx.aparelho.findFirst({ where: { serial: d.serial } }))) ||
         null;
 
       const aparelho = existente
@@ -142,7 +143,7 @@ export async function mudarStatus(osId: string, formData: FormData) {
   revalidatePath("/os");
 }
 
-async function recalcularTotal(tx: Prisma.TransactionClient, osId: string) {
+async function recalcularTotal(tx: Tx, osId: string) {
   const [itens, os] = await Promise.all([
     tx.itemOS.findMany({ where: { osId } }),
     tx.ordemServico.findUniqueOrThrow({ where: { id: osId }, select: { desconto: true } }),
@@ -238,7 +239,7 @@ export async function revelarSenha(osId: string): Promise<string | null> {
 }
 
 // Liga à OS as fotos enviadas durante o preenchimento (só as que ainda estão soltas).
-async function ligarFotos(tx: Prisma.TransactionClient, osId: string, valor: unknown) {
+async function ligarFotos(tx: Tx, osId: string, valor: unknown) {
   const fotos = lerFotosJson(valor);
   const jaTem = await tx.fotoOS.count({ where: { osId } });
   for (const f of fotos.slice(0, Math.max(0, MAX_FOTOS_OS - jaTem))) {

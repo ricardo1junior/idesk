@@ -6,13 +6,14 @@ import { z } from "zod";
 import { exigirUsuario } from "@/lib/auth";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { cnpjValido, somenteDigitos } from "@/lib/documentos";
-import { prisma } from "@/lib/db";
+import { criptografar } from "@/lib/cripto";
+import { empresaAtualId, prisma } from "@/lib/db";
 import { ErroNota, montarNota } from "@/lib/nfe/emissao";
 import { cancelarNotaFocus, consultarNota, enviarNota } from "@/lib/nfe/focus";
 
 export async function emitirNota(vendaId: string, modelo: ModeloNota): Promise<{ erro?: string }> {
   const usuario = await exigirUsuario("emitirNota");
-  const empresa = await prisma.empresaFiscal.findUnique({ where: { id: "empresa" } });
+  const empresa = await prisma.empresaFiscal.findFirst();
   if (!empresa) return { erro: "Preencha os dados fiscais da empresa em Notas fiscais › Dados fiscais da empresa." };
   const venda = await prisma.venda.findUnique({
     where: { id: vendaId },
@@ -105,6 +106,8 @@ const empresaSchema = z.object({
   origemPadrao: z.string().regex(/^[0-8]$/),
   naturezaOperacao: z.string().trim().min(3, "Informe a natureza da operação"),
   informacoesFisco: z.string().trim().transform((v) => v || null),
+  focusTokenHomologacao: z.string().trim().optional(),
+  focusTokenProducao: z.string().trim().optional(),
 });
 
 export async function salvarEmpresaFiscal(_e: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
@@ -116,7 +119,13 @@ export async function salvarEmpresaFiscal(_e: EstadoFormulario, formData: FormDa
     for (const i of r.error.issues) erros[String(i.path[0])] ??= i.message;
     return { erros, valores };
   }
-  await prisma.empresaFiscal.upsert({ where: { id: "empresa" }, create: r.data, update: r.data });
+  // Tokens: em branco mantém o que já está salvo; guardados criptografados.
+  const { focusTokenHomologacao, focusTokenProducao, ...dados } = r.data;
+  const tokens = {
+    ...(focusTokenHomologacao ? { focusTokenHomologacao: criptografar(focusTokenHomologacao) } : {}),
+    ...(focusTokenProducao ? { focusTokenProducao: criptografar(focusTokenProducao) } : {}),
+  };
+  await prisma.empresaFiscal.upsert({ where: { empresaId: await empresaAtualId() }, create: { ...dados, ...tokens }, update: { ...dados, ...tokens } });
   revalidatePath("/notas/configuracao");
   return { mensagem: `Salvo às ${new Date().toLocaleTimeString("pt-BR")}` };
 }

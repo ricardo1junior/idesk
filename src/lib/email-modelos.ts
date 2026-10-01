@@ -7,11 +7,11 @@ const data = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "America/Sao
 
 type Linha = { descricao: string; detalhe?: string | null; quantidade: number; valor: number };
 
-function pagina(loja: string, titulo: string, saudacao: string, blocos: string) {
+function pagina(loja: string, titulo: string, saudacao: string, blocos: string, logoCid?: string | null) {
   return `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#1d1d1f">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:18px;padding:32px" cellpadding="0" cellspacing="0"><tr><td>
-<div style="font-size:14px;color:#6e6e73">${esc(loja)}</div>
+${logoCid ? `<img src="cid:${esc(logoCid)}" alt="${esc(loja)}" style="max-height:48px;max-width:160px;display:block;margin:0 0 12px">` : ""}<div style="font-size:14px;color:#6e6e73">${esc(loja)}</div>
 <h1 style="font-size:26px;margin:4px 0 16px;letter-spacing:-0.02em">${esc(titulo)}</h1>
 <p style="font-size:15px;line-height:1.5;margin:0 0 20px">${esc(saudacao)}</p>
 ${blocos}
@@ -47,6 +47,7 @@ const texto = (linhas: string[]) => linhas.filter(Boolean).join("\n");
 
 export type DadosEmailOS = {
   loja: string;
+  logoCid?: string | null;
   cliente: string;
   numero: number;
   status: string;
@@ -92,7 +93,7 @@ export function emailOS(d: DadosEmailOS) {
   const primeiro = d.cliente.split(" ")[0];
   return {
     assunto,
-    html: pagina(d.loja, `Ordem de serviço nº ${d.numero}`, `Olá, ${primeiro}. Seguem os dados da sua ordem de serviço.`, blocos),
+    html: pagina(d.loja, `Ordem de serviço nº ${d.numero}`, `Olá, ${primeiro}. Seguem os dados da sua ordem de serviço.`, blocos, d.logoCid),
     texto: texto([
       `Olá, ${primeiro}. Seguem os dados da sua ordem de serviço nº ${d.numero} na ${d.loja}.`,
       `Situação: ${d.status}`,
@@ -109,6 +110,7 @@ export function emailOS(d: DadosEmailOS) {
 
 export type DadosEmailVenda = {
   loja: string;
+  logoCid?: string | null;
   cliente: string;
   numero: number;
   data: Date;
@@ -132,7 +134,7 @@ export function emailVenda(d: DadosEmailVenda) {
   const primeiro = d.cliente.split(" ")[0];
   return {
     assunto: `${d.loja}: sua compra nº ${d.numero}`,
-    html: pagina(d.loja, `Compra nº ${d.numero}`, `Olá, ${primeiro}. Obrigado pela compra em ${data(d.data)}. Seguem os detalhes.`, tabela(linhas, rodape) + notas),
+    html: pagina(d.loja, `Compra nº ${d.numero}`, `Olá, ${primeiro}. Obrigado pela compra em ${data(d.data)}. Seguem os detalhes.`, tabela(linhas, rodape) + notas, d.logoCid),
     texto: texto([
       `Olá, ${primeiro}. Obrigado pela compra nº ${d.numero} na ${d.loja} em ${data(d.data)}.`,
       ...linhas.map((i) => `- ${i.descricao}${i.detalhe ? ` (${i.detalhe})` : ""}: ${i.quantidade} x ${reais(i.valor)}`),

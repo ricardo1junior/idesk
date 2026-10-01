@@ -1,4 +1,5 @@
-import type { FormaPagamento, Prisma, TipoLancamento } from "@prisma/client";
+import type { Tx } from "@/lib/db";
+import type { FormaPagamento, TipoLancamento } from "@prisma/client";
 import { z } from "zod";
 import { paraNumero } from "./estoque";
 import { dataHoraLocal } from "./tempo";
@@ -54,12 +55,12 @@ export function parcelarPagamento(
   });
 }
 
-export async function categoriaId(tx: Prisma.TransactionClient, tipo: TipoLancamento, nome: string): Promise<string> {
-  const c = await tx.categoriaFinanceira.upsert({ where: { nome_tipo: { nome, tipo } }, create: { nome, tipo }, update: {} });
+export async function categoriaId(tx: Tx, tipo: TipoLancamento, nome: string): Promise<string> {
+  const c = (await tx.categoriaFinanceira.findFirst({ where: { nome, tipo } })) ?? (await tx.categoriaFinanceira.create({ data: { nome, tipo } }));
   return c.id;
 }
 
-export async function garantirCategorias(tx: Prisma.TransactionClient) {
+export async function garantirCategorias(tx: Tx) {
   for (const tipo of ["ENTRADA", "SAIDA"] as const) for (const nome of CATEGORIAS_PADRAO[tipo]) await categoriaId(tx, tipo, nome);
 }
 

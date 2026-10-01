@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { CabecalhoLoja } from "@/components/CabecalhoLoja";
 import { BotaoImprimir } from "@/app/(app)/os/[id]/imprimir/BotaoImprimir";
 import { ResumoVenda } from "@/components/ResumoVenda";
 import { exigirUsuario } from "@/lib/auth";
@@ -21,13 +22,11 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
         <BotaoImprimir />
       </div>
       <header className="mb-4 flex items-start justify-between border-b-2 border-zinc-900 pb-3">
-        <div>
-          <div className="text-xl font-bold">iDesk</div>
-          <div className="text-xs text-zinc-500">Recibo de venda (não é documento fiscal)</div>
-        </div>
+        <CabecalhoLoja />
         <div className="text-right">
           <div className="text-xl font-bold">Venda #{venda.numero}</div>
           <div className="text-xs">{venda.criadoEm.toLocaleString("pt-BR")}</div>
+          <div className="text-xs text-zinc-500">Recibo de venda (não é documento fiscal)</div>
           {venda.status === "CANCELADA" && <div className="text-xs font-bold text-red-700">CANCELADA</div>}
         </div>
       </header>

@@ -4,7 +4,7 @@ import { Prisma, type TipoProduto } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirUsuario } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { empresaAtualId, prisma } from "@/lib/db";
 import { categoriaId } from "@/lib/financeiro";
 import { entradaComCustoMedio } from "@/lib/movimentos";
 import { ErroXml, lerXmlNFe, type NotaLida } from "@/lib/nfe/ler-xml";
@@ -27,10 +27,10 @@ export async function conferirXml(xml: string): Promise<Conferencia> {
   } catch (e) {
     return { erro: e instanceof ErroXml ? e.message : "Não foi possível ler o XML." };
   }
-  if (await prisma.notaEntrada.findUnique({ where: { chave: nota.chave } })) {
+  if (await prisma.notaEntrada.findFirst({ where: { chave: nota.chave } })) {
     return { erro: `A nota ${nota.numero} (chave ${nota.chave}) já foi importada.` };
   }
-  const fornecedor = await prisma.fornecedor.findUnique({ where: { cnpj: nota.emitente.cnpj } });
+  const fornecedor = await prisma.fornecedor.findFirst({ where: { cnpj: nota.emitente.cnpj } });
   const sugestoes: Sugestao[] = [];
   for (const item of nota.itens) {
     const vinculo = fornecedor
@@ -43,7 +43,7 @@ export async function conferirXml(xml: string): Promise<Conferencia> {
       sugestoes.push({ produtoId: vinculo.produtoId, descricao: vinculo.produto.descricao, tipo: vinculo.produto.tipo, fator: vinculo.fatorConversao, origem: "vinculo" });
       continue;
     }
-    const porEan = item.ean ? await prisma.produto.findUnique({ where: { codigoBarras: item.ean } }) : null;
+    const porEan = item.ean ? await prisma.produto.findFirst({ where: { codigoBarras: item.ean } }) : null;
     sugestoes.push(porEan ? { produtoId: porEan.id, descricao: porEan.descricao, tipo: porEan.tipo, fator: 1, origem: "ean" } : null);
   }
   return {
@@ -107,7 +107,7 @@ export async function importarNota(xml: string, mapeamentos: unknown): Promise<{
       async (tx) => {
         const e = nota.emitente;
         const fornecedor = await tx.fornecedor.upsert({
-          where: { cnpj: e.cnpj },
+          where: { empresaId_cnpj: { empresaId: await empresaAtualId(), cnpj: e.cnpj } },
           create: { cnpj: e.cnpj, razaoSocial: e.razaoSocial, nomeFantasia: e.nomeFantasia, inscricaoEstadual: e.ie, telefone: e.telefone, cidade: e.cidade, uf: e.uf },
           update: { razaoSocial: e.razaoSocial, nomeFantasia: e.nomeFantasia ?? undefined },
         });
@@ -131,7 +131,7 @@ export async function importarNota(xml: string, mapeamentos: unknown): Promise<{
 
           let produtoId = map.produtoId;
           if (map.acao === "novo" || !produtoId) {
-            const codigoLivre = item.ean && !(await tx.produto.findUnique({ where: { codigoBarras: item.ean } }));
+            const codigoLivre = item.ean && !(await tx.produto.findFirst({ where: { codigoBarras: item.ean } }));
             produtoId = (
               await tx.produto.create({
                 data: {
@@ -162,7 +162,7 @@ export async function importarNota(xml: string, mapeamentos: unknown): Promise<{
               throw new ErroImportacao(`Item ${item.numero} (${item.descricao}): informe ${unidades} IMEI(s) de 15 dígitos, um por linha.`);
             }
             for (const imei of imeis) {
-              if (await tx.aparelho.findUnique({ where: { imei } })) throw new ErroImportacao(`IMEI ${imei} já está cadastrado.`);
+              if (await tx.aparelho.findFirst({ where: { imei } })) throw new ErroImportacao(`IMEI ${imei} já está cadastrado.`);
               await tx.aparelho.create({
                 data: { produtoId, modelo: produto.modelo ?? produto.descricao, imei, condicao: "NOVO", situacao: "EM_ESTOQUE", custo: custoUnit },
               });

@@ -1,5 +1,6 @@
 "use server";
 
+import type { Tx } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
@@ -87,7 +88,7 @@ export async function buscarParaVenda(termo: string): Promise<OpcaoVenda[]> {
 
 class ErroVenda extends Error {}
 
-async function receberTroca(tx: Prisma.TransactionClient, troca: TrocaEntrada, valor: number) {
+async function receberTroca(tx: Tx, troca: TrocaEntrada, valor: number) {
   // A troca entra no estoque ligada a um produto "aparelho" do mesmo modelo (criado se não existir).
   const produto =
     (await tx.produto.findFirst({ where: { tipo: "APARELHO", modelo: { equals: troca.modelo, mode: "insensitive" } } })) ??
@@ -108,8 +109,8 @@ async function receberTroca(tx: Prisma.TransactionClient, troca: TrocaEntrada, v
 
   // Se o aparelho já passou pela loja (ex.: OS antiga), reaproveita o cadastro.
   const existente =
-    (troca.imei && (await tx.aparelho.findUnique({ where: { imei: troca.imei } }))) ||
-    (troca.serial && (await tx.aparelho.findUnique({ where: { serial: troca.serial.toUpperCase() } }))) ||
+    (troca.imei && (await tx.aparelho.findFirst({ where: { imei: troca.imei } }))) ||
+    (troca.serial && (await tx.aparelho.findFirst({ where: { serial: troca.serial.toUpperCase() } }))) ||
     null;
   if (existente && existente.situacao === "EM_ESTOQUE") throw new ErroVenda("O aparelho da troca já está no estoque da loja.");
 

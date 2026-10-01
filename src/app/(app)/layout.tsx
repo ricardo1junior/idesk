@@ -2,6 +2,8 @@ import { exigirUsuario } from "@/lib/auth";
 import { PERFIS, pode, type Permissao } from "@/lib/permissoes";
 import { sair } from "../login/actions";
 import { EscolherTema } from "@/components/EscolherTema";
+import { empresaAtual, urlLogo } from "@/lib/empresa";
+import { estiloCor } from "@/lib/empresa-dados";
 import { ItemMenu } from "./ItemMenu";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
@@ -20,13 +22,22 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = await exigirUsuario();
+  const empresa = await empresaAtual();
+  const logo = urlLogo(empresa);
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen flex-col md:flex-row" style={estiloCor(empresa.corDestaque)}>
       <aside className="sticky top-0 z-20 flex flex-col border-b border-zinc-200/70 bg-cartao/75 backdrop-blur-xl backdrop-saturate-150 md:h-screen md:w-60 md:border-r md:border-b-0 print:hidden">
         <div className="flex items-center gap-2 px-5 py-5 text-xl font-semibold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">i</span>
-          iDesk
+          {logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logo} alt="" className="size-8 shrink-0 rounded-[10px] object-contain" />
+          ) : (
+            <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">{empresa.nome.trim().charAt(0).toUpperCase() || "i"}</span>
+          )}
+          <span className="line-clamp-2 min-w-0 text-base leading-tight break-words" title={empresa.nome}>
+            {empresa.nome}
+          </span>
           <span className="ml-auto">
             <EscolherTema />
           </span>
@@ -34,6 +45,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
           {menu
             .filter((item) => !item.permissao || pode(usuario.perfil, item.permissao))
+            .concat(usuario.superAdmin ? [{ href: "/sistema", label: "Lojas do sistema" }] : [])
             .map((item) =>
               item.embreve ? (
                 <span key={item.label} className="whitespace-nowrap rounded-md px-3 py-2 text-zinc-400">

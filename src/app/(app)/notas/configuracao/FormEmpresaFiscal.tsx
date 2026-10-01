@@ -12,7 +12,7 @@ const REGIMES = {
   MEI: "MEI",
 };
 
-export function FormEmpresaFiscal({ empresa }: { empresa?: Record<string, string> }) {
+export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string, string>; tokens: { homologacao: boolean; producao: boolean } }) {
   const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(salvarEmpresaFiscal, {});
   const v = (c: string, padrao = "") => estado.valores?.[c] ?? empresa?.[c] ?? padrao;
   const erro = (c: string) => estado.erros?.[c];
@@ -81,6 +81,17 @@ export function FormEmpresaFiscal({ empresa }: { empresa?: Record<string, string
         </Campo>
         <Campo label="Informações complementares (em branco usa o texto padrão do Simples)" className="sm:col-span-4">
           <textarea name="informacoesFisco" rows={2} defaultValue={v("informacoesFisco")} />
+        </Campo>
+      </section>
+
+      <section className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-2">
+        <h2 className="titulo-secao mb-0 sm:col-span-2">Focus NFe da loja</h2>
+        <p className="-mt-2 text-sm text-zinc-500 sm:col-span-2">Tokens do painel da Focus NFe (Minha conta &gt; Tokens). Ficam guardados criptografados; deixe em branco para manter o atual.</p>
+        <Campo label={`Token de homologação ${tokens.homologacao ? "· configurado" : ""}`}>
+          <input name="focusTokenHomologacao" type="password" autoComplete="off" placeholder={tokens.homologacao ? "••••••••" : ""} />
+        </Campo>
+        <Campo label={`Token de produção ${tokens.producao ? "· configurado" : ""}`}>
+          <input name="focusTokenProducao" type="password" autoComplete="off" placeholder={tokens.producao ? "••••••••" : ""} />
         </Campo>
       </section>
 

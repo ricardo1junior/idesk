@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { enviarEmail, nomeDaLoja } from "@/lib/email";
+import { anexoLogo, enviarEmail, nomeDaLoja } from "@/lib/email";
 import { emailOS, emailVenda } from "@/lib/email-modelos";
 import { TIPOS_FOTO } from "@/lib/fotos";
 import { CONDICOES } from "@/lib/estoque";
@@ -38,8 +38,10 @@ export async function enviarEmailOS(osId: string, para: string): Promise<{ erro?
   const destino = await emailDoCliente(os.clienteId, para);
   if (!destino) return { erro: "Escolha um e-mail cadastrado no cliente." };
 
+  const logo = await anexoLogo();
   const e = emailOS({
     loja: await nomeDaLoja(),
+    logoCid: logo?.cid,
     cliente: os.cliente.nome,
     numero: os.numero,
     status: STATUS_OS[os.status].label,
@@ -61,7 +63,7 @@ export async function enviarEmailOS(osId: string, para: string): Promise<{ erro?
     contentType: f.mime,
     cid: `foto${i + 1}@idesk`,
   }));
-  const r = await enviarEmail(destino, e.assunto, e.html, e.texto, anexos);
+  const r = await enviarEmail(destino, e.assunto, e.html, e.texto, logo ? [logo, ...anexos] : anexos);
   if (r.erro) return r;
   await prisma.historicoOS.create({
     data: { osId, status: os.status, nota: `E-mail da OS enviado para ${destino}${anexos.length ? ` com ${anexos.length} foto(s)` : ""}` },
@@ -80,8 +82,10 @@ export async function enviarEmailVenda(vendaId: string, para: string): Promise<{
   const destino = await emailDoCliente(v.cliente.id, para);
   if (!destino) return { erro: "Escolha um e-mail cadastrado no cliente." };
 
+  const logo = await anexoLogo();
   const e = emailVenda({
     loja: await nomeDaLoja(),
+    logoCid: logo?.cid,
     cliente: v.cliente.nome,
     numero: v.numero,
     data: v.criadoEm,
@@ -98,6 +102,6 @@ export async function enviarEmailVenda(vendaId: string, para: string): Promise<{
     pagamentos: v.pagamentos.map((p) => ({ forma: FORMAS_PAGAMENTO[p.forma], valor: Number(p.valor) })),
     notas: v.notas.map((n) => ({ modelo: n.modelo === "NFCE" ? "NFC-e" : "NF-e", numero: n.numero, link: linkFocus(n.ambiente, n.caminhoDanfe) })),
   });
-  const r = await enviarEmail(destino, e.assunto, e.html, e.texto);
+  const r = await enviarEmail(destino, e.assunto, e.html, e.texto, logo ? [logo] : []);
   return r.erro ? r : { ok: `Enviado para ${destino}.` };
 }

@@ -1,4 +1,5 @@
 import { exigirUsuario } from "@/lib/auth";
+import { CabecalhoLoja } from "@/components/CabecalhoLoja";
 import { notFound } from "next/navigation";
 import { FichaAparelho } from "@/components/FichaAparelho";
 import { formatarDocumento } from "@/lib/documentos";
@@ -23,10 +24,7 @@ export default async function ImprimirOS({ params }: PageProps<"/os/[id]/imprimi
       </div>
 
       <header className="mb-4 flex items-start justify-between border-b-2 border-zinc-900 pb-3">
-        <div>
-          <div className="text-xl font-bold">iDesk</div>
-          <div className="text-xs text-zinc-500">Assistência técnica e venda de aparelhos Apple</div>
-        </div>
+        <CabecalhoLoja />
         <div className="text-right">
           <div className="text-xl font-bold">OS #{os.numero}</div>
           <div className="text-xs">Entrada: {os.criadoEm.toLocaleString("pt-BR")}</div>

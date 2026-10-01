@@ -1,8 +1,9 @@
+import type { Tx } from "@/lib/db";
 import { Prisma, type TipoMovimento } from "@prisma/client";
 
 // Entrada de itens sem IMEI (acessórios e peças) atualizando o custo médio ponderado.
 export async function entradaComCustoMedio(
-  tx: Prisma.TransactionClient,
+  tx: Tx,
   produtoId: string,
   quantidade: number,
   custoUnit: number,

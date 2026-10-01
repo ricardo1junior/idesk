@@ -46,7 +46,7 @@ export async function estimarRota(endereco: string): Promise<Estimativa> {
     if (!origem) {
       origem = await geocodificar(loja.endereco);
       if (!origem) return { erro: "Não encontrei o endereço da loja no mapa. Confira em Configurações.", mapa };
-      await prisma.lojaConfig.update({ where: { id: "loja" }, data: { latitude: origem.lat, longitude: origem.lon } });
+      await prisma.lojaConfig.updateMany({ data: { latitude: origem.lat, longitude: origem.lon } });
     }
     const destino = await geocodificar(endereco);
     if (!destino) return { erro: "Não encontrei esse endereço no mapa. Confira rua, número e cidade.", mapa };

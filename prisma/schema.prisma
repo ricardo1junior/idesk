@@ -11,6 +11,44 @@ datasource db {
   directUrl = env("DIRECT_URL") // conexão direta (sem pooler) usada nas migrações; localmente é igual à DATABASE_URL
 }
 
+// ---------- Lojas (empresas que usam o sistema) ----------
+
+// Cada loja só enxerga os próprios dados: as tabelas têm empresaId, preenchido e filtrado
+// automaticamente pelo cliente do Prisma em src/lib/db.ts.
+model Empresa {
+  id             String   @id @default(cuid())
+  nome           String // nome que aparece no sistema, na impressão e nos e-mails
+  razaoSocial    String?
+  documento      String? // CNPJ ou CPF, só dígitos
+  telefone       String?
+  email          String?
+  endereco       String?
+  site           String?
+  corDestaque    String? // ex.: "#0071e3"
+  logo           Bytes?
+  logoTipo       String? // ex.: "image/png"
+  logoVersao     Int      @default(0)
+  // E-mail próprio da loja; sem isso vale o SMTP do servidor
+  smtpHost       String?
+  smtpPorta      Int?
+  smtpSeguro     Boolean  @default(false)
+  smtpUsuario    String?
+  smtpSenha      String? // criptografada com APP_SECRET
+  emailRemetente String?
+  ativa          Boolean  @default(true)
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+}
+
+// Próximo número de OS, venda e entrega de cada loja.
+model Contador {
+  empresaId String
+  chave     String // "os", "venda", "entrega"
+  valor     Int    @default(0)
+
+  @@id([empresaId, chave])
+}
+
 // ---------- Usuários ----------
 
 enum Perfil {
@@ -22,18 +60,22 @@ enum Perfil {
 }
 
 model Usuario {
-  id        String   @id @default(cuid())
-  nome      String
-  email     String   @unique
-  senhaHash String
-  perfil    Perfil   @default(VENDEDOR)
-  ativo     Boolean  @default(true)
-  criadoEm  DateTime @default(now())
+  id         String   @id @default(cuid())
+  empresaId  String   @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  nome       String
+  email      String   @unique
+  senhaHash  String
+  perfil     Perfil   @default(VENDEDOR)
+  ativo      Boolean  @default(true)
+  superAdmin Boolean  @default(false) // dono do sistema: cria e gerencia as lojas
+  criadoEm   DateTime @default(now())
 
   ordensTecnico OrdemServico[] @relation("TecnicoOS")
   vendas        Venda[]
   sessoes       Sessao[]
   entregas      Entrega[]
+
+  @@index([empresaId])
 }
 
 model Sessao {
@@ -55,10 +97,11 @@ enum TipoPessoa {
 
 model Cliente {
   id                 String     @id @default(cuid())
+  empresaId          String     @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   tipo               TipoPessoa
   nome               String // PF: nome completo | PJ: razão social
   nomeFantasia       String?
-  documento          String     @unique // CPF (11) ou CNPJ (14), só dígitos
+  documento          String // CPF (11) ou CNPJ (14), só dígitos
   rg                 String?
   dataNascimento     DateTime?
   inscricaoEstadual  String? // "ISENTO" quando for o caso
@@ -88,7 +131,9 @@ model Cliente {
   entregas     Entrega[]
   lancamentos  Lancamento[]
 
+  @@unique([empresaId, documento])
   @@index([nome])
+  @@index([empresaId])
 }
 
 enum TipoContato {
@@ -99,6 +144,7 @@ enum TipoContato {
 // Telefones e e-mails adicionais (os principais ficam no próprio Cliente).
 model ClienteContato {
   id        String      @id @default(cuid())
+  empresaId String      @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   clienteId String
   cliente   Cliente     @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   tipo      TipoContato
@@ -109,11 +155,13 @@ model ClienteContato {
 
   @@index([clienteId])
   @@index([valor])
+  @@index([empresaId])
 }
 
 // Endereços adicionais (o principal fica no próprio Cliente).
 model ClienteEndereco {
   id          String  @id @default(cuid())
+  empresaId   String  @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   clienteId   String
   cliente     Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   rotulo      String? // ex.: "Comercial", "Entrega", "Cobrança"
@@ -127,6 +175,7 @@ model ClienteEndereco {
   ordem       Int     @default(0)
 
   @@index([clienteId])
+  @@index([empresaId])
 }
 
 // ---------- Produtos, peças e serviços ----------
@@ -139,10 +188,11 @@ enum TipoProduto {
 
 model Produto {
   id            String      @id @default(cuid())
+  empresaId     String      @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   tipo          TipoProduto
   descricao     String
-  codigoBarras  String?     @unique
-  sku           String?     @unique
+  codigoBarras  String?
+  sku           String?
   marca         String?     @default("Apple")
   modelo        String? // ex.: "iPhone 15 Pro"
   unidade       String      @default("UN")
@@ -163,17 +213,23 @@ model Produto {
   itensOS            ItemOS[]
   vinculosFornecedor VinculoProdutoFornecedor[]
 
+  @@unique([empresaId, codigoBarras])
+  @@unique([empresaId, sku])
   @@index([descricao])
+  @@index([empresaId])
 }
 
 model Servico {
   id          String  @id @default(cuid())
+  empresaId   String  @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   descricao   String
   valor       Decimal @default(0) @db.Decimal(12, 2)
   codigoLC116 String? // código do serviço para NFS-e
   ativo       Boolean @default(true)
 
   itensOS ItemOS[]
+
+  @@index([empresaId])
 }
 
 // ---------- Aparelhos (unidade física, com IMEI/serial) ----------
@@ -195,6 +251,7 @@ enum CondicaoAparelho {
 
 model Aparelho {
   id           String           @id @default(cuid())
+  empresaId    String           @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   produtoId    String?
   produto      Produto?         @relation(fields: [produtoId], references: [id])
   clienteId    String? // dono atual (cliente) quando não é estoque da loja
@@ -202,9 +259,9 @@ model Aparelho {
   modelo       String // ex.: "iPhone 13 128GB"
   cor          String?
   capacidade   String?
-  imei         String?          @unique
+  imei         String?
   imei2        String?
-  serial       String?          @unique
+  serial       String?
   condicao     CondicaoAparelho @default(NOVO)
   situacao     SituacaoAparelho
   saudeBateria Int? // %
@@ -217,6 +274,10 @@ model Aparelho {
   itensVenda   ItemVenda[]
   trocaEm      Pagamento?        @relation("AparelhoTroca")
   verificacoes VerificacaoImei[]
+
+  @@unique([empresaId, imei])
+  @@unique([empresaId, serial])
+  @@index([empresaId])
 }
 
 // ---------- Verificação de IMEI (serviços externos) ----------
@@ -235,6 +296,7 @@ enum SituacaoVerificacao {
 
 model VerificacaoImei {
   id         String              @id @default(cuid())
+  empresaId  String              @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   imei       String
   aparelhoId String?
   aparelho   Aparelho?           @relation(fields: [aparelhoId], references: [id], onDelete: SetNull)
@@ -246,6 +308,7 @@ model VerificacaoImei {
   criadoEm   DateTime            @default(now())
 
   @@index([imei, criadoEm])
+  @@index([empresaId])
 }
 
 // ---------- Ordens de serviço ----------
@@ -271,7 +334,8 @@ enum StatusOS {
 
 model OrdemServico {
   id              String         @id @default(cuid())
-  numero          Int            @unique @default(autoincrement())
+  empresaId       String         @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  numero          Int            @default(dbgenerated("(current_setting('idesk.numero'::text))::integer")) // sequencial por loja (tabela Contador), preenchido por src/lib/db.ts
   clienteId       String
   cliente         Cliente        @relation(fields: [clienteId], references: [id])
   aparelhoId      String?
@@ -306,11 +370,14 @@ model OrdemServico {
   entregas    Entrega[]
   lancamentos Lancamento[]
 
+  @@unique([empresaId, numero])
   @@index([status])
+  @@index([empresaId])
 }
 
 model ItemOS {
   id         String       @id @default(cuid())
+  empresaId  String       @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   osId       String
   os         OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
   produtoId  String? // peça
@@ -320,6 +387,8 @@ model ItemOS {
   descricao  String
   quantidade Int          @default(1)
   valorUnit  Decimal      @db.Decimal(12, 2)
+
+  @@index([empresaId])
 }
 
 enum TipoFoto {
@@ -333,6 +402,7 @@ enum TipoFoto {
 // Fotos do aparelho na entrada (danos físicos). Guardadas no banco já reduzidas (JPEG ~1600px).
 model FotoOS {
   id        String        @id @default(cuid())
+  empresaId String        @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   osId      String? // vazio enquanto a OS ainda está sendo aberta
   os        OrdemServico? @relation(fields: [osId], references: [id], onDelete: Cascade)
   tipo      TipoFoto      @default(GERAL)
@@ -344,15 +414,19 @@ model FotoOS {
   criadoEm  DateTime      @default(now())
 
   @@index([osId])
+  @@index([empresaId])
 }
 
 model HistoricoOS {
-  id       String       @id @default(cuid())
-  osId     String
-  os       OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
-  status   StatusOS
-  nota     String?
-  criadoEm DateTime     @default(now())
+  id        String       @id @default(cuid())
+  empresaId String       @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  osId      String
+  os        OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+  status    StatusOS
+  nota      String?
+  criadoEm  DateTime     @default(now())
+
+  @@index([empresaId])
 }
 
 // ---------- Vendas ----------
@@ -376,7 +450,8 @@ enum FormaPagamento {
 
 model Venda {
   id          String      @id @default(cuid())
-  numero      Int         @unique @default(autoincrement())
+  empresaId   String      @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  numero      Int         @default(dbgenerated("(current_setting('idesk.numero'::text))::integer")) // sequencial por loja (tabela Contador), preenchido por src/lib/db.ts
   clienteId   String?
   cliente     Cliente?    @relation(fields: [clienteId], references: [id])
   vendedorId  String?
@@ -394,10 +469,14 @@ model Venda {
   entregas    Entrega[]
   lancamentos Lancamento[]
   notas       NotaFiscal[]
+
+  @@unique([empresaId, numero])
+  @@index([empresaId])
 }
 
 model ItemVenda {
   id           String    @id @default(cuid())
+  empresaId    String    @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   vendaId      String
   venda        Venda     @relation(fields: [vendaId], references: [id], onDelete: Cascade)
   produtoId    String
@@ -409,10 +488,13 @@ model ItemVenda {
   valorUnit    Decimal   @db.Decimal(12, 2)
   desconto     Decimal   @default(0) @db.Decimal(12, 2) // desconto do item (em R$)
   garantiaDias Int?
+
+  @@index([empresaId])
 }
 
 model Pagamento {
   id              String         @id @default(cuid())
+  empresaId       String         @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   vendaId         String
   venda           Venda          @relation(fields: [vendaId], references: [id], onDelete: Cascade)
   forma           FormaPagamento
@@ -420,6 +502,8 @@ model Pagamento {
   parcelas        Int            @default(1)
   aparelhoTrocaId String?        @unique // aparelho recebido na troca
   aparelhoTroca   Aparelho?      @relation("AparelhoTroca", fields: [aparelhoTrocaId], references: [id])
+
+  @@index([empresaId])
 }
 
 // ---------- Estoque ----------
@@ -435,6 +519,7 @@ enum TipoMovimento {
 
 model MovimentoEstoque {
   id            String        @id @default(cuid())
+  empresaId     String        @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   produtoId     String
   produto       Produto       @relation(fields: [produtoId], references: [id])
   tipo          TipoMovimento
@@ -446,6 +531,7 @@ model MovimentoEstoque {
   criadoEm      DateTime      @default(now())
 
   @@index([produtoId, criadoEm])
+  @@index([empresaId])
 }
 
 // ---------- Financeiro ----------
@@ -462,18 +548,21 @@ enum StatusLancamento {
 }
 
 model CategoriaFinanceira {
-  id    String         @id @default(cuid())
-  nome  String
-  tipo  TipoLancamento
-  ativa Boolean        @default(true)
+  id        String         @id @default(cuid())
+  empresaId String         @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  nome      String
+  tipo      TipoLancamento
+  ativa     Boolean        @default(true)
 
   lancamentos Lancamento[]
 
-  @@unique([nome, tipo])
+  @@unique([empresaId, nome, tipo])
+  @@index([empresaId])
 }
 
 model Lancamento {
   id            String               @id @default(cuid())
+  empresaId     String               @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   tipo          TipoLancamento
   status        StatusLancamento     @default(PENDENTE)
   descricao     String
@@ -502,13 +591,15 @@ model Lancamento {
   @@index([vencimento])
   @@index([pagoEm])
   @@index([tipo, status])
+  @@index([empresaId])
 }
 
 // ---------- Fornecedores e notas de entrada ----------
 
 model Fornecedor {
   id                String   @id @default(cuid())
-  cnpj              String   @unique // CNPJ ou CPF, só dígitos
+  empresaId         String   @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  cnpj              String // CNPJ ou CPF, só dígitos
   razaoSocial       String
   nomeFantasia      String?
   inscricaoEstadual String?
@@ -521,11 +612,15 @@ model Fornecedor {
   notas       NotaEntrada[]
   lancamentos Lancamento[]
   vinculos    VinculoProdutoFornecedor[]
+
+  @@unique([empresaId, cnpj])
+  @@index([empresaId])
 }
 
 // Lembra qual produto do cadastro corresponde ao código do produto na nota do fornecedor.
 model VinculoProdutoFornecedor {
   id               String     @id @default(cuid())
+  empresaId        String     @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   fornecedorId     String
   fornecedor       Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
   codigoFornecedor String
@@ -534,11 +629,13 @@ model VinculoProdutoFornecedor {
   fatorConversao   Int        @default(1) // ex.: 1 caixa na nota = 12 unidades
 
   @@unique([fornecedorId, codigoFornecedor])
+  @@index([empresaId])
 }
 
 model NotaEntrada {
   id           String     @id @default(cuid())
-  chave        String     @unique // chave de acesso (44 dígitos)
+  empresaId    String     @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  chave        String // chave de acesso (44 dígitos)
   numero       String
   serie        String
   emissao      DateTime
@@ -551,6 +648,9 @@ model NotaEntrada {
 
   lancamentos Lancamento[]
   movimentos  MovimentoEstoque[]
+
+  @@unique([empresaId, chave])
+  @@index([empresaId])
 }
 
 // ---------- Emissão de notas (via Focus NFe) ----------
@@ -570,23 +670,28 @@ enum AmbienteFiscal {
 // Registro único (id "empresa") com os dados fiscais e as regras padrão de impostos.
 // Confirme os códigos com o contador antes de emitir em produção.
 model EmpresaFiscal {
-  id                String           @id @default("empresa")
-  cnpj              String
-  razaoSocial       String
-  nomeFantasia      String?
-  inscricaoEstadual String?
-  uf                String           @db.Char(2)
-  regime            RegimeTributario @default(SIMPLES_NACIONAL)
-  ambiente          AmbienteFiscal   @default(HOMOLOGACAO)
-  icmsSituacao      String           @default("102") // CSOSN no Simples; CST no regime normal
-  icmsAliquota      Decimal          @default(0) @db.Decimal(5, 2)
-  pisCofinsCst      String           @default("07")
-  cfopDentroEstado  String           @default("5102")
-  cfopForaEstado    String           @default("6102")
-  origemPadrao      String           @default("0") // 0 nacional, 1 e 2 importado
-  naturezaOperacao  String           @default("Venda de mercadoria")
-  informacoesFisco  String? // texto obrigatório do Simples, por exemplo
-  atualizadoEm      DateTime         @updatedAt
+  id                    String           @id @default(cuid())
+  empresaId             String           @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  cnpj                  String
+  razaoSocial           String
+  nomeFantasia          String?
+  inscricaoEstadual     String?
+  uf                    String           @db.Char(2)
+  regime                RegimeTributario @default(SIMPLES_NACIONAL)
+  ambiente              AmbienteFiscal   @default(HOMOLOGACAO)
+  icmsSituacao          String           @default("102") // CSOSN no Simples; CST no regime normal
+  icmsAliquota          Decimal          @default(0) @db.Decimal(5, 2)
+  pisCofinsCst          String           @default("07")
+  cfopDentroEstado      String           @default("5102")
+  cfopForaEstado        String           @default("6102")
+  origemPadrao          String           @default("0") // 0 nacional, 1 e 2 importado
+  naturezaOperacao      String           @default("Venda de mercadoria")
+  informacoesFisco      String? // texto obrigatório do Simples, por exemplo
+  focusTokenHomologacao String? // token da Focus NFe da loja, criptografado; sem ele vale o do servidor
+  focusTokenProducao    String?
+  atualizadoEm          DateTime         @updatedAt
+
+  @@unique([empresaId])
 }
 
 enum ModeloNota {
@@ -604,6 +709,7 @@ enum StatusNota {
 
 model NotaFiscal {
   id           String         @id @default(cuid())
+  empresaId    String         @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   referencia   String         @unique // "ref" enviada ao provedor
   modelo       ModeloNota
   ambiente     AmbienteFiscal
@@ -622,13 +728,15 @@ model NotaFiscal {
   canceladaEm  DateTime?
 
   @@index([vendaId])
+  @@index([empresaId])
 }
 
 // ---------- Agenda e entregas ----------
 
 // Configurações da loja (registro único "loja").
 model LojaConfig {
-  id                      String   @id @default("loja")
+  id                      String   @id @default(cuid())
+  empresaId               String   @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   endereco                String? // ponto de partida das entregas
   latitude                Float?
   longitude               Float?
@@ -639,6 +747,8 @@ model LojaConfig {
   atendimentosSimultaneos Int      @default(1) // quantos clientes a loja atende ao mesmo tempo
   minutosNoLocalEntrega   Int      @default(10)
   atualizadoEm            DateTime @updatedAt
+
+  @@unique([empresaId])
 }
 
 enum MotivoAgendamento {
@@ -660,6 +770,7 @@ enum StatusAgendamento {
 
 model Agendamento {
   id           String            @id @default(cuid())
+  empresaId    String            @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
   inicio       DateTime
   fim          DateTime
   clienteId    String?
@@ -675,6 +786,7 @@ model Agendamento {
   atualizadoEm DateTime          @updatedAt
 
   @@index([inicio])
+  @@index([empresaId])
 }
 
 enum TipoEntrega {
@@ -691,7 +803,8 @@ enum StatusEntrega {
 
 model Entrega {
   id            String        @id @default(cuid())
-  numero        Int           @unique @default(autoincrement())
+  empresaId     String        @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  numero        Int           @default(dbgenerated("(current_setting('idesk.numero'::text))::integer")) // sequencial por loja (tabela Contador), preenchido por src/lib/db.ts
   tipo          TipoEntrega   @default(ENTREGA)
   status        StatusEntrega @default(PENDENTE)
   clienteId     String
@@ -712,5 +825,7 @@ model Entrega {
   criadoEm      DateTime      @default(now())
   concluidaEm   DateTime?
 
+  @@unique([empresaId, numero])
   @@index([agendadaPara])
+  @@index([empresaId])
 }
