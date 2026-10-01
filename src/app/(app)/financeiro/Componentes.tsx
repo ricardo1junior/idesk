@@ -1,9 +1,12 @@
 "use client";
 
+import Form from "next/form";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Campo } from "@/components/Campos";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { PERIODOS, type Filtros } from "@/lib/financeiro-filtros-cliente";
+import { ymdLocal } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
 import { criarLancamento } from "./actions";
 
@@ -13,7 +16,7 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
   const [periodo, setPeriodo] = useState(filtros.periodo);
   const [base, setBase] = useState(filtros.base);
   return (
-    <form className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
+    <Form action="/financeiro" className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
       <Campo label="Visão">
         <select name="base" value={base} onChange={(e) => setBase(e.target.value as Filtros["base"])}>
           <option value="pagamento">Realizado (o que entrou e saiu)</option>
@@ -91,11 +94,11 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
       </Campo>
       <div className="flex items-end gap-2 sm:col-span-2">
         <button className="btn-primario">Pesquisar</button>
-        <a href="/financeiro" className="btn-secundario">
+        <Link href="/financeiro" className="btn-secundario">
           Limpar
-        </a>
+        </Link>
       </div>
-    </form>
+    </Form>
   );
 }
 
@@ -103,6 +106,8 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
   const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(criarLancamento, {});
   const [tipo, setTipo] = useState("SAIDA");
   const erro = (c: string) => estado.erros?.[c];
+  // Em caso de erro a action devolve o que foi digitado, para não perder o formulário.
+  const v = estado.valores ?? {};
   return (
     <form action={acao} key={estado.mensagem} className="grid gap-3 sm:grid-cols-4">
       <Campo label="Tipo">
@@ -112,10 +117,10 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
         </select>
       </Campo>
       <Campo label="Descrição" erro={erro("descricao")} className="sm:col-span-2">
-        <input name="descricao" placeholder="ex.: Aluguel de outubro" />
+        <input name="descricao" defaultValue={v.descricao} placeholder="ex.: Aluguel de outubro" />
       </Campo>
-      <Campo label="Categoria">
-        <select name="categoriaId">
+      <Campo label="Categoria" erro={erro("categoriaId")}>
+        <select name="categoriaId" defaultValue={v.categoriaId ?? ""}>
           <option value="">Sem categoria</option>
           {categorias
             .filter((c) => c.tipo === tipo)
@@ -127,16 +132,16 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
         </select>
       </Campo>
       <Campo label="Valor total (R$)" erro={erro("valor")}>
-        <input name="valor" inputMode="decimal" placeholder="0,00" />
+        <input name="valor" defaultValue={v.valor} inputMode="decimal" placeholder="0,00" />
       </Campo>
       <Campo label="Vencimento (1ª parcela)" erro={erro("vencimento")}>
-        <input name="vencimento" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+        <input name="vencimento" type="date" defaultValue={v.vencimento ?? ymdLocal(new Date())} />
       </Campo>
-      <Campo label="Parcelas (mensais)">
-        <input name="parcelas" type="number" min={1} max={60} defaultValue={1} />
+      <Campo label="Parcelas (mensais)" erro={erro("parcelas")}>
+        <input name="parcelas" type="number" min={1} max={60} defaultValue={v.parcelas ?? 1} />
       </Campo>
       <Campo label="Forma">
-        <select name="forma" defaultValue="">
+        <select name="forma" defaultValue={v.forma ?? ""}>
           <option value="">-</option>
           {Object.entries(FORMAS_PAGAMENTO)
             .filter(([f]) => f !== "TROCA")
@@ -148,14 +153,14 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
         </select>
       </Campo>
       <Campo label="Observações" className="sm:col-span-3">
-        <input name="observacoes" />
+        <input name="observacoes" defaultValue={v.observacoes} />
       </Campo>
       <label className="flex items-end gap-2 pb-2 text-sm">
-        <input type="checkbox" name="pago" value="sim" /> Já foi pago (à vista)
+        <input type="checkbox" name="pago" value="sim" defaultChecked={v.pago === "sim"} /> Já foi pago (à vista)
       </label>
       <div className="flex items-center gap-3 sm:col-span-4">
         <button className="btn-primario" disabled={pendente}>
-          Lançar
+          {pendente ? "Lançando..." : "Lançar"}
         </button>
         {estado.mensagem && <span className="text-sm text-green-700">{estado.mensagem}</span>}
         {estado.erros && <span className="text-sm text-red-600">Corrija os campos destacados.</span>}

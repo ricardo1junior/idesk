@@ -72,7 +72,7 @@ export function FormDadosLoja({ inicial, logo }: { inicial: DadosLoja; logo: str
             <input name="smtpPorta" defaultValue={v("smtpPorta")} inputMode="numeric" placeholder="465" />
           </Campo>
           <label className="flex items-end gap-2 pb-2 text-sm">
-            <input type="checkbox" name="smtpSeguro" defaultChecked={inicial.smtpSeguro} /> Conexão segura (SSL)
+            <input type="checkbox" name="smtpSeguro" defaultChecked={estado.valores ? estado.valores.smtpSeguro === "on" : inicial.smtpSeguro} key={String(estado.valores?.smtpSeguro)} /> Conexão segura (SSL)
           </label>
           <Campo label="Usuário" className="sm:col-span-2">
             <input name="smtpUsuario" defaultValue={v("smtpUsuario")} autoComplete="off" />

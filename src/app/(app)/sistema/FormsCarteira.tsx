@@ -27,7 +27,7 @@ export function FormCobrancaLoja({ empresaId, diaria, isenta, diariaPadrao }: { 
         <input name="diaria" inputMode="decimal" defaultValue={estado.valores?.diaria ?? (diaria === null ? "" : reais(diaria))} />
       </Campo>
       <label className="flex items-center gap-2 self-end pb-2 text-sm">
-        <input type="checkbox" name="isenta" defaultChecked={isenta} />
+        <input type="checkbox" name="isenta" defaultChecked={estado.valores ? estado.valores.isenta === "on" : isenta} />
         Isenta (não paga diária)
       </label>
       <Rodape pendente={pendente} estado={estado} texto="Salvar cobrança" />

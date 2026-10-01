@@ -1,6 +1,8 @@
+import Form from "next/form";
 import Link from "next/link";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { dataEHora, inicioDeHoje } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO, formatarReais } from "@/lib/vendas";
 
 export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
@@ -8,8 +10,7 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
   const { q } = await searchParams;
   const busca = typeof q === "string" ? q.trim() : "";
 
-  const inicioDoDia = new Date();
-  inicioDoDia.setHours(0, 0, 0, 0);
+  const inicioDoDia = inicioDeHoje();
 
   const [vendas, hoje] = await Promise.all([
     prisma.venda.findMany({
@@ -48,9 +49,9 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
         </div>
       </div>
 
-      <form className="campo max-w-md">
+      <Form action="/vendas" className="campo max-w-md">
         <input name="q" defaultValue={busca} placeholder="Nº da venda, cliente ou IMEI vendido" />
-      </form>
+      </Form>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full text-left text-sm">
@@ -72,7 +73,7 @@ export default async function Vendas({ searchParams }: PageProps<"/vendas">) {
                     #{v.numero}
                   </Link>
                 </td>
-                <td className="px-4 py-3">{v.criadoEm.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</td>
+                <td className="px-4 py-3">{dataEHora(v.criadoEm)}</td>
                 <td className="px-4 py-3">{v.cliente?.nome ?? "Consumidor"}</td>
                 <td className="px-4 py-3">{[...new Set(v.pagamentos.map((p) => FORMAS_PAGAMENTO[p.forma]))].join(", ")}</td>
                 <td className="px-4 py-3">{v.vendedor?.nome ?? "-"}</td>

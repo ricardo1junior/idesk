@@ -15,12 +15,16 @@ export function CancelarVenda({ id }: { id: string }) {
         onClick={() => {
           if (!confirm("Cancelar esta venda? Os itens voltam ao estoque e o aparelho da troca volta para o cliente.")) return;
           iniciar(async () => {
-            const r = await cancelarVenda(id);
-            if (r.erro) setErro(r.erro);
+            try {
+              const r = await cancelarVenda(id);
+              if (r.erro) setErro(r.erro);
+            } catch {
+              setErro("Não foi possível cancelar a venda. Tente de novo.");
+            }
           });
         }}
       >
-        Cancelar venda
+        {pendente ? "Cancelando..." : "Cancelar venda"}
       </button>
       {erro && <p className="mt-1 max-w-xs text-sm text-red-600">{erro}</p>}
     </div>

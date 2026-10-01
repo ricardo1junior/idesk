@@ -27,7 +27,8 @@ export function FotosAparelho({
   maximo = MAX_FOTOS_OS,
 }: {
   fotos: FotoEnviada[];
-  onChange: (fotos: FotoEnviada[]) => void;
+  /** Recebe uma função de atualização (como o setState do React): várias fotos chegam ao mesmo tempo. */
+  onChange: (atualizar: (atuais: FotoEnviada[]) => FotoEnviada[]) => void;
   maximo?: number;
 }) {
   const entrada = useRef<HTMLInputElement>(null);
@@ -40,9 +41,10 @@ export function FotosAparelho({
     setErro(undefined);
     const lista = [...arquivos].slice(0, Math.max(0, maximo - fotos.length));
     if (lista.length < arquivos.length) setErro(`Limite de ${maximo} fotos por OS.`);
-    setEnviando(lista.length);
-    let atuais = fotos;
-    for (const arquivo of lista) {
+    if (entrada.current) entrada.current.value = "";
+    setEnviando((n) => n + lista.length);
+
+    async function enviar(arquivo: File) {
       try {
         const blob = await reduzir(arquivo).catch(() => {
           throw new ErroFoto(`Não foi possível ler "${arquivo.name}". Use foto JPG ou PNG.`);
@@ -52,18 +54,25 @@ export function FotosAparelho({
         const resp = await fetch("/fotos-os", { method: "POST", body: form });
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok || !json.id) throw new ErroFoto(json.erro ?? "Falha ao enviar a foto.");
-        atuais = [...atuais, { id: json.id, tipo: tipoNovo, legenda: "", previa: URL.createObjectURL(blob) }];
-        onChange(atuais);
+        const nova: FotoEnviada = { id: json.id, tipo: tipoNovo, legenda: "", previa: URL.createObjectURL(blob) };
+        // Atualização funcional: não desfaz legendas/remoções feitas enquanto a foto subia.
+        onChange((atuais) => (atuais.length >= maximo ? atuais : [...atuais, nova]));
       } catch (e) {
         setErro(e instanceof ErroFoto ? e.message : "Falha ao enviar a foto. Verifique a conexão e tente de novo.");
       } finally {
         setEnviando((n) => n - 1);
       }
     }
-    if (entrada.current) entrada.current.value = "";
+
+    // Até 3 envios ao mesmo tempo.
+    let proximo = 0;
+    const trabalhador = async () => {
+      while (proximo < lista.length) await enviar(lista[proximo++]);
+    };
+    await Promise.all(Array.from({ length: Math.min(3, lista.length) }, trabalhador));
   }
 
-  const alterar = (id: string, parte: Partial<FotoEnviada>) => onChange(fotos.map((f) => (f.id === id ? { ...f, ...parte } : f)));
+  const alterar = (id: string, parte: Partial<FotoEnviada>) => onChange((atuais) => atuais.map((f) => (f.id === id ? { ...f, ...parte } : f)));
 
   return (
     <div className="space-y-3">
@@ -117,7 +126,7 @@ export function FotosAparelho({
                   onChange={(e) => alterar(f.id, { legenda: e.target.value })}
                   className="w-full rounded-md border border-zinc-300 px-2 py-1 text-xs"
                 />
-                <button type="button" className="text-xs text-zinc-500 hover:text-red-600" onClick={() => onChange(fotos.filter((x) => x.id !== f.id))}>
+                <button type="button" className="text-xs text-zinc-500 hover:text-red-600" onClick={() => onChange((atuais) => atuais.filter((x) => x.id !== f.id))}>
                   Remover
                 </button>
               </div>

@@ -2,7 +2,7 @@ import type { Tx } from "@/lib/db";
 import type { FormaPagamento, TipoLancamento } from "@prisma/client";
 import { z } from "zod";
 import { paraNumero } from "./estoque";
-import { dataHoraLocal } from "./tempo";
+import { dataHoraLocal, somarDias, somarMeses, ymdLocal, ymdValido } from "./tempo";
 
 export const CATEGORIAS_PADRAO: Record<TipoLancamento, string[]> = {
   ENTRADA: ["Vendas", "Serviços (OS)", "Outras entradas"],
@@ -42,26 +42,30 @@ export function parcelarPagamento(
   const base = Math.floor(centavos / n);
   return Array.from({ length: n }, (_, i) => {
     const v = i === n - 1 ? centavos - base * (n - 1) : base;
-    let venc: Date;
-    if (forma === "CREDITO") venc = new Date(data.getTime() + 30 * (i + 1) * DIA_MS);
-    else if (primeiroVencimento && COM_VENCIMENTO.includes(forma)) {
-      venc = dataHoraLocal(primeiroVencimento, "12:00");
-      venc.setMonth(venc.getMonth() + i);
-    } else {
-      venc = new Date(data);
-      venc.setMonth(venc.getMonth() + i + 1);
-    }
+    // Datas mensais pelo calendário de Brasília; dia 31 cai no último dia dos meses curtos.
+    const venc =
+      forma === "CREDITO"
+        ? new Date(data.getTime() + 30 * (i + 1) * DIA_MS)
+        : primeiroVencimento && COM_VENCIMENTO.includes(forma)
+          ? dataHoraLocal(somarMeses(primeiroVencimento, i), "12:00")
+          : dataHoraLocal(somarMeses(ymdLocal(data), i + 1), "12:00");
     return { valor: v / 100, vencimento: venc, pago: false, parcela: n > 1 ? i + 1 : null, totalParcelas: n > 1 ? n : null };
   });
 }
 
+// createMany com skipDuplicates vira ON CONFLICT DO NOTHING: duas vendas simultâneas não colidem na
+// chave única (empresaId, nome, tipo) e a transação não é abortada.
 export async function categoriaId(tx: Tx, tipo: TipoLancamento, nome: string): Promise<string> {
-  const c = (await tx.categoriaFinanceira.findFirst({ where: { nome, tipo } })) ?? (await tx.categoriaFinanceira.create({ data: { nome, tipo } }));
-  return c.id;
+  const achar = () => tx.categoriaFinanceira.findFirst({ where: { nome, tipo }, select: { id: true } });
+  const c = await achar();
+  if (c) return c.id;
+  await tx.categoriaFinanceira.createMany({ data: [{ nome, tipo }], skipDuplicates: true });
+  return (await achar())!.id;
 }
 
 export async function garantirCategorias(tx: Tx) {
-  for (const tipo of ["ENTRADA", "SAIDA"] as const) for (const nome of CATEGORIAS_PADRAO[tipo]) await categoriaId(tx, tipo, nome);
+  const data = (["ENTRADA", "SAIDA"] as const).flatMap((tipo) => CATEGORIAS_PADRAO[tipo].map((nome) => ({ nome, tipo })));
+  await tx.categoriaFinanceira.createMany({ data, skipDuplicates: true });
 }
 
 // Filtros da tela de fluxo de caixa, lidos da URL.
@@ -76,28 +80,27 @@ export const PERIODOS: Record<Periodo, string> = {
   personalizado: "Personalizado",
 };
 
+// Intervalos pelo calendário de Brasília (início do dia às 00:00 -03:00), mesmo com o servidor em UTC.
 export function intervaloDoPeriodo(periodo: Periodo, de?: string, ate?: string, agora = new Date()): { inicio: Date; fim: Date } {
-  const dia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const hoje = dia(agora);
-  const amanha = new Date(hoje.getTime() + DIA_MS);
+  const h = ymdLocal(agora);
+  const dia = (ymd: string) => dataHoraLocal(ymd, "00:00");
+  const mes = h.slice(0, 8) + "01";
+  const amanha = dia(somarDias(h, 1));
   switch (periodo) {
     case "hoje":
-      return { inicio: hoje, fim: amanha };
+      return { inicio: dia(h), fim: amanha };
     case "7dias":
-      return { inicio: new Date(hoje.getTime() - 6 * DIA_MS), fim: amanha };
+      return { inicio: dia(somarDias(h, -6)), fim: amanha };
     case "30dias":
-      return { inicio: hoje, fim: new Date(hoje.getTime() + 31 * DIA_MS) };
+      return { inicio: dia(h), fim: dia(somarDias(h, 31)) };
     case "mes_anterior":
-      return { inicio: new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), fim: new Date(hoje.getFullYear(), hoje.getMonth(), 1) };
+      return { inicio: dia(somarMeses(mes, -1)), fim: dia(mes) };
     case "ano":
-      return { inicio: new Date(hoje.getFullYear(), 0, 1), fim: new Date(hoje.getFullYear() + 1, 0, 1) };
-    case "personalizado": {
-      const i = de ? new Date(`${de}T00:00:00`) : new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      const f = ate ? new Date(new Date(`${ate}T00:00:00`).getTime() + DIA_MS) : amanha;
-      return { inicio: i, fim: f };
-    }
+      return { inicio: dia(`${h.slice(0, 4)}-01-01`), fim: dia(`${Number(h.slice(0, 4)) + 1}-01-01`) };
+    case "personalizado":
+      return { inicio: dia(ymdValido(de) ? de : mes), fim: ymdValido(ate) ? dia(somarDias(ate, 1)) : amanha };
     default:
-      return { inicio: new Date(hoje.getFullYear(), hoje.getMonth(), 1), fim: new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1) };
+      return { inicio: dia(mes), fim: dia(somarMeses(mes, 1)) };
   }
 }
 
@@ -114,7 +117,8 @@ export const lancamentoSchema = z.object({
   valor: z
     .unknown()
     .transform(paraNumero)
-    .refine((v) => Number.isFinite(v) && v > 0, "Informe o valor"),
+    .refine((v) => Number.isFinite(v), "Valor inválido")
+    .refine((v) => v > 0, "Informe o valor"),
   vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data"),
   parcelas: z.coerce.number().int().min(1).max(60).default(1),
   pago: z.enum(["sim"]).optional(),

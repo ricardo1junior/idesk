@@ -8,6 +8,7 @@ import { formatarDocumento } from "@/lib/documentos";
 import { prisma } from "@/lib/db";
 import { linkFocus } from "@/lib/nfe/focus";
 import { pode } from "@/lib/permissoes";
+import { dataEHora } from "@/lib/tempo";
 import { enviarEmailVenda } from "../../email/actions";
 import { CancelarVenda } from "./CancelarVenda";
 import { carregarVenda } from "./dados";
@@ -16,13 +17,13 @@ import { NotasDaVenda } from "./NotasDaVenda";
 export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">) {
   const usuario = await exigirUsuario("vendas");
   const { id } = await params;
-  const venda = await carregarVenda(id);
-  if (!venda) notFound();
-  const cancelada = venda.status === "CANCELADA";
-  const [notas, empresa] = await Promise.all([
+  const [venda, notas, empresa] = await Promise.all([
+    carregarVenda(id),
     prisma.notaFiscal.findMany({ where: { vendaId: id }, orderBy: { criadoEm: "asc" } }),
     prisma.empresaFiscal.findFirst({ select: { uf: true } }),
   ]);
+  if (!venda) notFound();
+  const cancelada = venda.status === "CANCELADA";
   // NF-e para empresa com IE ou cliente de outro estado; NFC-e no balcão.
   const sugerido =
     venda.cliente && ((venda.cliente.tipo === "PJ" && venda.cliente.inscricaoEstadual) || (empresa && venda.cliente.uf && venda.cliente.uf !== empresa.uf))
@@ -41,7 +42,7 @@ export default async function DetalheVenda({ params }: PageProps<"/vendas/[id]">
             {cancelada && <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Cancelada</span>}
           </h1>
           <p className="text-sm text-zinc-500">
-            {venda.criadoEm.toLocaleString("pt-BR")} · vendedor {venda.vendedor?.nome ?? "-"}
+            {dataEHora(venda.criadoEm)} · vendedor {venda.vendedor?.nome ?? "-"}
           </p>
         </div>
         <div className="flex flex-wrap items-start gap-2">

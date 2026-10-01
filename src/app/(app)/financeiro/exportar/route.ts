@@ -1,6 +1,7 @@
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { lerFiltros, whereDosFiltros } from "@/lib/financeiro-filtros";
+import { dataLocal } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
 
 // Exporta os lançamentos filtrados em CSV (abre no Excel com ; como separador).
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
     take: 20000,
   });
   const campo = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const data = (d: Date | null) => (d ? d.toLocaleDateString("pt-BR") : "");
+  const data = (d: Date | null) => (d ? dataLocal(d) : "");
   const linhas = [
     ["Tipo", "Descrição", "Parcela", "Categoria", "Cliente/Fornecedor", "Forma", "Situação", "Vencimento", "Pago em", "Valor"],
     ...lancamentos.map((l) => [

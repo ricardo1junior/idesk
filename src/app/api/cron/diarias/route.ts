@@ -14,5 +14,7 @@ export async function GET(req: Request) {
       console.error("Falha na diária da loja", l.id, e);
     });
   }
-  return Response.json({ lojas: lojas.length, falhas });
+  // Aproveita para apagar sessões vencidas.
+  const sessoes = await prismaBase.sessao.deleteMany({ where: { expiraEm: { lt: new Date() } } });
+  return Response.json({ lojas: lojas.length, falhas, sessoesApagadas: sessoes.count });
 }

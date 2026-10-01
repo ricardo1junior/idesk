@@ -1,5 +1,7 @@
 import type { StatusOS, TipoSenha } from "@prisma/client";
 import { z } from "zod";
+import { paraNumero } from "./estoque";
+import { ymdValido } from "./tempo";
 
 export const STATUS_OS: Record<StatusOS, { label: string; cor: string }> = {
   ABERTA: { label: "Aberta", cor: "bg-sky-100 text-sky-800" },
@@ -64,7 +66,7 @@ export const aberturaOSSchema = z
     precisaBackup: z.enum(["sim"]).optional(),
     backupObs: opcional,
     defeitoRelatado: z.string().trim().min(3, "Descreva o defeito relatado"),
-    previsaoEntrega: opcional,
+    previsaoEntrega: opcional.refine((v) => !v || ymdValido(v), "Data inválida"),
     garantiaDias: z.coerce.number().int().min(0).default(90),
   })
   .superRefine((d, ctx) => {
@@ -80,10 +82,48 @@ export const itemOSSchema = z.object({
   descricao: z.string().trim().min(2, "Descreva o item"),
   quantidade: z.coerce.number().int().min(1),
   valorUnit: z
-    .string()
-    .transform((v) => Number(v.replace(/\./g, "").replace(",", ".")))
+    .unknown()
+    .transform(paraNumero)
     .refine((v) => Number.isFinite(v) && v >= 0, "Valor inválido"),
 });
+
+// Para onde cada status pode ir. Antes da entrega o fluxo é livre (pode voltar etapas).
+// Cancelada é final; entregue só volta para concluída (desfazer entrega marcada por engano).
+// Retorno do cliente depois da entrega vira uma OS nova (garantia).
+const TODOS_STATUS: StatusOS[] = ["ABERTA", "EM_ANALISE", "ORCAMENTO_ENVIADO", "APROVADA", "EM_EXECUCAO", "CONCLUIDA", "ENTREGUE", "CANCELADA"];
+export const TRANSICOES_OS: Record<StatusOS, StatusOS[]> = {
+  ABERTA: TODOS_STATUS,
+  EM_ANALISE: TODOS_STATUS,
+  ORCAMENTO_ENVIADO: TODOS_STATUS,
+  APROVADA: TODOS_STATUS,
+  EM_EXECUCAO: TODOS_STATUS,
+  CONCLUIDA: TODOS_STATUS,
+  ENTREGUE: ["ENTREGUE", "CONCLUIDA"],
+  CANCELADA: ["CANCELADA"],
+};
+
+export const statusOSValido = (v: unknown): v is StatusOS => typeof v === "string" && Object.hasOwn(STATUS_OS, v);
+export const podeMudarStatusOS = (de: StatusOS, para: StatusOS) => TRANSICOES_OS[de].includes(para);
+/** Orçamento (itens e desconto) não muda depois de entregue ou cancelada. */
+export const orcamentoTravado = (s: StatusOS) => s === "ENTREGUE" || s === "CANCELADA";
+
+// Situação do pagamento: recebido (PAGO), a receber (PENDENTE) e o que ainda falta lançar.
+export function resumoPagamentoOS(total: number, lancamentos: { status: string; valor: number | { toString(): string } }[]) {
+  const centavos = (v: number | { toString(): string }) => Math.round(Number(v.toString()) * 100);
+  let recebido = 0;
+  let aReceber = 0;
+  for (const l of lancamentos) {
+    if (l.status === "PAGO") recebido += centavos(l.valor);
+    else if (l.status === "PENDENTE") aReceber += centavos(l.valor);
+  }
+  const t = centavos(total);
+  return {
+    recebido: recebido / 100,
+    aReceber: aReceber / 100,
+    faltaLancar: Math.max(0, t - recebido - aReceber) / 100,
+    quitada: t > 0 && recebido >= t,
+  };
+}
 
 export function formatarMoeda(valor: number | string | { toString(): string }): string {
   return Number(valor.toString()).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

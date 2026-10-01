@@ -22,6 +22,8 @@ export function FormEntrega({
 }) {
   const [estado, acao, salvando] = useActionState<EstadoFormulario, FormData>(criarEntrega, {});
   const erro = (c: string) => estado.erros?.[c];
+  // Com erro de validação, os campos voltam com o que foi digitado.
+  const v = estado.valores ?? {};
   const [cliente, setCliente] = useState(inicial);
   const [dados, setDados] = useState<Dados | null>(null);
   const [endereco, setEndereco] = useState("");
@@ -128,7 +130,7 @@ export function FormEntrega({
       <section className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Detalhes</h2>
         <Campo label="Tipo" className="sm:col-span-2">
-          <select name="tipo" defaultValue="ENTREGA">
+          <select name="tipo" defaultValue={v.tipo ?? "ENTREGA"} key={v.tipo}>
             {Object.entries(TIPOS_ENTREGA).map(([k, l]) => (
               <option key={k} value={k}>
                 {l}
@@ -136,15 +138,15 @@ export function FormEntrega({
             ))}
           </select>
         </Campo>
-        <Campo label="Dia">
-          <input name="dia" type="date" />
+        <Campo label="Dia" erro={erro("dia")}>
+          <input name="dia" type="date" defaultValue={v.dia} />
         </Campo>
         <Campo label="Hora de saída" erro={erro("hora")}>
-          <input name="hora" type="time" />
+          <input name="hora" type="time" defaultValue={v.hora} />
         </Campo>
         {dados && dados.vendas.length > 0 && (
-          <Campo label="Venda" className="sm:col-span-2">
-            <select name="vendaId" defaultValue={vendaId ?? ""}>
+          <Campo label="Venda" erro={erro("vendaId")} className="sm:col-span-2">
+            <select name="vendaId" defaultValue={v.vendaId ?? vendaId ?? ""} key={v.vendaId}>
               <option value="">Nenhuma</option>
               {dados.vendas.map((v) => (
                 <option key={v.id} value={v.id}>
@@ -155,8 +157,8 @@ export function FormEntrega({
           </Campo>
         )}
         {dados && dados.ordens.length > 0 && (
-          <Campo label="Ordem de serviço" className="sm:col-span-2">
-            <select name="osId" defaultValue={osId ?? ""}>
+          <Campo label="Ordem de serviço" erro={erro("osId")} className="sm:col-span-2">
+            <select name="osId" defaultValue={v.osId ?? osId ?? ""} key={v.osId}>
               <option value="">Nenhuma</option>
               {dados.ordens.map((o) => (
                 <option key={o.id} value={o.id}>
@@ -166,11 +168,11 @@ export function FormEntrega({
             </select>
           </Campo>
         )}
-        <Campo label="Taxa de entrega (R$)">
-          <input name="taxa" inputMode="decimal" placeholder="0,00" />
+        <Campo label="Taxa de entrega (R$)" erro={erro("taxa")}>
+          <input name="taxa" inputMode="decimal" placeholder="0,00" defaultValue={v.taxa} />
         </Campo>
-        <Campo label="Quem vai" className="sm:col-span-2">
-          <select name="responsavelId" defaultValue="">
+        <Campo label="Quem vai" erro={erro("responsavelId")} className="sm:col-span-2">
+          <select name="responsavelId" defaultValue={v.responsavelId ?? ""} key={v.responsavelId}>
             <option value="">A definir</option>
             {usuarios.map((u) => (
               <option key={u.id} value={u.id}>
@@ -180,7 +182,7 @@ export function FormEntrega({
           </select>
         </Campo>
         <Campo label="Observações" className="sm:col-span-4">
-          <input name="observacoes" placeholder="ex.: interfone 12, falar com a portaria" />
+          <input name="observacoes" defaultValue={v.observacoes} placeholder="ex.: interfone 12, falar com a portaria" />
         </Campo>
       </section>
 

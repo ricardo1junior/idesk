@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { formatarDocumento } from "@/lib/documentos";
 import { lerXmlNFe } from "@/lib/nfe/ler-xml";
 import { formatarReais } from "@/lib/vendas";
+import { dataLocal } from "@/lib/tempo";
 
 export default async function NotaEntrada({ params }: PageProps<"/notas/entrada/[id]">) {
   await exigirUsuario("notasFiscais");
@@ -31,7 +32,7 @@ export default async function NotaEntrada({ params }: PageProps<"/notas/entrada/
             NF {nota.numero}/{nota.serie}
           </h1>
           <p className="text-sm text-zinc-500">
-            {nota.fornecedor.razaoSocial} · {formatarDocumento(nota.fornecedor.cnpj)} · emitida em {nota.emissao.toLocaleDateString("pt-BR")}
+            {nota.fornecedor.razaoSocial} · {formatarDocumento(nota.fornecedor.cnpj)} · emitida em {dataLocal(nota.emissao)}
           </p>
         </div>
         <a href={`/notas/entrada/${nota.id}/xml`} className="btn-secundario">
@@ -71,7 +72,7 @@ export default async function NotaEntrada({ params }: PageProps<"/notas/entrada/
             {nota.lancamentos.map((l) => (
               <tr key={l.id} className="border-t border-zinc-100 first:border-0">
                 <td className="py-2">{l.descricao}</td>
-                <td className="py-2">vence {l.vencimento.toLocaleDateString("pt-BR")}</td>
+                <td className="py-2">vence {dataLocal(l.vencimento)}</td>
                 <td className="py-2">{l.status === "PAGO" ? "Pago" : l.status === "CANCELADO" ? "Cancelado" : "Em aberto"}</td>
                 <td className="py-2 text-right">{formatarReais(Number(l.valor))}</td>
               </tr>

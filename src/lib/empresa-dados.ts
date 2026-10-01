@@ -8,6 +8,18 @@ const opcional = z.string().trim().transform((v) => v || null);
 export const COR_PADRAO = "#0071e3";
 export const MAX_BYTES_LOGO = 512 * 1024;
 
+const PORTAS_SMTP = [25, 465, 587, 2525];
+// Recusa endereços locais e de rede privada (localhost, 10.x, 192.168.x, 169.254.x, IPv6 local...).
+function hostPublico(host: string) {
+  const h = host.toLowerCase().replace(/^\[|\]$/g, "");
+  if (h === "localhost" || h.endsWith(".localhost") || h.endsWith(".local") || h.endsWith(".internal") || !h.includes(".")) return false;
+  if (h.includes(":")) return false; // IPv6 literal
+  const ip = h.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (!ip) return true;
+  const [a, b] = [Number(ip[1]), Number(ip[2])];
+  return !(a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a >= 224);
+}
+
 export const dadosLojaSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome da loja"),
   razaoSocial: opcional,
@@ -30,12 +42,13 @@ export const dadosLojaSchema = z.object({
     .trim()
     .refine((v) => !v || /^#[0-9a-fA-F]{6}$/.test(v), "Cor no formato #RRGGBB")
     .transform((v) => (v ? v.toLowerCase() : null)),
-  smtpHost: opcional,
+  // Só servidores de e-mail públicos: impede usar o envio para acessar a rede interna do servidor.
+  smtpHost: opcional.refine((v) => !v || hostPublico(v), "Informe o endereço do servidor de e-mail (ex.: smtp.gmail.com)"),
   smtpPorta: z
     .string()
     .trim()
     .transform((v) => (v ? Number(v) : null))
-    .refine((v) => v == null || (Number.isInteger(v) && v > 0 && v < 65536), "Porta inválida"),
+    .refine((v) => v == null || PORTAS_SMTP.includes(v), "Use a porta 587, 465, 25 ou 2525"),
   smtpSeguro: z.string().optional().transform((v) => v === "on" || v === "true"),
   smtpUsuario: opcional,
   smtpSenha: z.string().optional(),

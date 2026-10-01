@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { buscarParaVenda, finalizarVenda, type OpcaoVenda } from "@/app/(app)/vendas/actions";
 import { formatarDocumento } from "@/lib/documentos";
 import { CONDICOES, paraNumero } from "@/lib/estoque";
@@ -97,6 +97,11 @@ export function PDV() {
 
   function finalizar() {
     setErro(undefined);
+    const itemInvalido = itens.find((_, n) => !Number.isFinite(itensCalc[n].valorUnit) || !Number.isFinite(itensCalc[n].desconto));
+    if (itemInvalido) return setErro(`Valor ou desconto inválido em "${itemInvalido.descricao}".`);
+    if (!Number.isFinite(descontoGeralValor)) return setErro("Desconto geral inválido.");
+    const pagInvalido = pagamentos.find((p) => !Number.isFinite(paraNumero(p.valor)));
+    if (pagInvalido) return setErro(`Valor inválido no pagamento em ${FORMAS_PAGAMENTO[pagInvalido.forma]}.`);
     const payload = {
       clienteId: cliente?.id ?? null,
       itens: itens.map((i, n) => ({
@@ -120,9 +125,14 @@ export function PDV() {
       observacoes,
     };
     iniciar(async () => {
-      const r = await finalizarVenda(payload);
-      if (r.erro) setErro(r.erro);
-      else if (r.id) router.push(`/vendas/${r.id}`);
+      try {
+        const r = await finalizarVenda(payload);
+        if (r.erro) setErro(r.erro);
+        else if (r.id) router.push(`/vendas/${r.id}`);
+      } catch {
+        // Falha inesperada (rede, servidor): o carrinho fica como está para tentar de novo.
+        setErro("Não foi possível finalizar a venda; os itens continuam no carrinho. Tente de novo. Se os créditos da loja acabaram, ela está em modo consulta e não registra vendas.");
+      }
     });
   }
 
@@ -165,12 +175,12 @@ export function PDV() {
                       </div>
                     </td>
                     <td className="py-2 pr-2">
-                      <div className="campo">
+                      <div className={`campo ${Number.isFinite(itensCalc[n].valorUnit) ? "" : "campo-erro"}`}>
                         <input aria-label="Valor unitário" inputMode="decimal" value={i.valorUnit} onChange={(e) => alterarItem(n, { valorUnit: e.target.value })} />
                       </div>
                     </td>
                     <td className="py-2 pr-2">
-                      <div className="campo">
+                      <div className={`campo ${Number.isFinite(itensCalc[n].desconto) ? "" : "campo-erro"}`}>
                         <input aria-label="Desconto do item" inputMode="decimal" placeholder="R$ ou %" value={i.desconto} onChange={(e) => alterarItem(n, { desconto: e.target.value })} />
                       </div>
                     </td>
@@ -302,11 +312,43 @@ export function PDV() {
 function BuscaProduto({ onEscolher }: { onEscolher: (o: OpcaoVenda) => void }) {
   const [termo, setTermo] = useState("");
   const [opcoes, setOpcoes] = useState<OpcaoVenda[]>([]);
+  // Número da última busca: respostas que chegam fora de ordem são descartadas.
+  const ultima = useRef(0);
+  const espera = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    const t = setTimeout(() => buscarParaVenda(termo).then(setOpcoes), 250);
-    return () => clearTimeout(t);
+    const q = termo.trim();
+    if (q.length < 2) return;
+    espera.current = setTimeout(async () => {
+      const n = ++ultima.current;
+      const r = await buscarParaVenda(q);
+      if (n === ultima.current) setOpcoes(r);
+    }, 250);
+    return () => clearTimeout(espera.current);
   }, [termo]);
+
+  function escolher(o: OpcaoVenda) {
+    ultima.current++;
+    onEscolher(o);
+    setTermo("");
+    setOpcoes([]);
+  }
+
+  // Leitor de código de barras: busca o termo lido agora e adiciona o item que bate exato
+  // (código de barras, SKU, IMEI ou série) ou o único resultado.
+  async function lerCodigo() {
+    const q = termo.trim();
+    if (q.length < 2) return;
+    clearTimeout(espera.current); // a busca com atraso da digitação não pode passar na frente desta
+    const n = ++ultima.current;
+    const r = await buscarParaVenda(q);
+    if (n !== ultima.current) return;
+    const disponiveis = r.filter((o) => o.disponivel > 0);
+    const exatos = disponiveis.filter((o) => o.codigos.some((c) => c.toUpperCase() === q.toUpperCase()));
+    const unico = exatos.length === 1 ? exatos[0] : exatos.length === 0 && r.length === 1 ? disponiveis[0] : undefined;
+    if (unico) escolher(unico);
+    else setOpcoes(r);
+  }
 
   return (
     <div className="relative">
@@ -314,14 +356,18 @@ function BuscaProduto({ onEscolher }: { onEscolher: (o: OpcaoVenda) => void }) {
         <span>Buscar produto</span>
         <input
           value={termo}
-          onChange={(e) => setTermo(e.target.value)}
+          onChange={(e) => {
+            setTermo(e.target.value);
+            if (e.target.value.trim().length < 2) {
+              ultima.current++;
+              setOpcoes([]);
+            }
+          }}
           placeholder="Nome, modelo, IMEI, série ou código de barras"
           onKeyDown={(e) => {
-            // Leitor de código de barras: Enter adiciona o primeiro resultado.
-            if (e.key === "Enter" && opcoes[0]) {
+            if (e.key === "Enter") {
               e.preventDefault();
-              onEscolher(opcoes[0]);
-              setTermo("");
+              lerCodigo();
             }
           }}
         />
@@ -334,10 +380,7 @@ function BuscaProduto({ onEscolher }: { onEscolher: (o: OpcaoVenda) => void }) {
                 type="button"
                 disabled={o.disponivel < 1}
                 className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-zinc-50 disabled:opacity-40"
-                onClick={() => {
-                  onEscolher(o);
-                  setTermo("");
-                }}
+                onClick={() => escolher(o)}
               >
                 <span>
                   <span className="font-medium">{o.descricao}</span>

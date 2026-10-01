@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { exigirUsuario } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { ErroSomenteConsulta, exigirGravacao, prisma } from "@/lib/db";
 import { anexoLogo, enviarEmail, nomeDaLoja } from "@/lib/email";
 import { emailOS, emailVenda } from "@/lib/email-modelos";
 import { TIPOS_FOTO } from "@/lib/fotos";
@@ -24,6 +24,13 @@ async function emailDoCliente(clienteId: string, para: string) {
 
 export async function enviarEmailOS(osId: string, para: string): Promise<{ erro?: string; ok?: string }> {
   await exigirUsuario("os");
+  // O envio fica registrado no histórico da OS: sem poder gravar, nem envia.
+  try {
+    await exigirGravacao();
+  } catch (e) {
+    if (e instanceof ErroSomenteConsulta) return { erro: e.message };
+    throw e;
+  }
   const os = await prisma.ordemServico.findUnique({
     where: { id: osId },
     include: {

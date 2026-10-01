@@ -44,22 +44,25 @@ export async function salvarProduto(id: string | null, _e: EstadoFormulario, for
 // Entrada ou ajuste de quantidade para produtos sem IMEI (acessórios e peças).
 export async function movimentarEstoque(produtoId: string, _e: EstadoFormulario, formData: FormData): Promise<EstadoFormulario> {
   await exigirUsuario("editarProdutos");
-  const tipo = formData.get("tipo") === "AJUSTE" ? "AJUSTE" : "ENTRADA_NOTA";
-  const quantidade = Math.trunc(paraNumero(formData.get("quantidade")));
-  const custo = paraNumero(formData.get("custoUnit"));
-  const referencia = String(formData.get("referencia") ?? "").trim() || null;
-  if (!quantidade) return { erros: { quantidade: "Informe a quantidade" } };
-  if (tipo === "ENTRADA_NOTA" && quantidade < 0) return { erros: { quantidade: "Entrada deve ser positiva" } };
+  const valores = Object.fromEntries([...formData.entries()].map(([k, v]) => [k, String(v)]));
+  const tipo = valores.tipo === "AJUSTE" ? "AJUSTE" : "ENTRADA_NOTA";
+  const quantidade = Number(valores.quantidade);
+  const custo = paraNumero(valores.custoUnit);
+  const referencia = valores.referencia?.trim() || null;
+  if (!Number.isInteger(quantidade) || !quantidade) return { erros: { quantidade: "Informe a quantidade (número inteiro)" }, valores };
+  if (tipo === "ENTRADA_NOTA" && quantidade < 0) return { erros: { quantidade: "Entrada deve ser positiva" }, valores };
+  if (!Number.isFinite(custo) || custo < 0) return { erros: { custoUnit: "Valor inválido" }, valores };
 
   const erro = await prisma.$transaction(async (tx) => {
-    const p = await tx.produto.findUniqueOrThrow({ where: { id: produtoId } });
+    const p = await tx.produto.findFirst({ where: { id: produtoId }, select: { tipo: true, estoque: true } });
+    if (!p) return "Produto não encontrado.";
     if (p.tipo === "APARELHO") return "Aparelhos entram no estoque um a um, com IMEI/série.";
-    if (p.estoque + quantidade < 0) return `Estoque atual é ${p.estoque}; não dá para retirar ${-quantidade}.`;
-
-    await entradaComCustoMedio(tx, produtoId, quantidade, custo, tipo, referencia);
+    if (!(await entradaComCustoMedio(tx, produtoId, quantidade, custo, tipo, referencia))) {
+      return `Estoque atual é ${p.estoque}; não dá para retirar ${-quantidade}.`;
+    }
     return null;
   });
-  if (erro) return { erros: { quantidade: erro } };
+  if (erro) return { erros: { quantidade: erro }, valores };
   revalidatePath(`/estoque/produtos/${produtoId}`);
   revalidatePath("/estoque");
   return { mensagem: "Estoque atualizado." };
@@ -72,6 +75,9 @@ export async function entradaAparelho(produtoId: string, _e: EstadoFormulario, f
   const r = aparelhoSchema.safeParse(valores);
   if (!r.success) return { erros: errosDe(r.error.issues), valores };
   if (!r.data.imei && !r.data.serial) return { erros: { imei: "Informe o IMEI ou o número de série" }, valores };
+  const produto = await prisma.produto.findFirst({ where: { id: produtoId }, select: { tipo: true } });
+  if (!produto) return { erros: { geral: "Produto não encontrado." }, valores };
+  if (produto.tipo !== "APARELHO") return { erros: { geral: "Só produtos do tipo aparelho recebem unidades com IMEI/série." }, valores };
 
   try {
     await prisma.$transaction(async (tx) => {

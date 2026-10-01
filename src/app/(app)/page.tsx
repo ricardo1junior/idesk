@@ -2,32 +2,33 @@ import Link from "next/link";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { pode } from "@/lib/permissoes";
-import { dataHoraLocal, somarDias, ymdLocal } from "@/lib/tempo";
+import { dataHoraLocal, inicioDeHoje, somarDias, ymdLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/vendas";
 
 export const dynamic = "force-dynamic";
 
 export default async function Inicio() {
   const usuario = await exigirUsuario();
-  const inicioDoDia = new Date();
-  inicioDoDia.setHours(0, 0, 0, 0);
   const hoje = ymdLocal(new Date());
-  const [agendadosHoje, entregasAbertas] = await Promise.all([
-    prisma.agendamento.count({ where: { inicio: { gte: dataHoraLocal(hoje, "00:00"), lt: dataHoraLocal(somarDias(hoje, 1), "00:00") }, status: { in: ["AGENDADO", "CONFIRMADO"] } } }),
-    prisma.entrega.count({ where: { status: { in: ["PENDENTE", "EM_ROTA"] } } }),
-  ]);
-  const [osAbertas, clientes, aparelhos, vendasHoje] = await Promise.all([
+  // Só consulta o que o perfil vai ver.
+  const [agendadosHoje, entregasAbertas, osAbertas, clientes, aparelhos, vendidoHoje] = await Promise.all([
+    pode(usuario.perfil, "agenda")
+      ? prisma.agendamento.count({ where: { inicio: { gte: dataHoraLocal(hoje, "00:00"), lt: dataHoraLocal(somarDias(hoje, 1), "00:00") }, status: { in: ["AGENDADO", "CONFIRMADO"] } } })
+      : 0,
+    pode(usuario.perfil, "entregas") ? prisma.entrega.count({ where: { status: { in: ["PENDENTE", "EM_ROTA"] } } }) : 0,
     prisma.ordemServico.count({ where: { status: { notIn: ["ENTREGUE", "CANCELADA"] } } }),
     prisma.cliente.count(),
     prisma.aparelho.count({ where: { situacao: "EM_ESTOQUE" } }),
-    prisma.venda.aggregate({ where: { status: "FINALIZADA", criadoEm: { gte: inicioDoDia } }, _sum: { total: true } }),
+    pode(usuario.perfil, "vendas")
+      ? prisma.venda.aggregate({ where: { status: "FINALIZADA", criadoEm: { gte: inicioDeHoje() } }, _sum: { total: true } }).then((r) => Number(r._sum.total ?? 0))
+      : 0,
   ]);
 
   return (
     <div className="max-w-5xl space-y-6">
       <h1 className="text-2xl font-semibold">Olá, {usuario.nome.split(" ")[0]}</h1>
       <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {pode(usuario.perfil, "vendas") && <Indicador titulo="Vendido hoje" valor={formatarReais(Number(vendasHoje._sum.total ?? 0))} />}
+        {pode(usuario.perfil, "vendas") && <Indicador titulo="Vendido hoje" valor={formatarReais(vendidoHoje)} />}
         {pode(usuario.perfil, "agenda") && (
           <Link href="/agenda">
             <Indicador titulo="Clientes agendados hoje" valor={agendadosHoje} />

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { FichaAparelho } from "@/components/FichaAparelho";
 import { formatarDocumento } from "@/lib/documentos";
 import { formatarMoeda, STATUS_OS, TIPOS_SENHA } from "@/lib/os";
+import { dataEHora, dataLocal } from "@/lib/tempo";
 import { carregarOS } from "../dados";
 import { BotaoImprimir } from "./BotaoImprimir";
 
@@ -27,8 +28,8 @@ export default async function ImprimirOS({ params }: PageProps<"/os/[id]/imprimi
         <CabecalhoLoja />
         <div className="text-right">
           <div className="text-xl font-bold">OS #{os.numero}</div>
-          <div className="text-xs">Entrada: {os.criadoEm.toLocaleString("pt-BR")}</div>
-          {os.previsaoEntrega && <div className="text-xs">Previsão: {os.previsaoEntrega.toLocaleDateString("pt-BR")}</div>}
+          <div className="text-xs">Entrada: {dataEHora(os.criadoEm)}</div>
+          {os.previsaoEntrega && <div className="text-xs">Previsão: {dataLocal(os.previsaoEntrega)}</div>}
           <div className="text-xs">Status: {STATUS_OS[os.status].label}</div>
         </div>
       </header>

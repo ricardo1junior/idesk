@@ -9,7 +9,8 @@ import { cnpjValido, somenteDigitos } from "@/lib/documentos";
 import { criptografar } from "@/lib/cripto";
 import { empresaAtualId, prisma } from "@/lib/db";
 import { ErroNota, montarNota } from "@/lib/nfe/emissao";
-import { cancelarNotaFocus, consultarNota, enviarNota } from "@/lib/nfe/focus";
+import { horaLocal } from "@/lib/tempo";
+import { cancelarNotaFocus, consultarNota, enviarNota, SEM_RESPOSTA } from "@/lib/nfe/focus";
 
 export async function emitirNota(vendaId: string, modelo: ModeloNota): Promise<{ erro?: string }> {
   const usuario = await exigirUsuario("emitirNota");
@@ -54,11 +55,16 @@ export async function emitirNota(vendaId: string, modelo: ModeloNota): Promise<{
   }
 
   const referencia = `venda${venda.numero}-${modelo.toLowerCase()}-${Date.now().toString(36)}`;
-  const nota = await prisma.notaFiscal.create({
-    data: { referencia, modelo, ambiente: empresa.ambiente, vendaId, usuarioId: usuario.id },
+  // Clique duplo ou duas abas: só uma emissão por venda de cada vez.
+  const nota = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`nota:${vendaId}`}))`;
+    if (await tx.notaFiscal.findFirst({ where: { vendaId, status: { in: ["AUTORIZADA", "PROCESSANDO"] } }, select: { id: true } })) return null;
+    return tx.notaFiscal.create({ data: { referencia, modelo, ambiente: empresa.ambiente, vendaId, usuarioId: usuario.id } });
   });
+  if (!nota) return { erro: "Esta venda já tem nota emitida ou em processamento." };
   const r = await enviarNota(empresa.ambiente, modelo, referencia, dados);
-  await prisma.notaFiscal.update({ where: { id: nota.id }, data: r });
+  // Sem resposta, a nota pode ter sido recebida: fica "em processamento" até consultar, para não emitir duas.
+  await prisma.notaFiscal.update({ where: { id: nota.id }, data: r.mensagem === SEM_RESPOSTA ? { status: "PROCESSANDO", mensagem: r.mensagem } : r });
   revalidatePath(`/vendas/${vendaId}`);
   revalidatePath("/notas");
   return r.status === "ERRO" || r.status === "REJEITADA" ? { erro: r.mensagem ?? "Nota não autorizada." } : {};
@@ -69,7 +75,14 @@ export async function atualizarNota(id: string): Promise<{ erro?: string }> {
   const nota = await prisma.notaFiscal.findUnique({ where: { id } });
   if (!nota) return { erro: "Nota não encontrada." };
   const r = await consultarNota(nota.ambiente, nota.modelo, nota.referencia);
-  if (r.status === "ERRO") return { erro: r.mensagem };
+  if (r.status === "ERRO") {
+    // A Focus não conhece a referência: a nota nunca chegou lá e pode ser emitida de novo.
+    if (nota.status === "PROCESSANDO" && nota.mensagem === SEM_RESPOSTA && /não encontrad|not found|404/i.test(r.mensagem ?? "")) {
+      await prisma.notaFiscal.update({ where: { id }, data: { status: "ERRO", mensagem: "A nota não chegou à Focus NFe. Emita de novo." } });
+      revalidatePath(`/vendas/${nota.vendaId}`);
+    }
+    return { erro: r.mensagem };
+  }
   await prisma.notaFiscal.update({ where: { id }, data: r });
   revalidatePath(`/vendas/${nota.vendaId}`);
   revalidatePath("/notas");
@@ -127,5 +140,5 @@ export async function salvarEmpresaFiscal(_e: EstadoFormulario, formData: FormDa
   };
   await prisma.empresaFiscal.upsert({ where: { empresaId: await empresaAtualId() }, create: { ...dados, ...tokens }, update: { ...dados, ...tokens } });
   revalidatePath("/notas/configuracao");
-  return { mensagem: `Salvo às ${new Date().toLocaleTimeString("pt-BR")}` };
+  return { mensagem: `Salvo às ${horaLocal(new Date())}` };
 }

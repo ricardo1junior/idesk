@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { exigirSuperAdmin } from "@/lib/auth";
-import { atualizarCarteira, configSistema } from "@/lib/carteira";
+import { atualizarCarteira, configSistema, saldoDe } from "@/lib/carteira";
 import { SITUACOES } from "@/lib/carteira-regras";
 import { prismaBase } from "@/lib/db";
 import { formatarReais } from "@/lib/vendas";
@@ -20,6 +20,7 @@ export default async function CarteiraDaLoja({ params }: PageProps<"/sistema/[id
     prismaBase.movimentoCredito.findMany({ where: { empresaId: id }, orderBy: { criadoEm: "desc" }, take: 100 }),
     prismaBase.recarga.findMany({ where: { empresaId: id }, orderBy: { criadoEm: "desc" }, take: 20 }),
   ]);
+  if (c.isenta) c.saldo = await saldoDe(id);
   const s = SITUACOES[c.situacao];
 
   return (

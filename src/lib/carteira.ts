@@ -1,17 +1,17 @@
 import "server-only";
-import type { FormaRecarga } from "@prisma/client";
+import type { ConfigSistema, FormaRecarga } from "@prisma/client";
 import { cache } from "react";
 import { consultarCobranca, criarClienteAsaas, criarCobrancaAsaas, pixDaCobranca, STATUS_PAGO, type FormaAsaas } from "./asaas";
 import { diasRestantes, planejarDiarias, situacaoDoSaldo, type SituacaoCarteira } from "./carteira-regras";
 import { prismaBase as db } from "./db";
+import { memoComValidade } from "./memo";
 import { somarDias, ymdLocal } from "./tempo";
 
 // Carteira de créditos de cada loja: saldo pré-pago, descontado a cada dia de uso.
 // Usa o cliente sem filtro de loja porque também roda no aviso do Asaas e na rotina diária.
 
-export const configSistema = cache(async () => {
-  return (await db.configSistema.findUnique({ where: { id: "sistema" } })) ?? (await db.configSistema.create({ data: { id: "sistema" } }));
-});
+/** Valores gerais da cobrança (guardados por 1 min; quem altera chama configSistema.esquecer). */
+export const configSistema = memoComValidade<void, ConfigSistema>(60_000, () => db.configSistema.upsert({ where: { id: "sistema" }, create: { id: "sistema" }, update: {} }));
 
 const diaDb = (ymd: string) => new Date(`${ymd}T00:00:00Z`);
 const ymdDb = (d: Date) => d.toISOString().slice(0, 10);
@@ -26,12 +26,11 @@ export async function atualizarCarteira(empresaId: string): Promise<ResumoCartei
   ]);
   const diaria = Number(empresa.diaria ?? config.diariaPadrao);
   const hoje = ymdLocal(new Date());
-  let saldo = await saldoDe(empresaId);
-  let diariaDeHojePaga = false;
+  // Saldo e "diária de hoje já paga" numa consulta só.
+  let { saldo, diariaDeHojePaga } = empresa.isenta ? { saldo: 0, diariaDeHojePaga: true } : await saldoEHoje(empresaId, hoje);
 
   if (!empresa.isenta && diaria > 0) {
     const ontem = somarDias(hoje, -1);
-    diariaDeHojePaga = !!(await db.movimentoCredito.findUnique({ where: { empresaId_referencia: { empresaId, referencia: `diaria:${hoje}` } }, select: { id: true } }));
     // Loja que ainda não tinha cobrança começa a pagar hoje. Se hoje ficou sem diária (saldo esgotado),
     // tenta de novo: depois de uma recarga a loja volta a usar no mesmo dia. Dias passados sem uso não são cobrados.
     const cobradoAte = empresa.cobradoAte ? ymdDb(empresa.cobradoAte) : ontem;
@@ -62,6 +61,17 @@ export async function atualizarCarteira(empresaId: string): Promise<ResumoCartei
 /** Situação da loja nesta requisição (memorizada). */
 export const carteiraDaLoja = cache((empresaId: string) => atualizarCarteira(empresaId));
 
+async function saldoEHoje(empresaId: string, hoje: string) {
+  const [r] = await db.$queryRaw<{ saldo: unknown; hoje: boolean | null }[]>`
+    SELECT COALESCE(SUM("valor"), 0) AS saldo, bool_or("referencia" = ${`diaria:${hoje}`}) AS hoje
+    FROM "MovimentoCredito" WHERE "empresaId" = ${empresaId}`;
+  return { saldo: Number(r.saldo), diariaDeHojePaga: !!r.hoje };
+}
+
+/** Situação usada para liberar gravações (guardada por 15 s; recargas e ajustes chamam esquecerCarteira). */
+export const situacaoParaGravar = memoComValidade(15_000, async (empresaId: string) => (await atualizarCarteira(empresaId)).situacao);
+export const esquecerCarteira = (empresaId: string) => situacaoParaGravar.esquecer(empresaId);
+
 export async function saldoDe(empresaId: string): Promise<number> {
   const r = await db.movimentoCredito.aggregate({ where: { empresaId }, _sum: { valor: true } });
   return Number(r._sum.valor ?? 0);
@@ -69,6 +79,7 @@ export async function saldoDe(empresaId: string): Promise<number> {
 
 export async function lancarCredito(empresaId: string, c: { tipo: "BONUS" | "AJUSTE" | "RECARGA"; valor: number; descricao: string; referencia: string; usuarioId?: string }) {
   await db.movimentoCredito.createMany({ data: [{ empresaId, ...c }], skipDuplicates: true });
+  esquecerCarteira(empresaId);
 }
 
 const FORMA_ASAAS: Record<FormaRecarga, FormaAsaas> = { PIX: "PIX", BOLETO: "BOLETO", CARTAO: "CREDIT_CARD" };
@@ -128,7 +139,23 @@ export async function confirmarRecarga(cobrancaId: string): Promise<"PAGA" | "PE
       skipDuplicates: true,
     }),
   ]);
+  esquecerCarteira(recarga.empresaId);
   return "PAGA";
+}
+
+/**
+ * Pagamento devolvido ou contestado no Asaas: tira o crédito (uma vez só).
+ * Cobrança apagada antes de pagar: só marca a recarga como cancelada.
+ */
+export async function estornarRecarga(cobrancaId: string, motivo: "ESTORNO" | "APAGADA") {
+  const recarga = await db.recarga.findUnique({ where: { cobrancaId } });
+  if (!recarga) return;
+  if (recarga.status !== "PAGA") {
+    await db.recarga.update({ where: { id: recarga.id }, data: { status: "CANCELADA" } });
+    return;
+  }
+  if (motivo === "APAGADA") return;
+  await lancarCredito(recarga.empresaId, { tipo: "AJUSTE", valor: -Number(recarga.valor), descricao: "Estorno de recarga (pagamento devolvido ou contestado)", referencia: `estorno:${cobrancaId}` });
 }
 
 /** Crédito de boas-vindas e início da cobrança de uma loja nova. */
@@ -137,4 +164,24 @@ export async function iniciarCarteira(empresaId: string) {
   const bonus = Number(config.creditoBoasVindas);
   if (bonus > 0) await lancarCredito(empresaId, { tipo: "BONUS", valor: bonus, descricao: "Crédito de boas-vindas", referencia: "boas-vindas" });
   await db.empresa.update({ where: { id: empresaId }, data: { cobradoAte: diaDb(somarDias(ymdLocal(new Date()), -1)) } });
+  esquecerCarteira(empresaId);
+}
+
+/** Saldo e situação de todas as lojas em poucas consultas (painel do dono; não desconta diárias). */
+export async function resumoDasLojas(): Promise<Map<string, { saldo: number; isenta: boolean; situacao: SituacaoCarteira }>> {
+  const hoje = ymdLocal(new Date());
+  const [lojas, somas, pagasHoje, config] = await Promise.all([
+    db.empresa.findMany({ select: { id: true, isenta: true, diaria: true } }),
+    db.movimentoCredito.groupBy({ by: ["empresaId"], _sum: { valor: true } }),
+    db.movimentoCredito.findMany({ where: { referencia: `diaria:${hoje}` }, select: { empresaId: true } }),
+    configSistema(),
+  ]);
+  const pagas = new Set(pagasHoje.map((p) => p.empresaId));
+  return new Map(
+    lojas.map((l) => {
+      const saldo = Number(somas.find((s) => s.empresaId === l.id)?._sum.valor ?? 0);
+      const diaria = Number(l.diaria ?? config.diariaPadrao);
+      return [l.id, { saldo, isenta: l.isenta, situacao: situacaoDoSaldo({ isenta: l.isenta, saldo, diaria, diariaDeHojePaga: pagas.has(l.id) }) }];
+    }),
+  );
 }

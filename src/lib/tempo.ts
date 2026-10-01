@@ -26,6 +26,19 @@ export function diaDaSemana(ymd: string): number {
 
 export const horaLocal = (d: Date) => d.toLocaleTimeString("pt-BR", { timeZone: FUSO, hour: "2-digit", minute: "2-digit" });
 export const dataLocal = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: FUSO });
+export const dataEHora = (d: Date) => `${dataLocal(d)} ${horaLocal(d)}`;
+/** Dia guardado em coluna de data (@db.Date, meia-noite UTC), sem deslocar pelo fuso. */
+export const dataDoDia = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+/** Início de hoje em Brasília. */
+export const inicioDeHoje = () => dataHoraLocal(ymdLocal(new Date()), "00:00");
+/** Mesmo dia N meses depois, sem pular mês curto (31/01 + 1 mês = 28/02). AAAA-MM-DD. */
+export function somarMeses(ymd: string, meses: number): string {
+  const [a, m, d] = ymd.split("-").map(Number);
+  const alvo = new Date(Date.UTC(a, m - 1 + meses, 1));
+  const ultimo = new Date(Date.UTC(alvo.getUTCFullYear(), alvo.getUTCMonth() + 1, 0)).getUTCDate();
+  alvo.setUTCDate(Math.min(d, ultimo));
+  return alvo.toISOString().slice(0, 10);
+}
 export const diaPorExtenso = (ymd: string) =>
   new Date(`${ymd}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" });
 export const diaCurto = (ymd: string) =>

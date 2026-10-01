@@ -61,6 +61,8 @@ export function extrairImeis(texto: string | null): string[] {
 
 export function lerXmlNFe(xml: string): NotaLida {
   let doc: No;
+  // NF-e nunca tem DOCTYPE; recusar evita XML com entidades montadas para travar o servidor.
+  if (/<!DOCTYPE/i.test(xml)) throw new ErroXml("Arquivo não é o XML de uma NF-e.");
   try {
     doc = parser.parse(xml);
   } catch {
@@ -123,9 +125,10 @@ export function lerXmlNFe(xml: string): NotaLida {
     destinatarioDocumento: txt(no(inf.dest).CNPJ ?? no(inf.dest).CPF),
     itens,
     valorTotal: num(no(no(inf.total).ICMSTot).vNF),
-    duplicatas: dups.map((x) => {
-      const d = no(x);
-      return { numero: String(d.nDup ?? ""), vencimento: new Date(`${d.dVenc}T12:00:00`), valor: num(d.vDup) };
-    }),
+    // Parcela sem data de vencimento válida é ignorada (não vira conta a pagar com data inválida).
+    duplicatas: dups
+      .map((x) => no(x))
+      .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(String(d.dVenc ?? "")))
+      .map((d) => ({ numero: String(d.nDup ?? ""), vencimento: new Date(`${d.dVenc}T12:00:00-03:00`), valor: num(d.vDup) })),
   };
 }

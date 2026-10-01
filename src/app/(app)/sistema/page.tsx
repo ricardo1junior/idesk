@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { exigirSuperAdmin } from "@/lib/auth";
-import { atualizarCarteira, configSistema } from "@/lib/carteira";
+import { configSistema, resumoDasLojas } from "@/lib/carteira";
 import { SITUACOES } from "@/lib/carteira-regras";
 import { prismaBase } from "@/lib/db";
 import { formatarReais } from "@/lib/vendas";
@@ -16,7 +17,8 @@ export default async function LojasDoSistema() {
     prismaBase.venda.groupBy({ by: ["empresaId"], _count: true }),
     prismaBase.ordemServico.groupBy({ by: ["empresaId"], _count: true }),
   ]);
-  const [carteiras, config] = await Promise.all([Promise.all(lojas.map((l) => atualizarCarteira(l.id))), configSistema()]);
+  const [resumo, config] = await Promise.all([resumoDasLojas(), configSistema()]);
+  const carteiras = lojas.map((l) => resumo.get(l.id) ?? { saldo: 0, isenta: l.isenta, situacao: "ATIVA" as const });
   const conta = (lista: { empresaId: string; _count: number }[], id: string) => lista.find((x) => x.empresaId === id)?._count ?? 0;
 
   return (
@@ -62,7 +64,13 @@ export default async function LojasDoSistema() {
                   ) : (
                     <form action={alternarLoja.bind(null, l.id)} className="flex items-center gap-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs ${l.ativa ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{l.ativa ? "Ativa" : "Bloqueada"}</span>
-                      <button className="text-xs text-link hover:underline">{l.ativa ? "Bloquear" : "Desbloquear"}</button>
+                      <BotaoEnviar
+                        className="text-xs text-link hover:underline disabled:opacity-50"
+                        enviando="Salvando..."
+                        confirmar={l.ativa ? `Bloquear "${l.nome}"? Todos os usuários dela saem do sistema na hora.` : undefined}
+                      >
+                        {l.ativa ? "Bloquear" : "Desbloquear"}
+                      </BotaoEnviar>
                     </form>
                   )}
                 </td>

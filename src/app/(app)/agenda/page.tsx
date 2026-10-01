@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { horariosDoDia, MOTIVOS, OCUPA_VAGA, STATUS_AGENDAMENTO } from "@/lib/agenda";
@@ -6,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { configLoja } from "@/lib/loja";
 import { pode } from "@/lib/permissoes";
 import { dataHoraLocal, diaCurto, diaPorExtenso, horaLocal, somarDias, ymdLocal, ymdValido } from "@/lib/tempo";
-import { mudarStatusAgendamento } from "./actions";
+import { BotaoStatus } from "./BotaoStatus";
 import { NovoAgendamento } from "./NovoAgendamento";
 
 export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
@@ -58,10 +59,10 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
           <Link href={`/agenda?dia=${somarDias(dia, 1)}`} className="btn-secundario" aria-label="Próximo dia">
             ›
           </Link>
-          <form className="flex items-center gap-2">
-            <input type="date" name="dia" defaultValue={dia} aria-label="Ir para o dia" className="rounded-md border border-zinc-300 bg-cartao px-3 py-1.5 text-sm" />
+          <Form action="/agenda" className="flex items-center gap-2">
+            <input type="date" name="dia" defaultValue={dia} key={dia} required aria-label="Ir para o dia" className="rounded-md border border-zinc-300 bg-cartao px-3 py-1.5 text-sm" />
             <button className="btn-secundario">Ir</button>
-          </form>
+          </Form>
           {pode(usuario.perfil, "configuracoes") && (
             <Link href="/configuracoes" className="text-sm text-link hover:underline">
               Horários da loja
@@ -167,11 +168,7 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
     const st = STATUS_AGENDAMENTO[a.status];
     const inativo = a.status === "CANCELADO" || a.status === "FALTOU";
     const msg = `Olá ${a.nome.split(" ")[0]}! Confirmando seu horário na loja ${diaPorExtenso(ymdLocal(a.inicio))} às ${horaLocal(a.inicio)}. Pode confirmar?`;
-    const acao = (s: typeof a.status, rotulo: string) => (
-      <form action={mudarStatusAgendamento.bind(null, a.id, s)}>
-        <button className="text-xs text-link hover:underline">{rotulo}</button>
-      </form>
-    );
+    const acao = (s: typeof a.status, rotulo: string, confirmar?: string) => <BotaoStatus id={a.id} status={s} rotulo={rotulo} confirmar={confirmar} />;
     return (
       <div className={`rounded-lg border border-zinc-200 p-3 text-sm ${inativo ? "bg-zinc-50 text-zinc-500" : "bg-cartao"}`}>
         <div className="flex flex-wrap items-center gap-2">
@@ -189,8 +186,8 @@ export default async function Agenda({ searchParams }: PageProps<"/agenda">) {
           {(a.status === "AGENDADO" || a.status === "CONFIRMADO") && (
             <>
               {acao("ATENDIDO", "Chegou / atendido")}
-              {acao("FALTOU", "Faltou")}
-              {acao("CANCELADO", "Cancelar")}
+              {acao("FALTOU", "Faltou", `Marcar que ${a.nome} faltou?`)}
+              {acao("CANCELADO", "Cancelar", `Cancelar o agendamento de ${a.nome}?`)}
             </>
           )}
           {a.status === "ATENDIDO" && a.clienteId && (a.motivo === "REPARO" || a.motivo === "ORCAMENTO") && pode(usuario.perfil, "os") && (

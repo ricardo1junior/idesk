@@ -36,11 +36,11 @@ export function FormPrimeiroAcesso({ pedirCodigo }: { pedirCodigo: boolean }) {
       )}
       <label className="campo">
         <span>Nome da loja</span>
-        <input name="loja" required />
+        <input name="loja" defaultValue={estado.loja} required />
       </label>
       <label className="campo">
         <span>Seu nome</span>
-        <input name="nome" required autoFocus={!pedirCodigo} />
+        <input name="nome" defaultValue={estado.nome} required autoFocus={!pedirCodigo} />
       </label>
       <label className="campo">
         <span>E-mail</span>
@@ -56,7 +56,7 @@ export function FormPrimeiroAcesso({ pedirCodigo }: { pedirCodigo: boolean }) {
       </label>
       {estado.erro && <p className="text-sm text-red-600">{estado.erro}</p>}
       <button className="btn-primario w-full" disabled={pendente}>
-        Criar administrador
+        {pendente ? "Criando..." : "Criar administrador"}
       </button>
     </form>
   );

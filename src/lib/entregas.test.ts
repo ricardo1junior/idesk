@@ -16,3 +16,18 @@ test("tempo de ida e volta", () => {
   assert.equal(formatarDuracao(95), "1h35");
   assert.equal(formatarDuracao(120), "2h");
 });
+
+test("formulário de entrega: taxa, dia e hora", async () => {
+  const { entregaSchema, TRANSICOES_ENTREGA, statusEntregaValido } = await import("./entregas");
+  const base = { tipo: "ENTREGA", clienteId: "c1", endereco: "Rua A, 100, Centro", dia: "", hora: "", vendaId: "", osId: "", taxa: "", distanciaKm: "", minutosIda: "", minutosTotal: "", responsavelId: "", observacoes: "" };
+  assert.equal(entregaSchema.parse({ ...base, taxa: "15.50" }).taxa, 15.5);
+  assert.equal(entregaSchema.parse({ ...base, taxa: "1.500" }).taxa, 1500);
+  assert.equal(entregaSchema.parse(base).taxa, 0);
+  assert.equal(entregaSchema.safeParse({ ...base, taxa: "abc" }).success, false);
+  assert.equal(entregaSchema.safeParse({ ...base, dia: "2026-13-45", hora: "10:00" }).success, false);
+  assert.equal(entregaSchema.safeParse({ ...base, dia: "2026-10-02", hora: "25:00" }).success, false);
+  assert.equal(entregaSchema.parse({ ...base, dia: "2026-10-02", hora: "09:30" }).hora, "09:30");
+  assert.deepEqual(TRANSICOES_ENTREGA.CONCLUIDA, []);
+  assert.ok(TRANSICOES_ENTREGA.PENDENTE.includes("EM_ROTA"));
+  assert.equal(statusEntregaValido("constructor"), false);
+});

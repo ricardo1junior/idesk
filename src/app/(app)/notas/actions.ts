@@ -30,22 +30,24 @@ export async function conferirXml(xml: string): Promise<Conferencia> {
   if (await prisma.notaEntrada.findFirst({ where: { chave: nota.chave } })) {
     return { erro: `A nota ${nota.numero} (chave ${nota.chave}) já foi importada.` };
   }
-  const fornecedor = await prisma.fornecedor.findFirst({ where: { cnpj: nota.emitente.cnpj } });
-  const sugestoes: Sugestao[] = [];
-  for (const item of nota.itens) {
-    const vinculo = fornecedor
-      ? await prisma.vinculoProdutoFornecedor.findUnique({
-          where: { fornecedorId_codigoFornecedor: { fornecedorId: fornecedor.id, codigoFornecedor: item.codigo } },
-          include: { produto: true },
+  const fornecedor = await prisma.fornecedor.findFirst({ where: { cnpj: nota.emitente.cnpj }, select: { id: true } });
+  // Duas consultas para a nota inteira (em vez de uma ou duas por item).
+  const eans = nota.itens.map((i) => i.ean).filter((e): e is string => !!e);
+  const [vinculos, porEan] = await Promise.all([
+    fornecedor
+      ? prisma.vinculoProdutoFornecedor.findMany({
+          where: { fornecedorId: fornecedor.id, codigoFornecedor: { in: nota.itens.map((i) => i.codigo) } },
+          include: { produto: { select: { descricao: true, tipo: true } } },
         })
-      : null;
-    if (vinculo) {
-      sugestoes.push({ produtoId: vinculo.produtoId, descricao: vinculo.produto.descricao, tipo: vinculo.produto.tipo, fator: vinculo.fatorConversao, origem: "vinculo" });
-      continue;
-    }
-    const porEan = item.ean ? await prisma.produto.findFirst({ where: { codigoBarras: item.ean } }) : null;
-    sugestoes.push(porEan ? { produtoId: porEan.id, descricao: porEan.descricao, tipo: porEan.tipo, fator: 1, origem: "ean" } : null);
-  }
+      : [],
+    eans.length ? prisma.produto.findMany({ where: { codigoBarras: { in: eans } }, select: { id: true, descricao: true, tipo: true, codigoBarras: true } }) : [],
+  ]);
+  const sugestoes: Sugestao[] = nota.itens.map((item) => {
+    const v = vinculos.find((x) => x.codigoFornecedor === item.codigo);
+    if (v) return { produtoId: v.produtoId, descricao: v.produto.descricao, tipo: v.produto.tipo, fator: v.fatorConversao, origem: "vinculo" };
+    const p = item.ean ? porEan.find((x) => x.codigoBarras === item.ean) : undefined;
+    return p ? { produtoId: p.id, descricao: p.descricao, tipo: p.tipo, fator: 1, origem: "ean" } : null;
+  });
   return {
     nota: {
       ...nota,

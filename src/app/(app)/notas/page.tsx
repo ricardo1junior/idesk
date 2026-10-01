@@ -3,11 +3,12 @@ import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatarDocumento } from "@/lib/documentos";
 import { formatarReais } from "@/lib/vendas";
+import { dataEHora, dataLocal } from "@/lib/tempo";
 
 export default async function Notas() {
   await exigirUsuario("notasFiscais");
   const [entradas, emitidas] = await Promise.all([
-    prisma.notaEntrada.findMany({ include: { fornecedor: true }, orderBy: { criadoEm: "desc" }, take: 100 }),
+    prisma.notaEntrada.findMany({ omit: { xml: true }, include: { fornecedor: { select: { razaoSocial: true, nomeFantasia: true, cnpj: true } } }, orderBy: { criadoEm: "desc" }, take: 100 }),
     prisma.notaFiscal.findMany({ include: { venda: { include: { cliente: { select: { nome: true } } } } }, orderBy: { criadoEm: "desc" }, take: 100 }),
   ]);
   return (
@@ -57,7 +58,7 @@ export default async function Notas() {
                   </td>
                   <td className="px-4 py-2">{n.venda.cliente?.nome ?? "Consumidor final"}</td>
                   <td className="px-4 py-2">{SITUACAO_NOTA[n.status]}</td>
-                  <td className="px-4 py-2">{n.criadoEm.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-2">{dataEHora(n.criadoEm)}</td>
                 </tr>
               ))}
             </tbody>
@@ -97,9 +98,9 @@ export default async function Notas() {
                     {n.fornecedor.nomeFantasia ?? n.fornecedor.razaoSocial}
                     <div className="text-xs text-zinc-500">{formatarDocumento(n.fornecedor.cnpj)}</div>
                   </td>
-                  <td className="px-4 py-2">{n.emissao.toLocaleDateString("pt-BR")}</td>
+                  <td className="px-4 py-2">{dataLocal(n.emissao)}</td>
                   <td className="px-4 py-2 text-right">{formatarReais(Number(n.valorTotal))}</td>
-                  <td className="px-4 py-2">{n.criadoEm.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-2">{dataEHora(n.criadoEm)}</td>
                 </tr>
               ))}
             </tbody>

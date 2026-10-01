@@ -1,16 +1,20 @@
 import { exigirUsuario } from "@/lib/auth";
 import type { Prisma, StatusOS } from "@prisma/client";
+import Form from "next/form";
 import Link from "next/link";
+import { Paginacao } from "@/components/Paginacao";
 import { StatusBadge } from "@/components/StatusBadge";
 import { prisma } from "@/lib/db";
-import { formatarMoeda, STATUS_OS } from "@/lib/os";
+import { formatarMoeda, STATUS_OS, statusOSValido } from "@/lib/os";
+import { faixaDaPagina, lerPagina, POR_PAGINA } from "@/lib/paginacao";
+import { dataLocal } from "@/lib/tempo";
 
 const EM_ANDAMENTO: StatusOS[] = ["ABERTA", "EM_ANALISE", "ORCAMENTO_ENVIADO", "APROVADA", "EM_EXECUCAO", "CONCLUIDA"];
 
 export default async function OrdensServico({ searchParams }: PageProps<"/os">) {
   await exigirUsuario("os");
-  const { status, q } = await searchParams;
-  const filtro = typeof status === "string" && status in STATUS_OS ? (status as StatusOS) : undefined;
+  const { status, q, pagina } = await searchParams;
+  const filtro = statusOSValido(status) ? status : undefined;
   const busca = typeof q === "string" ? q.trim() : "";
 
   const where: Prisma.OrdemServicoWhereInput = {
@@ -26,15 +30,15 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
     }),
   };
 
-  const [ordens, contagem] = await Promise.all([
-    prisma.ordemServico.findMany({
-      where,
-      include: { cliente: { select: { nome: true } }, aparelho: { select: { modelo: true, imei: true } } },
-      orderBy: { numero: "desc" },
-      take: 100,
-    }),
-    prisma.ordemServico.groupBy({ by: ["status"], _count: true }),
-  ]);
+  const [total, contagem] = await Promise.all([prisma.ordemServico.count({ where }), prisma.ordemServico.groupBy({ by: ["status"], _count: true })]);
+  const faixa = faixaDaPagina(lerPagina(pagina), total);
+  const ordens = await prisma.ordemServico.findMany({
+    where,
+    include: { cliente: { select: { nome: true } }, aparelho: { select: { modelo: true, imei: true } } },
+    orderBy: { numero: "desc" },
+    skip: faixa.pular,
+    take: POR_PAGINA,
+  });
   const qtd = Object.fromEntries(contagem.map((c) => [c.status, c._count]));
 
   const abas = [
@@ -68,10 +72,18 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
         ))}
       </div>
 
-      <form className="campo max-w-md">
+      <Form action="/os" className="flex max-w-xl flex-wrap items-center gap-2">
         {atual && <input type="hidden" name="status" value={atual} />}
-        <input name="q" defaultValue={busca} placeholder="Nº da OS, cliente, modelo, IMEI ou série" />
-      </form>
+        <label className="campo min-w-60 flex-1">
+          <input name="q" defaultValue={busca} placeholder="Nº da OS, cliente, modelo, IMEI ou série" aria-label="Buscar OS" />
+        </label>
+        <button className="btn-secundario">Buscar</button>
+        {busca && (
+          <Link href={atual ? `/os?status=${atual}` : "/os"} className="text-sm text-link hover:underline">
+            Limpar
+          </Link>
+        )}
+      </Form>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-cartao">
         <table className="w-full text-left text-sm">
@@ -101,7 +113,7 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
                 <td className="px-4 py-3">
                   <StatusBadge status={os.status} />
                 </td>
-                <td className="px-4 py-3">{os.previsaoEntrega?.toLocaleDateString("pt-BR") ?? "-"}</td>
+                <td className="px-4 py-3">{os.previsaoEntrega ? dataLocal(os.previsaoEntrega) : "-"}</td>
                 <td className="px-4 py-3 text-right">{formatarMoeda(os.total)}</td>
               </tr>
             ))}
@@ -115,6 +127,7 @@ export default async function OrdensServico({ searchParams }: PageProps<"/os">) 
           </tbody>
         </table>
       </div>
+      <Paginacao faixa={faixa} base="/os" filtros={{ status: atual, q: busca || undefined }} />
     </div>
   );
 }

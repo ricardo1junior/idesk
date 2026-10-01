@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { garantirCategorias, intervaloDoPeriodo, PERIODOS } from "@/lib/financeiro";
 import { lerFiltros, paramsDosFiltros, whereDosFiltros } from "@/lib/financeiro-filtros";
+import { dataLocal, inicioDeHoje, ymdLocal } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO, formatarReais } from "@/lib/vendas";
 import { baixarLancamento, cancelarLancamento, estornarLancamento } from "./actions";
 import { FiltrosFluxo, NovoLancamento } from "./Componentes";
+
+const LIMITE = 2000;
 
 export default async function FluxoDeCaixa({ searchParams }: PageProps<"/financeiro">) {
   await exigirUsuario("financeiro");
@@ -13,22 +17,25 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
   if ((await prisma.categoriaFinanceira.count()) === 0) await prisma.$transaction((tx) => garantirCategorias(tx));
 
   const { inicio, fim } = intervaloDoPeriodo(f.periodo, f.de, f.ate);
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const hoje = inicioDeHoje();
+  const hojeYmd = ymdLocal(new Date());
+  const where = whereDosFiltros(f);
 
-  const [lancamentos, categorias, abertos, vencidos] = await Promise.all([
+  const [lancamentos, totais, categorias, abertos, vencidos] = await Promise.all([
     prisma.lancamento.findMany({
-      where: whereDosFiltros(f),
+      where,
       include: { categoria: true, cliente: { select: { nome: true } }, fornecedor: { select: { razaoSocial: true } } },
       orderBy: f.base === "pagamento" ? [{ pagoEm: "asc" }, { criadoEm: "asc" }] : [{ vencimento: "asc" }, { criadoEm: "asc" }],
-      take: 2000,
+      take: LIMITE,
     }),
+    // Totais no banco: a lista acima é limitada.
+    prisma.lancamento.groupBy({ by: ["tipo"], where, _sum: { valor: true } }),
     prisma.categoriaFinanceira.findMany({ where: { ativa: true }, orderBy: [{ tipo: "asc" }, { nome: "asc" }] }),
     prisma.lancamento.groupBy({ by: ["tipo"], where: { status: "PENDENTE", vencimento: { gte: inicio, lt: fim } }, _sum: { valor: true } }),
     prisma.lancamento.groupBy({ by: ["tipo"], where: { status: "PENDENTE", vencimento: { lt: hoje } }, _sum: { valor: true }, _count: true }),
   ]);
 
-  const soma = (tipo: string) => lancamentos.filter((l) => l.tipo === tipo).reduce((s, l) => s + Number(l.valor), 0);
+  const soma = (tipo: string) => Number(totais.find((t) => t.tipo === tipo)?._sum.valor ?? 0);
   const entradas = soma("ENTRADA");
   const saidas = soma("SAIDA");
   const aberto = (tipo: string) => Number(abertos.find((a) => a.tipo === tipo)?._sum.valor ?? 0);
@@ -37,7 +44,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
   const dataDe = (l: (typeof lancamentos)[number]) => (f.base === "pagamento" ? (l.pagoEm ?? l.vencimento) : l.vencimento);
   const chave = (l: (typeof lancamentos)[number]) =>
     f.agrupar === "dia"
-      ? dataDe(l).toLocaleDateString("pt-BR")
+      ? dataLocal(dataDe(l))
       : f.agrupar === "categoria"
         ? (l.categoria?.nome ?? "Sem categoria")
         : f.agrupar === "forma"
@@ -48,7 +55,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
   const grupos = new Map<string, typeof lancamentos>();
   for (const l of lancamentos) grupos.set(chave(l), [...(grupos.get(chave(l)) ?? []), l]);
 
-  const titulo = f.periodo === "personalizado" ? `${inicio.toLocaleDateString("pt-BR")} a ${new Date(fim.getTime() - 1).toLocaleDateString("pt-BR")}` : PERIODOS[f.periodo];
+  const titulo = f.periodo === "personalizado" ? `${dataLocal(inicio)} a ${dataLocal(new Date(fim.getTime() - 1))}` : PERIODOS[f.periodo];
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -127,7 +134,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
                   const vencido = l.status === "PENDENTE" && l.vencimento < hoje;
                   return (
                     <tr key={l.id} className="border-b border-zinc-100 align-top last:border-0">
-                      <td className="px-4 py-2 whitespace-nowrap">{dataDe(l).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{dataLocal(dataDe(l))}</td>
                       <td className="px-4 py-2">
                         {l.vendaId ? (
                           <Link href={`/vendas/${l.vendaId}`} className="hover:underline">
@@ -162,18 +169,22 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
                       <td className="px-4 py-2 text-right">
                         {l.status === "PENDENTE" && (
                           <form action={baixarLancamento.bind(null, l.id)} className="flex items-center justify-end gap-1">
-                            <input type="date" name="data" defaultValue={new Date().toISOString().slice(0, 10)} className="w-32 rounded border border-zinc-300 px-1 py-0.5 text-xs" />
-                            <button className="rounded-full bg-azul px-3 py-1 text-xs text-white hover:bg-azul-escuro">{l.tipo === "ENTRADA" ? "Recebido" : "Pago"}</button>
+                            <input type="date" name="data" defaultValue={hojeYmd} className="w-32 rounded border border-zinc-300 px-1 py-0.5 text-xs" />
+                            <BotaoEnviar className="rounded-full bg-azul px-3 py-1 text-xs text-white hover:bg-azul-escuro disabled:opacity-50">{l.tipo === "ENTRADA" ? "Recebido" : "Pago"}</BotaoEnviar>
                           </form>
                         )}
                         {l.status === "PAGO" && !l.vendaId && (
                           <form action={estornarLancamento.bind(null, l.id)}>
-                            <button className="text-xs text-zinc-500 underline">Estornar</button>
+                            <BotaoEnviar className="text-xs text-zinc-500 underline disabled:opacity-50" confirmar="Estornar este lançamento? Ele volta a ficar em aberto.">
+                              Estornar
+                            </BotaoEnviar>
                           </form>
                         )}
                         {l.status === "PENDENTE" && !l.vendaId && (
                           <form action={cancelarLancamento.bind(null, l.id)}>
-                            <button className="mt-1 text-xs text-zinc-500 underline">Cancelar</button>
+                            <BotaoEnviar className="mt-1 text-xs text-zinc-500 underline disabled:opacity-50" confirmar="Cancelar este lançamento?">
+                              Cancelar
+                            </BotaoEnviar>
                           </form>
                         )}
                       </td>
@@ -182,6 +193,13 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
                 }),
               ];
             })}
+            {lancamentos.length === LIMITE && (
+              <tr>
+                <td colSpan={7} className="px-4 py-3 text-center text-xs text-zinc-500">
+                  Mostrando os primeiros {LIMITE} lançamentos; os totais acima consideram todos. Refine os filtros ou exporte a planilha.
+                </td>
+              </tr>
+            )}
             {lancamentos.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-10 text-center text-zinc-500">

@@ -25,9 +25,8 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = await exigirUsuario();
-  const empresa = await empresaAtual();
+  const [empresa, carteira] = await Promise.all([empresaAtual(), carteiraDaLoja(usuario.empresaId)]);
   const logo = urlLogo(empresa);
-  const carteira = await carteiraDaLoja(usuario.empresaId);
   const podeRecarregar = pode(usuario.perfil, "assinatura");
 
   return (

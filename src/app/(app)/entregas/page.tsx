@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -26,9 +27,11 @@ export default async function Entregas() {
   const Linha = ({ e }: { e: (typeof abertas)[number] }) => {
     const st = STATUS_ENTREGA[e.status];
     const tel = e.cliente.whatsapp || e.cliente.telefone;
-    const acao = (s: typeof e.status, rotulo: string, primario = false) => (
+    const acao = (s: typeof e.status, rotulo: string, primario = false, confirmar?: string) => (
       <form action={mudarStatusEntrega.bind(null, e.id, s)}>
-        <button className={primario ? "btn-primario px-4 py-1.5" : "text-sm text-link hover:underline"}>{rotulo}</button>
+        <BotaoEnviar className={primario ? "btn-primario px-4 py-1.5" : "text-sm text-link hover:underline disabled:opacity-50"} confirmar={confirmar}>
+          {rotulo}
+        </BotaoEnviar>
       </form>
     );
     return (
@@ -87,7 +90,7 @@ export default async function Entregas() {
                 <span className="text-sm text-link hover:underline">Avisar cliente</span>
               </LinkWhatsApp>
             )}
-            {(e.status === "PENDENTE" || e.status === "EM_ROTA") && acao("CANCELADA", "Cancelar")}
+            {(e.status === "PENDENTE" || e.status === "EM_ROTA") && acao("CANCELADA", "Cancelar", false, `Cancelar a ${e.tipo === "COLETA" ? "coleta" : "entrega"} #${e.numero}?`)}
           </div>
         </div>
       </li>

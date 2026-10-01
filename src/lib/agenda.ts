@@ -1,6 +1,6 @@
 import type { MotivoAgendamento, StatusAgendamento } from "@prisma/client";
 import { z } from "zod";
-import { dataHoraLocal, diaDaSemana } from "./tempo";
+import { dataHoraLocal, diaDaSemana, ymdValido } from "./tempo";
 
 export const MOTIVOS: Record<MotivoAgendamento, string> = {
   REPARO: "Reparo / assistência",
@@ -23,6 +23,16 @@ export const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 // Status que ocupam vaga na agenda.
 export const OCUPA_VAGA: StatusAgendamento[] = ["AGENDADO", "CONFIRMADO", "ATENDIDO"];
+
+// Para onde cada status pode ir. Atendido é final; faltou/cancelado podem ser reativados.
+export const TRANSICOES_AGENDA: Record<StatusAgendamento, StatusAgendamento[]> = {
+  AGENDADO: ["CONFIRMADO", "ATENDIDO", "FALTOU", "CANCELADO"],
+  CONFIRMADO: ["ATENDIDO", "FALTOU", "CANCELADO"],
+  ATENDIDO: [],
+  FALTOU: ["AGENDADO"],
+  CANCELADO: ["AGENDADO"],
+};
+export const statusAgendamentoValido = (v: unknown): v is StatusAgendamento => typeof v === "string" && Object.hasOwn(STATUS_AGENDAMENTO, v);
 
 export type ConfigAgenda = {
   abreAs: string;
@@ -74,7 +84,7 @@ export function conflitoAgendamento(ymd: string, inicio: Date, fim: Date, config
 const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM");
 
 export const agendamentoSchema = z.object({
-  dia: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Escolha o dia"),
+  dia: z.string().refine(ymdValido, "Escolha o dia"),
   hora,
   duracao: z.coerce.number().int().min(5).max(480),
   clienteId: z.string().trim().transform((v) => v || null),

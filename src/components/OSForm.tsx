@@ -26,6 +26,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
   const [imei, setImei] = useState(v.imei ?? "");
   const [modelo, setModelo] = useState(v.modelo ?? "");
   const [fotos, setFotos] = useState<FotoEnviada[]>([]);
+  const acessoriosMarcados = (v.acessorios ?? "").split("|");
 
   return (
     <form action={acao} className="space-y-6">
@@ -151,7 +152,7 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
           <div className="flex flex-wrap gap-2">
             {ACESSORIOS.map((a) => (
               <label key={a} className="chip">
-                <input type="checkbox" name="acessorios" value={a} className="peer sr-only" />
+                <input type="checkbox" name="acessorios" value={a} defaultChecked={acessoriosMarcados.includes(a)} className="peer sr-only" />
                 <span>{a}</span>
               </label>
             ))}
@@ -210,13 +211,30 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
 export function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: ClienteResumo) => void; erro?: string }) {
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<ClienteResumo[]>([]);
+  // Muda quando a janela volta ao foco: refaz a busca para achar o cliente cadastrado na outra aba.
+  const [rodada, setRodada] = useState(0);
+  const q = termo.trim();
 
   useEffect(() => {
+    const voltou = () => setRodada((n) => n + 1);
+    window.addEventListener("focus", voltou);
+    return () => window.removeEventListener("focus", voltou);
+  }, []);
+
+  useEffect(() => {
+    if (q.length < 2) return;
+    // Resposta que chega depois de uma busca mais nova é ignorada.
+    let atual = true;
     const t = setTimeout(() => {
-      buscarClientes(termo).then(setResultados);
+      buscarClientes(q).then((r) => atual && setResultados(r));
     }, 250);
-    return () => clearTimeout(t);
-  }, [termo]);
+    return () => {
+      atual = false;
+      clearTimeout(t);
+    };
+  }, [q, rodada]);
+
+  const lista = q.length >= 2 ? resultados : [];
 
   return (
     <div className="space-y-2">
@@ -225,9 +243,9 @@ export function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: Cliente
         <input value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Nome, CPF/CNPJ ou telefone" />
         {erro && <small className="text-red-600">{erro}</small>}
       </label>
-      {resultados.length > 0 && (
+      {lista.length > 0 && (
         <ul className="divide-y divide-zinc-100 rounded-md border border-zinc-200">
-          {resultados.map((c) => (
+          {lista.map((c) => (
             <li key={c.id}>
               <button type="button" onClick={() => onSelecionar(c)} className="w-full px-3 py-2 text-left text-sm hover:bg-zinc-50">
                 {c.nome} <span className="font-mono text-xs text-zinc-500">{formatarDocumento(c.documento)}</span>
@@ -236,9 +254,11 @@ export function BuscaCliente({ onSelecionar, erro }: { onSelecionar: (c: Cliente
           ))}
         </ul>
       )}
-      <Link href="/clientes/novo" className="text-sm text-zinc-600 underline">
+      {/* Nova aba: o que já foi preenchido aqui (OS, venda, entrega) não se perde. */}
+      <Link href="/clientes/novo" target="_blank" rel="noopener" className="text-sm text-zinc-600 underline">
         Cadastrar cliente novo
       </Link>
+      <span className="ml-2 text-xs text-zinc-400">(abre em outra aba; depois volte e busque pelo nome)</span>
     </div>
   );
 }

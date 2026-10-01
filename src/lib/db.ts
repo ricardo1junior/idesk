@@ -1,10 +1,11 @@
 import "server-only";
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { type Perfil, Prisma, PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { COOKIE_SESSAO } from "./auth-cookie";
+import { memoComValidade } from "./memo";
 import { hashToken } from "./sessao-token";
 
 // Reaproveita a conexão entre recarregamentos do servidor de desenvolvimento.
@@ -27,23 +28,34 @@ export function comEmpresa<T>(empresaId: string, fn: () => Promise<T>): Promise<
   return lojaForcada.run(empresaId, fn);
 }
 
-/** Loja do usuário logado nesta requisição, ou null. Memorizado por requisição. */
-export const empresaDaSessao = cache(async (): Promise<string | null> => {
+export type UsuarioSessao = { id: string; nome: string; email: string; perfil: Perfil; empresaId: string; superAdmin: boolean };
+
+/**
+ * Usuário de uma sessão válida (usuário ativo, loja ativa, não expirada), numa consulta só.
+ * Fica guardado por 5 s: cada tela e cada gravação consultam a sessão, e isso evita repetir a busca.
+ */
+export const sessaoPorHash = memoComValidade(5_000, async (hash: string): Promise<UsuarioSessao | null> => {
+  const [s] = await base.$queryRaw<(UsuarioSessao & { expiraEm: Date; ativo: boolean; lojaAtiva: boolean })[]>`
+    SELECT s."expiraEm", u.id, u.nome, u.email, u.perfil, u.ativo, u."empresaId", u."superAdmin", e.ativa AS "lojaAtiva"
+    FROM "Sessao" s JOIN "Usuario" u ON u.id = s."usuarioId" JOIN "Empresa" e ON e.id = u."empresaId"
+    WHERE s.id = ${hash}`;
+  if (!s || s.expiraEm < new Date() || !s.ativo || !s.lojaAtiva) return null;
+  return { id: s.id, nome: s.nome, email: s.email, perfil: s.perfil, empresaId: s.empresaId, superAdmin: s.superAdmin };
+});
+
+/** Usuário logado nesta requisição, ou null. */
+export const usuarioDaSessao = cache(async (): Promise<UsuarioSessao | null> => {
   let token: string | undefined;
   try {
     token = (await cookies()).get(COOKIE_SESSAO)?.value;
   } catch {
     return null; // fora de uma requisição
   }
-  if (!token) return null;
-  const sessao = await base.sessao.findUnique({
-    where: { id: hashToken(token) },
-    select: { expiraEm: true, usuario: { select: { empresaId: true, ativo: true } } },
-  });
-  if (!sessao || sessao.expiraEm < new Date() || !sessao.usuario.ativo) return null;
-  const empresa = await base.empresa.findUnique({ where: { id: sessao.usuario.empresaId }, select: { ativa: true } });
-  return empresa?.ativa ? sessao.usuario.empresaId : null;
+  return token ? sessaoPorHash(hashToken(token)) : null;
 });
+
+/** Loja do usuário logado nesta requisição, ou null. */
+export const empresaDaSessao = async (): Promise<string | null> => (await usuarioDaSessao())?.empresaId ?? null;
 
 export async function empresaAtualId(): Promise<string> {
   const id = lojaForcada.getStore() ?? (await empresaDaSessao());
@@ -134,6 +146,12 @@ const ESCRITAS = new Set(["create", "createMany", "createManyAndReturn", "update
 // A carteira continua gravando mesmo com o saldo esgotado (é como a loja sai dessa situação).
 const LIVRES_NO_MODO_CONSULTA = new Set(["MovimentoCredito", "Recarga"]);
 
+/** Para antes de efeitos externos (e-mail, SEFAZ) quando a loja está só consultando. */
+export async function exigirGravacao() {
+  const { situacaoParaGravar } = await import("./carteira");
+  if ((await situacaoParaGravar(await empresaAtualId())) === "CONSULTA") throw new ErroSomenteConsulta();
+}
+
 export class ErroSomenteConsulta extends Error {
   constructor() {
     super("Saldo esgotado: a loja está em modo consulta. Recarregue os créditos em Assinatura para voltar a cadastrar.");
@@ -156,9 +174,10 @@ export const prisma = base.$extends({
       async $allOperations({ model, operation, args, query }) {
         if (!DA_LOJA.has(model)) return query(args);
         const empresaId = await empresaAtualId();
-        if (ESCRITAS.has(operation) && !LIVRES_NO_MODO_CONSULTA.has(model)) {
-          const { carteiraDaLoja } = await import("./carteira");
-          if ((await carteiraDaLoja(empresaId)).situacao === "CONSULTA") throw new ErroSomenteConsulta();
+        // Atualizar a situação de nota já enviada à SEFAZ também é livre (senão o registro fica diferente da SEFAZ).
+        if (ESCRITAS.has(operation) && !LIVRES_NO_MODO_CONSULTA.has(model) && !(model === "NotaFiscal" && operation === "update")) {
+          const { situacaoParaGravar } = await import("./carteira");
+          if ((await situacaoParaGravar(empresaId)) === "CONSULTA") throw new ErroSomenteConsulta();
         }
         const a = { ...(args as Dados) };
         if (COM_WHERE.has(operation)) a.where = { ...((a.where as Dados) ?? {}), empresaId };

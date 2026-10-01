@@ -31,7 +31,8 @@ export async function salvarCliente(
   const { dataNascimento, ...dados } = resultado.data;
   const registro = {
     ...dados,
-    dataNascimento: dataNascimento ? new Date(`${dataNascimento}T00:00:00`) : null,
+    // Meia-noite UTC: a tela lê o dia com toISOString, igual em qualquer fuso do servidor.
+    dataNascimento: dataNascimento ? new Date(`${dataNascimento}T00:00:00Z`) : null,
     // Campos que não se aplicam ao tipo de pessoa são limpos.
     ...(dados.tipo === "PF"
       ? { nomeFantasia: null, inscricaoEstadual: null, inscricaoMunicipal: null }
@@ -67,14 +68,28 @@ export async function salvarCliente(
 
 export async function excluirCliente(id: string) {
   await exigirUsuario("excluirCliente");
-  const vinculos = await prisma.cliente.findUnique({
+  const vinculos = await prisma.cliente.findFirst({
     where: { id },
-    select: { _count: { select: { ordens: true, vendas: true } } },
+    select: { _count: { select: { ordens: true, vendas: true, entregas: true, lancamentos: true } } },
   });
-  if (vinculos && vinculos._count.ordens + vinculos._count.vendas > 0) {
-    return { erro: "Cliente tem ordens de serviço ou vendas e não pode ser excluído." };
+  if (!vinculos) return { erro: "Cliente não encontrado." };
+  const c = vinculos._count;
+  const usados = [
+    c.ordens && "ordens de serviço",
+    c.vendas && "vendas",
+    c.entregas && "entregas",
+    c.lancamentos && "lançamentos no financeiro",
+  ].filter(Boolean);
+  if (usados.length) return { erro: `Cliente tem ${usados.join(", ")} e não pode ser excluído.` };
+  try {
+    await prisma.cliente.delete({ where: { id } });
+  } catch (e) {
+    // Vínculo criado entre a conferência e a exclusão.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && (e.code === "P2003" || e.code === "P2014")) {
+      return { erro: "Cliente tem registros vinculados e não pode ser excluído." };
+    }
+    throw e;
   }
-  await prisma.cliente.delete({ where: { id } });
   revalidatePath("/clientes");
   redirect("/clientes");
 }

@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { exigirSuperAdmin } from "@/lib/auth";
 import { randomUUID } from "node:crypto";
-import { atualizarCarteira, iniciarCarteira, lancarCredito } from "@/lib/carteira";
+import { atualizarCarteira, configSistema, esquecerCarteira, iniciarCarteira, lancarCredito } from "@/lib/carteira";
 import { paraNumero } from "@/lib/estoque";
 import { somarDias, ymdLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/vendas";
 import type { EstadoFormulario } from "@/lib/clientes";
-import { prismaBase } from "@/lib/db";
+import { prismaBase, sessaoPorHash } from "@/lib/db";
 import { gerarHash } from "@/lib/senha";
 
 const novaLojaSchema = z.object({
@@ -52,6 +52,7 @@ export async function alternarLoja(empresaId: string) {
   if (e.ativa) {
     // Bloqueada: derruba as sessões abertas dos usuários dela.
     await prismaBase.sessao.deleteMany({ where: { usuario: { empresaId } } });
+    sessaoPorHash.limpar();
   }
   revalidatePath("/sistema");
 }
@@ -71,6 +72,7 @@ export async function salvarCobrancaLoja(empresaId: string, _e: EstadoFormulario
   // Ao voltar a cobrar, começa por hoje: os dias isentos não são cobrados.
   const ontem = new Date(`${somarDias(ymdLocal(new Date()), -1)}T00:00:00Z`);
   await prismaBase.empresa.update({ where: { id: empresaId }, data: { diaria, isenta, ...(antes.isenta && !isenta ? { cobradoAte: ontem } : {}) } });
+  esquecerCarteira(empresaId);
   revalidatePath("/sistema", "layout");
   return { mensagem: "Cobrança salva.", valores };
 }
@@ -105,6 +107,7 @@ export async function salvarConfigSistema(_e: EstadoFormulario, formData: FormDa
   if (Object.keys(erros).length) return { erros, valores };
   const dados = { diariaPadrao, creditoBoasVindas, recargaMinima, diasTolerancia };
   await prismaBase.configSistema.upsert({ where: { id: "sistema" }, create: { id: "sistema", ...dados }, update: dados });
+  configSistema.esquecer();
   revalidatePath("/sistema", "layout");
   return { mensagem: "Valores salvos.", valores };
 }

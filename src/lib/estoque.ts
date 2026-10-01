@@ -1,5 +1,6 @@
 import type { CondicaoAparelho, TipoProduto } from "@prisma/client";
 import { z } from "zod";
+import { lerReais } from "./dinheiro";
 
 export const TIPOS_PRODUTO: Record<TipoProduto, string> = {
   APARELHO: "Aparelho",
@@ -25,10 +26,8 @@ export const GARANTIA_ACESSORIO = 90;
 
 export function paraNumero(v: unknown): number {
   if (typeof v === "number") return v;
-  const s = String(v ?? "").trim();
-  if (!s) return 0;
-  // Aceita "1.234,56" e "1234.56"
-  return Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s);
+  if (!String(v ?? "").trim()) return 0;
+  return lerReais(v);
 }
 
 const opcional = z

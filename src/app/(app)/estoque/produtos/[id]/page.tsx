@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { CONDICOES, TIPOS_PRODUTO } from "@/lib/estoque";
 import { formatarMoeda } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
+import { dataEHora } from "@/lib/tempo";
 import { EntradaAparelhoForm, MovimentoForm } from "./Formularios";
 
 const SITUACAO: Record<string, string> = {
@@ -21,17 +22,20 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
   const usuario = await exigirUsuario("estoque");
   const { id } = await params;
   const { salvo } = await searchParams;
-  const produto = await prisma.produto.findUnique({
-    where: { id },
-    include: {
-      unidades: { orderBy: [{ situacao: "asc" }, { criadoEm: "desc" }], take: 100 },
-      movimentos: { orderBy: { criadoEm: "desc" }, take: 30 },
-    },
-  });
+  const [produto, unidadesEmEstoque] = await Promise.all([
+    prisma.produto.findUnique({
+      where: { id },
+      include: {
+        unidades: { orderBy: [{ situacao: "asc" }, { criadoEm: "desc" }], take: 100 },
+        movimentos: { orderBy: { criadoEm: "desc" }, take: 30 },
+      },
+    }),
+    prisma.aparelho.count({ where: { produtoId: id, situacao: "EM_ESTOQUE" } }),
+  ]);
   if (!produto) notFound();
   const editar = pode(usuario.perfil, "editarProdutos");
   const aparelho = produto.tipo === "APARELHO";
-  const emEstoque = aparelho ? produto.unidades.filter((u) => u.situacao === "EM_ESTOQUE").length : produto.estoque;
+  const emEstoque = aparelho ? unidadesEmEstoque : produto.estoque;
 
   const inicial = Object.fromEntries(
     Object.entries(produto)
@@ -107,7 +111,7 @@ export default async function Produto({ params, searchParams }: PageProps<"/esto
           <tbody>
             {produto.movimentos.map((m) => (
               <tr key={m.id} className="border-b border-zinc-100 last:border-0">
-                <td className="py-2 text-zinc-500">{m.criadoEm.toLocaleString("pt-BR")}</td>
+                <td className="py-2 text-zinc-500">{dataEHora(m.criadoEm)}</td>
                 <td className="py-2">{m.tipo.replace("_", " ").toLowerCase()}</td>
                 <td className="py-2">{m.referencia}</td>
                 <td className={`py-2 text-right font-medium ${m.quantidade < 0 ? "text-red-600" : "text-green-700"}`}>

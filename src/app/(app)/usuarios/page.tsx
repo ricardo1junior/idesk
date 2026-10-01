@@ -2,14 +2,13 @@ import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { Perfil } from "@prisma/client";
 import { DESCRICAO_PERMISSOES, PERFIS, pode, type Permissao } from "@/lib/permissoes";
-import { alterarUsuario } from "./actions";
-import { NovoUsuario } from "./NovoUsuario";
+import { LinhaUsuario, NovoUsuario } from "./NovoUsuario";
 
 const perfis = Object.keys(PERFIS) as Perfil[];
 
 export default async function Usuarios() {
   const eu = await exigirUsuario("usuarios");
-  const usuarios = await prisma.usuario.findMany({ orderBy: { nome: "asc" } });
+  const usuarios = await prisma.usuario.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true, email: true, perfil: true, ativo: true, superAdmin: true } });
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -24,36 +23,7 @@ export default async function Usuarios() {
         <h2 className="titulo-secao">Equipe</h2>
         <div className="divide-y divide-zinc-100">
           {usuarios.map((u) => (
-            <form
-              key={u.id + u.perfil + u.ativo}
-              action={alterarUsuario.bind(null, u.id)}
-              className="grid items-end gap-3 py-3 sm:grid-cols-[1fr_10rem_6rem_10rem_auto]"
-            >
-              <div className="text-sm">
-                <div className="font-medium">
-                  {u.nome} {u.id === eu.id && <span className="text-xs text-zinc-500">(você)</span>}
-                </div>
-                <div className="text-zinc-500">{u.email}</div>
-              </div>
-              <label className="campo">
-                <span>Perfil</span>
-                <select name="perfil" defaultValue={u.perfil} disabled={u.id === eu.id}>
-                  {Object.entries(PERFIS).map(([v, l]) => (
-                    <option key={v} value={v}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex items-center gap-2 pb-2 text-sm">
-                <input type="checkbox" name="ativo" defaultChecked={u.ativo} disabled={u.id === eu.id} /> Ativo
-              </label>
-              <label className="campo">
-                <span>Nova senha</span>
-                <input name="novaSenha" type="password" minLength={8} autoComplete="new-password" placeholder="(manter)" />
-              </label>
-              <button className="btn-secundario">Salvar</button>
-            </form>
+            <LinhaUsuario key={u.id} usuario={u} voce={u.id === eu.id} bloqueado={u.superAdmin && !eu.superAdmin} />
           ))}
         </div>
       </section>

@@ -199,8 +199,8 @@ model Cliente {
   lancamentos  Lancamento[]
 
   @@unique([empresaId, documento])
-  @@index([nome])
   @@index([empresaId])
+  @@index([empresaId, nome])
 }
 
 enum TipoContato {
@@ -339,12 +339,14 @@ model Aparelho {
 
   ordens       OrdemServico[]
   itensVenda   ItemVenda[]
-  trocaEm      Pagamento?        @relation("AparelhoTroca")
+  trocaEm      Pagamento[]       @relation("AparelhoTroca")
   verificacoes VerificacaoImei[]
 
   @@unique([empresaId, imei])
   @@unique([empresaId, serial])
   @@index([empresaId])
+  @@index([produtoId, situacao])
+  @@index([clienteId])
 }
 
 // ---------- Verificação de IMEI (serviços externos) ----------
@@ -438,8 +440,9 @@ model OrdemServico {
   lancamentos Lancamento[]
 
   @@unique([empresaId, numero])
-  @@index([status])
   @@index([empresaId])
+  @@index([clienteId])
+  @@index([empresaId, status])
 }
 
 model ItemOS {
@@ -456,6 +459,7 @@ model ItemOS {
   valorUnit  Decimal      @db.Decimal(12, 2)
 
   @@index([empresaId])
+  @@index([osId])
 }
 
 enum TipoFoto {
@@ -494,6 +498,7 @@ model HistoricoOS {
   criadoEm  DateTime     @default(now())
 
   @@index([empresaId])
+  @@index([osId, criadoEm])
 }
 
 // ---------- Vendas ----------
@@ -539,6 +544,7 @@ model Venda {
 
   @@unique([empresaId, numero])
   @@index([empresaId])
+  @@index([empresaId, criadoEm])
 }
 
 model ItemVenda {
@@ -557,6 +563,7 @@ model ItemVenda {
   garantiaDias Int?
 
   @@index([empresaId])
+  @@index([vendaId])
 }
 
 model Pagamento {
@@ -567,10 +574,12 @@ model Pagamento {
   forma           FormaPagamento
   valor           Decimal        @db.Decimal(12, 2)
   parcelas        Int            @default(1)
-  aparelhoTrocaId String?        @unique // aparelho recebido na troca
+  aparelhoTrocaId String? // aparelho recebido na troca (o mesmo aparelho pode voltar em outra troca)
   aparelhoTroca   Aparelho?      @relation("AparelhoTroca", fields: [aparelhoTrocaId], references: [id])
 
   @@index([empresaId])
+  @@index([vendaId])
+  @@index([aparelhoTrocaId])
 }
 
 // ---------- Estoque ----------
@@ -655,10 +664,12 @@ model Lancamento {
   usuarioId     String?
   criadoEm      DateTime             @default(now())
 
-  @@index([vencimento])
-  @@index([pagoEm])
-  @@index([tipo, status])
   @@index([empresaId])
+  @@index([vendaId])
+  @@index([empresaId, pagoEm])
+  @@index([empresaId, status, vencimento])
+  @@index([osId])
+  @@index([clienteId])
 }
 
 // ---------- Fornecedores e notas de entrada ----------
@@ -852,8 +863,8 @@ model Agendamento {
   criadoEm     DateTime          @default(now())
   atualizadoEm DateTime          @updatedAt
 
-  @@index([inicio])
   @@index([empresaId])
+  @@index([empresaId, inicio])
 }
 
 enum TipoEntrega {
@@ -895,4 +906,6 @@ model Entrega {
   @@unique([empresaId, numero])
   @@index([agendadaPara])
   @@index([empresaId])
+  @@index([osId])
+  @@index([empresaId, status])
 }

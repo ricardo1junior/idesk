@@ -5,6 +5,7 @@ import { ResumoVenda } from "@/components/ResumoVenda";
 import { exigirUsuario } from "@/lib/auth";
 import { formatarDocumento } from "@/lib/documentos";
 import { CONDICOES } from "@/lib/estoque";
+import { dataEHora } from "@/lib/tempo";
 import { formatarReais } from "@/lib/vendas";
 import { carregarVenda } from "../dados";
 
@@ -25,7 +26,7 @@ export default async function ReciboVenda({ params }: PageProps<"/vendas/[id]/im
         <CabecalhoLoja />
         <div className="text-right">
           <div className="text-xl font-bold">Venda #{venda.numero}</div>
-          <div className="text-xs">{venda.criadoEm.toLocaleString("pt-BR")}</div>
+          <div className="text-xs">{dataEHora(venda.criadoEm)}</div>
           <div className="text-xs text-zinc-500">Recibo de venda (não é documento fiscal)</div>
           {venda.status === "CANCELADA" && <div className="text-xs font-bold text-red-700">CANCELADA</div>}
         </div>

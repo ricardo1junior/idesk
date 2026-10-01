@@ -1,6 +1,7 @@
 import { exigirUsuario } from "@/lib/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { EnviarEmail } from "@/components/EnviarEmail";
 import { FichaAparelho } from "@/components/FichaAparelho";
 import { IconeWhatsApp, LinkWhatsApp } from "@/components/LinkWhatsApp";
@@ -8,13 +9,14 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { VerificarImei } from "@/components/VerificarImei";
 import { formatarDocumento } from "@/lib/documentos";
 import { MAX_FOTOS_OS, TIPOS_FOTO } from "@/lib/fotos";
-import { formatarMoeda, STATUS_OS, TIPOS_SENHA } from "@/lib/os";
+import { formatarMoeda, orcamentoTravado, resumoPagamentoOS, STATUS_OS, TIPOS_SENHA, TRANSICOES_OS } from "@/lib/os";
 import { pode } from "@/lib/permissoes";
+import { dataEHora, dataLocal } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO } from "@/lib/vendas";
-import { definirDesconto, mudarStatus, removerFoto, removerItem } from "../actions";
+import { removerFoto, removerItem } from "../actions";
 import { enviarEmailOS } from "../../email/actions";
 import { carregarOS } from "./dados";
-import { AdicionarFotos, NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
+import { AdicionarFotos, AtualizarStatus, Desconto, NovoItem, PagamentoOS, RevelarSenha } from "./Interacoes";
 
 export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const usuario = await exigirUsuario("os");
@@ -22,10 +24,12 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
   const os = await carregarOS(id);
   if (!os) notFound();
 
-  const pago = os.lancamentos.reduce((s, l) => s + Number(l.valor), 0);
-  const restante = Math.round((Number(os.total) - pago) * 100) / 100;
+  const pagamento = resumoPagamentoOS(Number(os.total), os.lancamentos);
+  const restante = pagamento.faltaLancar;
   const subtotal = os.itens.reduce((s, i) => s + Number(i.valorUnit) * i.quantidade, 0);
   const editar = pode(usuario.perfil, "editarOS");
+  const travada = orcamentoTravado(os.status);
+  const editarOrcamento = editar && !travada;
   const receber = pode(usuario.perfil, "receberOS");
   const whatsapp = (os.cliente.whatsapp || os.cliente.telefone || "").replace(/\D/g, "");
 
@@ -39,7 +43,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
           <h1 className="flex items-center gap-3 text-2xl font-semibold">
             OS #{os.numero} <StatusBadge status={os.status} />
           </h1>
-          <p className="text-sm text-zinc-500">Aberta em {os.criadoEm.toLocaleString("pt-BR")}</p>
+          <p className="text-sm text-zinc-500">Aberta em {dataEHora(os.criadoEm)}</p>
         </div>
         <div className="flex flex-wrap items-start gap-2">
           {whatsapp && (
@@ -112,9 +116,9 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
                   </div>
                   {editar && (
                     <form action={removerFoto.bind(null, os.id, f.id)}>
-                      <button className="text-zinc-400 hover:text-red-600" aria-label="Apagar foto">
+                      <BotaoEnviar className="text-zinc-400 hover:text-red-600 disabled:opacity-40" aria-label="Apagar foto" confirmar="Apagar esta foto?">
                         ×
-                      </button>
+                      </BotaoEnviar>
                     </form>
                   )}
                 </div>
@@ -137,11 +141,11 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
                 </td>
                 <td className="w-32 py-2 text-right">{formatarMoeda(Number(i.valorUnit) * i.quantidade)}</td>
                 <td className="w-10 py-2 text-right">
-                  {editar && (
+                  {editarOrcamento && (
                     <form action={removerItem.bind(null, os.id, i.id)}>
-                      <button className="text-zinc-400 hover:text-red-600" aria-label="Remover item">
+                      <BotaoEnviar className="text-zinc-400 hover:text-red-600 disabled:opacity-40" aria-label="Remover item" confirmar={`Remover "${i.descricao}"?`}>
                         ×
-                      </button>
+                      </BotaoEnviar>
                     </form>
                   )}
                 </td>
@@ -154,17 +158,12 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             )}
           </tbody>
         </table>
-        {editar && <NovoItem osId={os.id} />}
+        {editarOrcamento && <NovoItem osId={os.id} />}
+        {editar && travada && <p className="text-sm text-zinc-500">OS {os.status === "ENTREGUE" ? "entregue" : "cancelada"}: o orçamento não pode mais ser alterado.</p>}
         <div className="mt-4 flex flex-wrap items-end justify-end gap-6 text-sm">
           <div>Subtotal: {formatarMoeda(subtotal)}</div>
-          {editar ? (
-            <form key={os.desconto.toString()} action={definirDesconto.bind(null, os.id)} className="flex items-end gap-2">
-              <label className="campo w-28">
-                <span>Desconto</span>
-                <input name="desconto" inputMode="decimal" defaultValue={Number(os.desconto).toFixed(2).replace(".", ",")} />
-              </label>
-              <button className="btn-secundario">Aplicar</button>
-            </form>
+          {editarOrcamento ? (
+            <Desconto osId={os.id} inicial={Number(os.desconto).toFixed(2).replace(".", ",")} />
           ) : (
             Number(os.desconto) > 0 && <div>Desconto: {formatarMoeda(os.desconto)}</div>
           )}
@@ -184,7 +183,7 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
                     {l.parcela && ` ${l.parcela}/${l.totalParcelas}`}
                   </td>
                   <td className="py-1.5 text-zinc-500">
-                    {l.status === "PAGO" ? `pago em ${l.pagoEm?.toLocaleDateString("pt-BR")}` : `a receber em ${l.vencimento.toLocaleDateString("pt-BR")}`}
+                    {l.status === "PAGO" ? `pago em ${l.pagoEm ? dataLocal(l.pagoEm) : "-"}` : `a receber em ${dataLocal(l.vencimento)}`}
                   </td>
                   <td className="py-1.5 text-right">{formatarMoeda(l.valor)}</td>
                 </tr>
@@ -192,47 +191,39 @@ export default async function DetalheOS({ params }: PageProps<"/os/[id]">) {
             </tbody>
           </table>
         )}
-        {restante > 0 && !receber ? (
-          <p className="text-sm text-zinc-500">Falta receber {formatarMoeda(restante)}.</p>
+        {os.lancamentos.length > 0 && (
+          <p className="mb-3 text-sm">
+            Recebido: <b>{formatarMoeda(pagamento.recebido)}</b>
+            {pagamento.aReceber > 0 && (
+              <>
+                {" · "}A receber: <b>{formatarMoeda(pagamento.aReceber)}</b>
+              </>
+            )}
+          </p>
+        )}
+        {os.status === "CANCELADA" ? (
+          <p className="text-sm text-zinc-500">OS cancelada.</p>
+        ) : restante > 0 && !receber ? (
+          <p className="text-sm text-zinc-500">Falta lançar {formatarMoeda(restante)}.</p>
         ) : restante > 0 ? (
           <PagamentoOS osId={os.id} sugerido={restante.toFixed(2).replace(".", ",")} />
+        ) : Number(os.total) <= 0 ? (
+          <p className="text-sm text-zinc-500">Lance os serviços e peças para registrar o pagamento.</p>
+        ) : pagamento.quitada ? (
+          <p className="text-sm text-green-700">OS paga.</p>
         ) : (
-          <p className="text-sm text-green-700">{Number(os.total) > 0 ? "OS paga." : "Lance os serviços e peças para registrar o pagamento."}</p>
+          <p className="text-sm text-amber-700">Pagamento todo lançado; falta receber {formatarMoeda(pagamento.aReceber)} em parcelas.</p>
         )}
       </section>
 
       <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
         <h2 className="titulo-secao">Andamento</h2>
-        {editar && (
-        <form key={os.atualizadoEm.toISOString()} action={mudarStatus.bind(null, os.id)} className="grid gap-3 sm:grid-cols-4">
-          <label className="campo">
-            <span>Novo status</span>
-            <select name="status" defaultValue={os.status}>
-              {Object.entries(STATUS_OS).map(([valor, s]) => (
-                <option key={valor} value={valor}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="campo sm:col-span-3">
-            <span>Anotação</span>
-            <input name="nota" placeholder="ex.: cliente aprovou por telefone" />
-          </label>
-          <label className="campo sm:col-span-4">
-            <span>Diagnóstico técnico</span>
-            <textarea name="diagnostico" rows={2} defaultValue={os.diagnostico ?? ""} />
-          </label>
-          <div>
-            <button className="btn-primario">Atualizar</button>
-          </div>
-        </form>
-        )}
+        {editar && <AtualizarStatus key={os.atualizadoEm.toISOString()} osId={os.id} status={os.status} opcoes={TRANSICOES_OS[os.status]} diagnostico={os.diagnostico ?? ""} />}
         <ol className="mt-5 space-y-2 border-l border-zinc-200 pl-4 text-sm">
           {os.historico.map((h) => (
             <li key={h.id}>
               <StatusBadge status={h.status} />{" "}
-              <span className="text-zinc-500">{h.criadoEm.toLocaleString("pt-BR")}</span>
+              <span className="text-zinc-500">{dataEHora(h.criadoEm)}</span>
               {h.nota && <div className="text-zinc-700">{h.nota}</div>}
             </li>
           ))}

@@ -32,6 +32,9 @@ export async function focusConfigurado(ambiente: AmbienteFiscal) {
   return !!(await token(ambiente));
 }
 
+// A nota pode ter chegado à Focus mesmo sem resposta: não tratar como erro definitivo.
+export const SEM_RESPOSTA = "Sem resposta da Focus NFe. Tente atualizar a situação em instantes.";
+
 const caminho = (modelo: ModeloNota) => (modelo === "NFCE" ? "nfce" : "nfe");
 
 async function chamar(ambiente: AmbienteFiscal, metodo: string, rota: string, corpo?: unknown): Promise<RespostaNota> {
@@ -46,7 +49,7 @@ async function chamar(ambiente: AmbienteFiscal, metodo: string, rota: string, co
       signal: AbortSignal.timeout(60_000),
     });
   } catch {
-    return { status: "ERRO", mensagem: "Sem resposta da Focus NFe. Tente atualizar a situação em instantes." };
+    return { status: "ERRO", mensagem: SEM_RESPOSTA };
   }
   const json = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
   return interpretar(resp.status, json);

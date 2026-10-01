@@ -36,3 +36,15 @@ test("datas em Brasília", () => {
   assert.equal(ymdLocal(new Date("2026-10-01T02:00:00Z")), "2026-09-30");
   assert.equal(somarDias("2026-09-30", 1), "2026-10-01");
 });
+
+test("transições de status do agendamento", async () => {
+  const { TRANSICOES_AGENDA, statusAgendamentoValido, agendamentoSchema } = await import("./agenda");
+  assert.ok(TRANSICOES_AGENDA.CANCELADO.includes("AGENDADO"));
+  assert.ok(TRANSICOES_AGENDA.FALTOU.includes("AGENDADO"));
+  assert.deepEqual(TRANSICOES_AGENDA.ATENDIDO, []);
+  assert.equal(statusAgendamentoValido("__proto__"), false);
+  assert.equal(statusAgendamentoValido("CONFIRMADO"), true);
+  const base = { hora: "10:00", duracao: "30", clienteId: "", nome: "Ana", telefone: "", motivo: "REPARO", aparelho: "", observacoes: "" };
+  assert.equal(agendamentoSchema.safeParse({ ...base, dia: "2026-10-01" }).success, true);
+  assert.equal(agendamentoSchema.safeParse({ ...base, dia: "ontem" }).success, false);
+});

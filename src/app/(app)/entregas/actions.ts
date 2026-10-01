@@ -1,12 +1,11 @@
 "use server";
 
-import type { StatusEntrega } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { exigirUsuario } from "@/lib/auth";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { prisma } from "@/lib/db";
-import { enderecoEmLinha, entregaSchema, STATUS_ENTREGA, tempoTotal } from "@/lib/entregas";
+import { enderecoEmLinha, entregaSchema, statusEntregaValido, tempoTotal, TRANSICOES_ENTREGA } from "@/lib/entregas";
 import { configLoja } from "@/lib/loja";
 import { geocodificar, linkGoogleMaps, rotaDeCarro, rotasConfiguradas } from "@/lib/rotas";
 import { dataHoraLocal } from "@/lib/tempo";
@@ -71,6 +70,17 @@ export async function criarEntrega(_e: EstadoFormulario, formData: FormData): Pr
   }
   const d = r.data;
   if ((d.dia && !d.hora) || (!d.dia && d.hora)) return { erros: { hora: "Informe o dia e a hora, ou deixe os dois em branco." }, valores };
+  // Ids vindos do formulário precisam ser desta loja (e a venda/OS, deste cliente).
+  const [cliente, venda, os, responsavel] = await Promise.all([
+    prisma.cliente.findFirst({ where: { id: d.clienteId }, select: { id: true } }),
+    d.vendaId ? prisma.venda.findFirst({ where: { id: d.vendaId, clienteId: d.clienteId }, select: { id: true } }) : true,
+    d.osId ? prisma.ordemServico.findFirst({ where: { id: d.osId, clienteId: d.clienteId }, select: { id: true } }) : true,
+    d.responsavelId ? prisma.usuario.findFirst({ where: { id: d.responsavelId, ativo: true }, select: { id: true } }) : true,
+  ]);
+  if (!cliente) return { erros: { clienteId: "Cliente não encontrado. Busque e selecione de novo." }, valores };
+  if (!venda) return { erros: { vendaId: "Venda não encontrada para este cliente." }, valores };
+  if (!os) return { erros: { osId: "Ordem de serviço não encontrada para este cliente." }, valores };
+  if (!responsavel) return { erros: { responsavelId: "Usuário não encontrado ou inativo." }, valores };
   const entrega = await prisma.entrega.create({
     data: {
       tipo: d.tipo,
@@ -92,10 +102,12 @@ export async function criarEntrega(_e: EstadoFormulario, formData: FormData): Pr
   redirect(`/entregas#e${entrega.numero}`);
 }
 
-export async function mudarStatusEntrega(id: string, status: StatusEntrega) {
+export async function mudarStatusEntrega(id: string, status: string) {
   await exigirUsuario("entregas");
-  if (!(status in STATUS_ENTREGA)) return;
-  await prisma.entrega.update({ where: { id }, data: { status, concluidaEm: status === "CONCLUIDA" ? new Date() : null } });
+  if (!statusEntregaValido(status)) return;
+  const de = (Object.keys(TRANSICOES_ENTREGA) as (keyof typeof TRANSICOES_ENTREGA)[]).filter((s) => TRANSICOES_ENTREGA[s].includes(status));
+  // Só muda a partir de um status que permite a transição: clique repetido ou entrega já finalizada não fazem nada.
+  await prisma.entrega.updateMany({ where: { id, status: { in: de } }, data: { status, concluidaEm: status === "CONCLUIDA" ? new Date() : null } });
   revalidatePath("/entregas");
   revalidatePath("/agenda");
 }

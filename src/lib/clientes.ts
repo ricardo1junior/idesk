@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cnpjValido, cpfValido, somenteDigitos } from "./documentos";
+import { ymdValido } from "./tempo";
 
 const opcional = z
   .string()
@@ -15,7 +16,7 @@ export const clienteSchema = z
     nomeFantasia: opcional,
     documento: z.string().transform(somenteDigitos),
     rg: opcional,
-    dataNascimento: opcional,
+    dataNascimento: opcional.refine((v) => !v || ymdValido(v), "Data inválida"),
     inscricaoEstadual: opcional,
     inscricaoMunicipal: opcional,
     email: opcional.refine((v) => !v || z.email().safeParse(v).success, "E-mail inválido"),

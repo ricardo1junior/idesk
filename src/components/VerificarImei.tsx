@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { dataEHora } from "@/lib/tempo";
 import { historicoImei, verificarImei, type RespostaVerificacao } from "@/app/(app)/verificacao/actions";
 
 const CORES: Record<string, string> = {
@@ -54,7 +55,7 @@ export function VerificarImei({ imei, aparelhoId }: { imei: string; aparelhoId?:
           <div className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${CORES[v.situacao]}`}>{ROTULOS[v.situacao]}</span>
             <span className="text-xs font-medium">{FONTES[v.fonte] ?? v.fonte}</span>
-            <span className="text-xs text-zinc-500">{new Date(v.criadoEm).toLocaleString("pt-BR")}</span>
+            <span className="text-xs text-zinc-500">{dataEHora(new Date(v.criadoEm))}</span>
           </div>
           <p className="mt-1 text-xs text-zinc-700">{v.resumo}</p>
         </div>

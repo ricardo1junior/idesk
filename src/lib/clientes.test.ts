@@ -31,3 +31,12 @@ test("e-mail adicional inválido aponta a linha", () => {
   const r = prepararExtras(JSON.stringify({ contatos: [{ tipo: "EMAIL", valor: "x@", rotulo: "", whatsapp: false }], enderecos: [] }));
   assert.equal(r.erros.contato0, "E-mail inválido");
 });
+
+test("data de nascimento inválida vira erro de campo", async () => {
+  const { clienteSchema } = await import("./clientes");
+  const base = { tipo: "PF", nome: "Maria Silva", documento: "529.982.247-25" };
+  assert.equal(clienteSchema.safeParse({ ...base, dataNascimento: "1990-05-10" }).success, true);
+  const r = clienteSchema.safeParse({ ...base, dataNascimento: "10/05/1990" });
+  assert.equal(r.success, false);
+  assert.equal(r.error?.issues[0].path[0], "dataNascimento");
+});

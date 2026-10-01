@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { dataEHora } from "@/lib/tempo";
 import { atualizarNota, cancelarNota, emitirNota } from "../../notas/emissao";
 
 type Nota = {
@@ -64,7 +65,7 @@ export function NotasDaVenda({
             )}
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${COR[n.status]}`}>{NOME[n.status]}</span>
             {n.homologacao && <span className="text-xs text-amber-700">homologação (sem valor fiscal)</span>}
-            <span className="ml-auto text-xs text-zinc-500">{new Date(n.criadoEm).toLocaleString("pt-BR")}</span>
+            <span className="ml-auto text-xs text-zinc-500">{dataEHora(new Date(n.criadoEm))}</span>
           </div>
           {n.chave && <div className="mt-1 break-all font-mono text-xs text-zinc-500">{n.chave}</div>}
           {n.mensagem && <div className="mt-1 text-zinc-600">{n.mensagem}</div>}

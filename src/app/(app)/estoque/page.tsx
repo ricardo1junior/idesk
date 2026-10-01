@@ -1,4 +1,5 @@
 import type { Prisma, TipoProduto } from "@prisma/client";
+import Form from "next/form";
 import Link from "next/link";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -44,11 +45,11 @@ export default async function Estoque({ searchParams }: PageProps<"/estoque">) {
         ))}
       </div>
 
-      <form className="campo max-w-md">
+      <Form action="/estoque" className="campo max-w-md">
         {verAparelhos && <input type="hidden" name="aba" value="aparelhos" />}
         {filtroTipo && <input type="hidden" name="tipo" value={filtroTipo} />}
         <input name="q" defaultValue={busca} placeholder={verAparelhos ? "Modelo, IMEI ou série" : "Descrição, modelo, código de barras ou SKU"} />
-      </form>
+      </Form>
 
       {verAparelhos ? <ListaAparelhos busca={busca} /> : <ListaProdutos busca={busca} tipo={filtroTipo} />}
     </div>

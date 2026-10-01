@@ -1,8 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { lerReais } from "@/lib/dinheiro";
 import { formatarDocumento } from "@/lib/documentos";
+import { dataLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/vendas";
 import { buscarProdutosNota, conferirXml, importarNota, type Conferencia } from "../../actions";
 
@@ -75,18 +77,24 @@ export function ConferenciaXml() {
     const semProduto = linhas.find((l) => l.acao === "vincular" && !l.produtoId);
     if (semProduto) return setErro(`Item ${semProduto.numero}: escolha o produto do cadastro ou marque "Cadastrar novo".`);
     iniciar(async () => {
-      const r = await importarNota(
-        xml,
-        linhas.map((l) => ({
-          numero: l.numero,
-          acao: l.acao,
-          produtoId: l.acao === "vincular" ? l.produtoId : null,
-          novoTipo: l.novoTipo,
-          fator: Number(l.fator) || 1,
-          precoVenda: Number(l.precoVenda.replace(/\./g, "").replace(",", ".")) || 0,
-          imeis: l.imeis.split(/[\s,;]+/).filter(Boolean),
-        })),
-      );
+      let r;
+      try {
+        r = await importarNota(
+          xml,
+          linhas.map((l) => ({
+            numero: l.numero,
+            acao: l.acao,
+            produtoId: l.acao === "vincular" ? l.produtoId : null,
+            novoTipo: l.novoTipo,
+            fator: Number(l.fator) || 1,
+            precoVenda: lerReais(l.precoVenda) || 0,
+            imeis: l.imeis.split(/[\s,;]+/).filter(Boolean),
+          })),
+        );
+      } catch {
+        // Mantém a conferência na tela para tentar de novo.
+        return setErro("Não foi possível importar agora. Se os créditos do sistema acabaram, a loja está em modo consulta; recarregue e tente de novo.");
+      }
       if (r.erro) return setErro(r.erro);
       router.push(`/notas/entrada/${r.id}`);
     });
@@ -117,7 +125,7 @@ export function ConferenciaXml() {
             </Info>
             <Info titulo="Nota">
               {nota.numero} série {nota.serie}
-              <div className="text-xs text-zinc-500">Emitida em {new Date(nota.emissao).toLocaleDateString("pt-BR")}</div>
+              <div className="text-xs text-zinc-500">Emitida em {dataLocal(new Date(nota.emissao))}</div>
             </Info>
             <Info titulo="Valor total">{formatarReais(nota.valorTotal)}</Info>
             <Info titulo="Contas a pagar">
@@ -125,7 +133,7 @@ export function ConferenciaXml() {
                 ? `1 conta de ${formatarReais(nota.valorTotal)}`
                 : nota.duplicatas.map((d) => (
                     <div key={d.numero}>
-                      {new Date(d.vencimento).toLocaleDateString("pt-BR")}: {formatarReais(d.valor)}
+                      {dataLocal(new Date(d.vencimento))}: {formatarReais(d.valor)}
                     </div>
                   ))}
             </Info>
@@ -236,7 +244,8 @@ type ProdutoBusca = { id: string; descricao: string; tipo: Tipo };
 function BuscaProduto({ selecionado, onEscolher }: { selecionado: string | null; onEscolher: (p: ProdutoBusca) => void }) {
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<ProdutoBusca[]>([]);
-  const [, iniciar] = useTransition();
+  const ultima = useRef(0);
+  const espera = useRef<ReturnType<typeof setTimeout>>(undefined);
   return (
     <div className="relative sm:col-span-2">
       <label className="campo">
@@ -247,7 +256,14 @@ function BuscaProduto({ selecionado, onEscolher }: { selecionado: string | null;
           onChange={(e) => {
             const t = e.target.value;
             setTermo(t);
-            iniciar(async () => setResultados(await buscarProdutosNota(t)));
+            // Espera parar de digitar e ignora respostas de buscas antigas.
+            clearTimeout(espera.current);
+            if (t.trim().length < 2) return setResultados([]);
+            const n = ++ultima.current;
+            espera.current = setTimeout(async () => {
+              const r = await buscarProdutosNota(t);
+              if (n === ultima.current) setResultados(r);
+            }, 250);
           }}
         />
       </label>
