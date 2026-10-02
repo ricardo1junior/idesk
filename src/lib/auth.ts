@@ -19,7 +19,8 @@ export async function criarSessao(usuarioId: string) {
   await prisma.sessao.create({ data: { id: hashToken(token), usuarioId, expiraEm } });
   (await cookies()).set(COOKIE_SESSAO, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // IDESK_REDE_LOCAL é ligado só pelo `npm run servidor` (http://IP da rede, sem HTTPS).
+    secure: process.env.NODE_ENV === "production" && process.env.IDESK_REDE_LOCAL !== "1",
     sameSite: "lax",
     path: "/",
     expires: expiraEm,
