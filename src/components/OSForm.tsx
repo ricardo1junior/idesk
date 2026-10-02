@@ -6,6 +6,7 @@ import { abrirOS, buscarClientes } from "@/app/(app)/os/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarDocumento } from "@/lib/documentos";
 import { ACESSORIOS, CHECKLIST, RESULTADOS_CHECKLIST, TIPOS_SENHA } from "@/lib/os";
+import { Entrada } from "./Entrada";
 import { Campo, Secao } from "./Campos";
 import { ListaCapacidades, ListaModelosApple } from "./ListaModelosApple";
 import { FotosAparelho, fotosParaEnvio, type FotoEnviada } from "./FotosAparelho";
@@ -60,13 +61,13 @@ export function OSForm({ cliente: clienteInicial }: { cliente?: ClienteResumo })
           <input name="capacidade" defaultValue={v.capacidade} placeholder="ex.: 128 GB" list="capacidades-apple" autoComplete="off" />
         </Campo>
         <Campo label="IMEI" erro={erro("imei")} dica="*#06# no teclado mostra o IMEI">
-          <input name="imei" value={imei} onChange={(e) => setImei(e.target.value.trim())} inputMode="numeric" maxLength={15} />
+          <Entrada mascara="imei" name="imei" value={imei} onChange={(e) => setImei(e.target.value)} />
         </Campo>
-        <Campo label="Número de série">
-          <input name="serial" defaultValue={v.serial} className="uppercase" />
+        <Campo label="Número de série" erro={erro("serial")}>
+          <Entrada mascara="serial" name="serial" defaultValue={v.serial} />
         </Campo>
         <Campo label="Saúde da bateria (%)" erro={erro("saudeBateria")}>
-          <input name="saudeBateria" defaultValue={v.saudeBateria} inputMode="numeric" />
+          <Entrada mascara="porcentagem" name="saudeBateria" defaultValue={v.saudeBateria} />
         </Campo>
         <Campo label="Conta iCloud / Buscar ativo?">
           <select name="icloudBloqueado" defaultValue={v.icloudBloqueado ?? ""}>

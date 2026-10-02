@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Entrada } from "@/components/Entrada";
 import { Campo } from "@/components/Campos";
 import { ListaCapacidades, ListaModelosApple } from "@/components/ListaModelosApple";
 import type { EstadoFormulario } from "@/lib/clientes";
@@ -22,7 +23,7 @@ export function MovimentoForm({ produtoId }: { produtoId: string }) {
         <input name="quantidade" type="number" step={1} defaultValue={v.quantidade} required />
       </Campo>
       <Campo label="Custo unit. (R$)" erro={estado.erros?.custoUnit}>
-        <input name="custoUnit" defaultValue={v.custoUnit} inputMode="decimal" placeholder="opcional" />
+        <Entrada mascara="dinheiro" name="custoUnit" defaultValue={v.custoUnit} placeholder="opcional" />
       </Campo>
       <Campo label="Referência">
         <input name="referencia" defaultValue={v.referencia} placeholder="ex.: NF 1234" />
@@ -63,19 +64,19 @@ export function EntradaAparelhoForm({ produtoId, modelo }: { produtoId: string; 
         </select>
       </Campo>
       <Campo label="IMEI" erro={erro("imei")}>
-        <input name="imei" defaultValue={v.imei} inputMode="numeric" maxLength={15} />
+        <Entrada mascara="imei" name="imei" defaultValue={v.imei} />
       </Campo>
       <Campo label="IMEI 2" erro={erro("imei2")}>
-        <input name="imei2" defaultValue={v.imei2} inputMode="numeric" maxLength={15} />
+        <Entrada mascara="imei" name="imei2" defaultValue={v.imei2} />
       </Campo>
-      <Campo label="Nº de série">
-        <input name="serial" defaultValue={v.serial} className="uppercase" />
+      <Campo label="Nº de série" erro={erro("serial")}>
+        <Entrada mascara="serial" name="serial" defaultValue={v.serial} />
       </Campo>
       <Campo label="Bateria (%)" erro={erro("saudeBateria")}>
-        <input name="saudeBateria" defaultValue={v.saudeBateria} inputMode="numeric" />
+        <Entrada mascara="porcentagem" name="saudeBateria" defaultValue={v.saudeBateria} />
       </Campo>
       <Campo label="Custo (R$)" erro={erro("custo")}>
-        <input name="custo" defaultValue={v.custo} inputMode="decimal" placeholder="0,00" />
+        <Entrada mascara="dinheiro" name="custo" defaultValue={v.custo} placeholder="0,00" />
       </Campo>
       <Campo label="Observações" className="sm:col-span-2">
         <input name="observacoes" defaultValue={v.observacoes} />

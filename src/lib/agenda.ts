@@ -1,5 +1,6 @@
 import type { MotivoAgendamento, StatusAgendamento } from "@prisma/client";
 import { z } from "zod";
+import { nomeValido, telefoneOpcional } from "./mascaras";
 import { dataHoraLocal, diaDaSemana, ymdValido } from "./tempo";
 
 export const MOTIVOS: Record<MotivoAgendamento, string> = {
@@ -89,11 +90,13 @@ export const agendamentoSchema = z.object({
   duracao: z.coerce.number().int().min(5).max(480),
   clienteId: z.string().trim().transform((v) => v || null),
   nome: z.string().trim().min(2, "Informe o nome do cliente"),
-  telefone: z.string().trim().transform((v) => v.replace(/\D/g, "") || null),
+  telefone: telefoneOpcional(),
   motivo: z.enum(Object.keys(MOTIVOS) as [MotivoAgendamento, ...MotivoAgendamento[]]),
   aparelho: z.string().trim().max(80).transform((v) => v || null),
   observacoes: z.string().trim().max(500).transform((v) => v || null),
-});
+})
+  // Nome digitado à mão é de pessoa; o de um cliente cadastrado (pode ser empresa) vem como está.
+  .refine((a) => a.clienteId || nomeValido(a.nome), { message: "O nome não pode ter números nem símbolos", path: ["nome"] });
 
 export const configLojaSchema = z
   .object({

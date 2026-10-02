@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { criarLoja } from "./actions";
 
@@ -16,10 +17,10 @@ export function FormNovaLoja() {
         <input name="loja" defaultValue={v("loja")} required />
       </Campo>
       <Campo label="Administrador da loja" erro={erro("nome")}>
-        <input name="nome" defaultValue={v("nome")} required />
+        <Entrada mascara="nome" name="nome" defaultValue={v("nome")} required />
       </Campo>
       <Campo label="E-mail de acesso" erro={erro("email")}>
-        <input name="email" type="email" defaultValue={v("email")} autoComplete="off" required />
+        <Entrada mascara="email" name="email" defaultValue={v("email")} autoComplete="off" required />
       </Campo>
       <Campo label="Senha inicial" erro={erro("senha")} className="sm:col-span-2" dica="Passe para o lojista; ele pode trocar depois">
         <input name="senha" type="text" autoComplete="off" minLength={8} required />

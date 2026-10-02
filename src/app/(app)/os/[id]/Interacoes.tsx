@@ -2,6 +2,7 @@
 
 import type { StatusOS } from "@prisma/client";
 import { useActionState, useState, useTransition } from "react";
+import { Entrada } from "@/components/Entrada";
 import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { PadraoSenha } from "@/components/PadraoSenha";
 import type { EstadoFormulario } from "@/lib/clientes";
@@ -51,7 +52,7 @@ export function NovoItem({ osId }: { osId: string }) {
       </label>
       <label className={`campo ${erro("valorUnit") ? "campo-erro" : ""}`}>
         <span>Valor unit. (R$)</span>
-        <input name="valorUnit" inputMode="decimal" defaultValue={v.valorUnit} placeholder="0,00" />
+        <Entrada mascara="dinheiro" name="valorUnit" defaultValue={v.valorUnit} placeholder="0,00" />
       </label>
       <button type="submit" disabled={salvando} className="btn-primario">
         Adicionar
@@ -68,7 +69,7 @@ export function Desconto({ osId, inicial }: { osId: string; inicial: string }) {
     <form action={acao} className="flex flex-wrap items-end gap-2">
       <label className={`campo w-28 ${erro ? "campo-erro" : ""}`}>
         <span>Desconto</span>
-        <input name="desconto" inputMode="decimal" defaultValue={inicial} key={inicial} />
+        <Entrada mascara="dinheiro" name="desconto" defaultValue={inicial} key={inicial} placeholder="" />
       </label>
       <BotaoEnviar className="btn-secundario">Aplicar</BotaoEnviar>
       {erro && <p className="basis-full text-right text-sm text-red-600">{erro}</p>}
@@ -128,7 +129,7 @@ export function PagamentoOS({ osId, sugerido }: { osId: string; sugerido: string
       </label>
       <label className={`campo ${estado.erros?.valor ? "campo-erro" : ""}`}>
         <span>Valor (R$)</span>
-        <input name="valor" inputMode="decimal" defaultValue={v.valor ?? sugerido} />
+        <Entrada mascara="dinheiro" name="valor" defaultValue={v.valor ?? sugerido} />
       </label>
       {forma === "CREDITO" || forma === "BOLETO" || forma === "A_PRAZO" ? (
         <label className="campo">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Entrada } from "@/components/Entrada";
 import { Campo } from "@/components/Campos";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { salvarEmpresaFiscal } from "../emissao";
@@ -21,7 +22,7 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
       <section className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Empresa</h2>
         <Campo label="CNPJ" erro={erro("cnpj")}>
-          <input name="cnpj" defaultValue={v("cnpj")} />
+          <Entrada mascara="cnpj" name="cnpj" defaultValue={v("cnpj")} />
         </Campo>
         <Campo label="Razão social" erro={erro("razaoSocial")} className="sm:col-span-2">
           <input name="razaoSocial" defaultValue={v("razaoSocial")} />
@@ -33,7 +34,7 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
           <input name="inscricaoEstadual" defaultValue={v("inscricaoEstadual")} />
         </Campo>
         <Campo label="UF" erro={erro("uf")}>
-          <input name="uf" maxLength={2} defaultValue={v("uf")} />
+          <Entrada mascara="uf" name="uf" defaultValue={v("uf")} />
         </Campo>
         <Campo label="Regime tributário" className="sm:col-span-2">
           <select name="regime" defaultValue={v("regime", "SIMPLES_NACIONAL")}>
@@ -55,13 +56,13 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
       <section className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Impostos padrão dos itens</h2>
         <Campo label="CSOSN / CST do ICMS" erro={erro("icmsSituacao")}>
-          <input name="icmsSituacao" defaultValue={v("icmsSituacao", "102")} />
+          <Entrada mascara="digitos" name="icmsSituacao" maxLength={3} defaultValue={v("icmsSituacao", "102")} />
         </Campo>
         <Campo label="Alíquota ICMS (%) · só regime normal" erro={erro("icmsAliquota")}>
-          <input name="icmsAliquota" inputMode="decimal" defaultValue={v("icmsAliquota", "0")} />
+          <Entrada mascara="dinheiro" name="icmsAliquota" defaultValue={v("icmsAliquota", "0")} />
         </Campo>
         <Campo label="CST PIS/COFINS" erro={erro("pisCofinsCst")}>
-          <input name="pisCofinsCst" defaultValue={v("pisCofinsCst", "07")} />
+          <Entrada mascara="digitos" name="pisCofinsCst" maxLength={2} defaultValue={v("pisCofinsCst", "07")} />
         </Campo>
         <Campo label="Origem da mercadoria">
           <select name="origemPadrao" defaultValue={v("origemPadrao", "0")}>
@@ -71,10 +72,10 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
           </select>
         </Campo>
         <Campo label="CFOP dentro do estado" erro={erro("cfopDentroEstado")}>
-          <input name="cfopDentroEstado" defaultValue={v("cfopDentroEstado", "5102")} />
+          <Entrada mascara="digitos" name="cfopDentroEstado" maxLength={4} defaultValue={v("cfopDentroEstado", "5102")} />
         </Campo>
         <Campo label="CFOP para outro estado" erro={erro("cfopForaEstado")}>
-          <input name="cfopForaEstado" defaultValue={v("cfopForaEstado", "6102")} />
+          <Entrada mascara="digitos" name="cfopForaEstado" maxLength={4} defaultValue={v("cfopForaEstado", "6102")} />
         </Campo>
         <Campo label="Natureza da operação" erro={erro("naturezaOperacao")} className="sm:col-span-2">
           <input name="naturezaOperacao" defaultValue={v("naturezaOperacao", "Venda de mercadoria")} />

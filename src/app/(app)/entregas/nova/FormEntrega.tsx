@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import { BuscaCliente } from "@/components/OSForm";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarDuracao, TIPOS_ENTREGA } from "@/lib/entregas";
@@ -169,7 +170,7 @@ export function FormEntrega({
           </Campo>
         )}
         <Campo label="Taxa de entrega (R$)" erro={erro("taxa")}>
-          <input name="taxa" inputMode="decimal" placeholder="0,00" defaultValue={v.taxa} />
+          <Entrada mascara="dinheiro" name="taxa" placeholder="0,00" defaultValue={v.taxa} />
         </Campo>
         <Campo label="Quem vai" erro={erro("responsavelId")} className="sm:col-span-2">
           <select name="responsavelId" defaultValue={v.responsavelId ?? ""} key={v.responsavelId}>
