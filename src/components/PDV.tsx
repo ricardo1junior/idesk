@@ -8,6 +8,7 @@ import { CONDICOES, paraNumero } from "@/lib/estoque";
 import { calcularTotais, centavos, FORMAS_PAGAMENTO, formatarReais, somaPagamentos, totalItem } from "@/lib/vendas";
 import { COM_VENCIMENTO } from "@/lib/financeiro";
 import { AvaliacaoTroca } from "./AvaliacaoTroca";
+import { Entrada } from "./Entrada";
 import { ListaCapacidades, ListaModelosApple } from "./ListaModelosApple";
 import { BuscaCliente } from "./OSForm";
 import { VerificarImei } from "./VerificarImei";
@@ -176,12 +177,12 @@ export function PDV() {
                     </td>
                     <td className="py-2 pr-2">
                       <div className={`campo ${Number.isFinite(itensCalc[n].valorUnit) ? "" : "campo-erro"}`}>
-                        <input aria-label="Valor unitário" inputMode="decimal" value={i.valorUnit} onChange={(e) => alterarItem(n, { valorUnit: e.target.value })} />
+                        <Entrada mascara="dinheiro" aria-label="Valor unitário" placeholder="" value={i.valorUnit} onChange={(e) => alterarItem(n, { valorUnit: e.target.value })} />
                       </div>
                     </td>
                     <td className="py-2 pr-2">
                       <div className={`campo ${Number.isFinite(itensCalc[n].desconto) ? "" : "campo-erro"}`}>
-                        <input aria-label="Desconto do item" inputMode="decimal" placeholder="R$ ou %" value={i.desconto} onChange={(e) => alterarItem(n, { desconto: e.target.value })} />
+                        <Entrada mascara="desconto" aria-label="Desconto do item" value={i.desconto} onChange={(e) => alterarItem(n, { desconto: e.target.value })} />
                       </div>
                     </td>
                     <td className="py-2 text-right font-medium">{formatarReais(totalItem(itensCalc[n]))}</td>
@@ -220,7 +221,7 @@ export function PDV() {
                   <div className="text-sm font-medium">{FORMAS_PAGAMENTO[p.forma]}</div>
                   <label className="campo">
                     <span>{p.forma === "TROCA" ? "Valor avaliado" : "Valor"}</span>
-                    <input inputMode="decimal" value={p.valor} onChange={(e) => alterarPag(p.id, { valor: e.target.value })} />
+                    <Entrada mascara="dinheiro" value={p.valor} onChange={(e) => alterarPag(p.id, { valor: e.target.value })} />
                   </label>
                   {p.forma === "CREDITO" || p.forma === "BOLETO" || p.forma === "A_PRAZO" ? (
                     <label className="campo">
@@ -281,7 +282,7 @@ export function PDV() {
           </div>
           <label className="campo">
             <span>Desconto geral (R$ ou %)</span>
-            <input inputMode="decimal" value={descontoGeral} onChange={(e) => setDescontoGeral(e.target.value)} placeholder="0,00" />
+            <Entrada mascara="desconto" value={descontoGeral} onChange={(e) => setDescontoGeral(e.target.value)} placeholder="0,00" />
           </label>
           <div className="flex justify-between text-lg font-semibold">
             <span>Total</span>
@@ -417,11 +418,11 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
       </label>
       <label className="campo">
         <span>IMEI</span>
-        <input {...campo("imei")} inputMode="numeric" maxLength={15} />
+        <Entrada mascara="imei" {...campo("imei")} />
       </label>
       <label className="campo">
         <span>Nº de série</span>
-        <input {...campo("serial")} />
+        <Entrada mascara="serial" {...campo("serial")} />
       </label>
       <label className="campo">
         <span>Condição</span>
@@ -435,7 +436,7 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
       </label>
       <label className="campo">
         <span>Bateria (%)</span>
-        <input {...campo("saudeBateria")} inputMode="numeric" />
+        <Entrada mascara="porcentagem" {...campo("saudeBateria")} />
       </label>
       <AvaliacaoTroca modelo={troca.modelo} capacidade={troca.capacidade} />
       <div className="sm:col-span-4">

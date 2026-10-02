@@ -3,8 +3,9 @@
 import { useActionState, useState } from "react";
 import { salvarCliente } from "@/app/(app)/clientes/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
-import { formatarCep, formatarDocumento, somenteDigitos } from "@/lib/documentos";
+import { somenteDigitos } from "@/lib/documentos";
 import { Campo, Secao } from "./Campos";
+import { Entrada } from "./Entrada";
 
 export type ContatoExtra = { tipo: "TELEFONE" | "EMAIL"; valor: string; rotulo: string; whatsapp: boolean };
 export type EnderecoExtra = {
@@ -49,7 +50,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
   const v = { ...inicial, ...estado.valores };
   const [tipo, setTipo] = useState(v.tipo ?? "PF");
   const [endereco, setEndereco] = useState({
-    cep: v.cep ? formatarCep(v.cep) : "",
+    cep: v.cep ?? "",
     logradouro: v.logradouro ?? "",
     bairro: v.bairro ?? "",
     cidade: v.cidade ?? "",
@@ -99,7 +100,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
 
       <Secao titulo="Identificação">
         <Campo label={pf ? "Nome completo" : "Razão social"} erro={erro("nome")} className="sm:col-span-2">
-          <input name="nome" defaultValue={v.nome} required />
+          <Entrada mascara={pf ? "nome" : "texto"} name="nome" defaultValue={v.nome} required />
         </Campo>
         {!pf && (
           <Campo label="Nome fantasia" className="sm:col-span-2">
@@ -107,14 +108,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
           </Campo>
         )}
         <Campo label={pf ? "CPF" : "CNPJ"} erro={erro("documento")}>
-          <input
-            name="documento"
-            defaultValue={v.documento ? formatarDocumento(v.documento) : ""}
-            inputMode="numeric"
-            placeholder={pf ? "000.000.000-00" : "00.000.000/0000-00"}
-            onBlur={(e) => (e.target.value = formatarDocumento(e.target.value))}
-            required
-          />
+<Entrada mascara={pf ? "cpf" : "cnpj"} name="documento" defaultValue={v.documento} key={tipo} required />
         </Campo>
         {pf ? (
           <>
@@ -138,22 +132,21 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
       </Secao>
 
       <Secao titulo="Contatos">
-        <Campo label="Telefone principal">
-          <input name="telefone" type="tel" defaultValue={v.telefone} />
+        <Campo label="Telefone principal" erro={erro("telefone")}>
+          <Entrada mascara="telefone" name="telefone" defaultValue={v.telefone} />
         </Campo>
-        <Campo label="WhatsApp">
-          <input name="whatsapp" type="tel" defaultValue={v.whatsapp} />
+        <Campo label="WhatsApp" erro={erro("whatsapp")}>
+          <Entrada mascara="telefone" name="whatsapp" defaultValue={v.whatsapp} />
         </Campo>
         <Campo label="E-mail principal" erro={erro("email")} className="sm:col-span-2">
-          <input name="email" type="email" defaultValue={v.email} />
+          <Entrada mascara="email" name="email" defaultValue={v.email} />
         </Campo>
 
         {contatos.map((c, n) => (
           <div key={n} className="grid gap-3 border-t border-zinc-100 pt-3 sm:col-span-4 sm:grid-cols-[1fr_1.5fr_auto_auto]">
             <Campo label={c.tipo === "EMAIL" ? "E-mail adicional" : "Telefone adicional"} erro={erro(`contato${n}`)}>
-              <input
-                type={c.tipo === "EMAIL" ? "email" : "tel"}
-                inputMode={c.tipo === "EMAIL" ? "email" : "tel"}
+              <Entrada
+                mascara={c.tipo === "EMAIL" ? "email" : "telefone"}
                 value={c.valor}
                 onChange={(e) => alterarContato(n, { valor: e.target.value })}
               />
@@ -184,15 +177,14 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
       </Secao>
 
       <Secao titulo="Endereço principal">
-        <Campo label="CEP" dica={buscandoCep ? "Buscando endereço..." : undefined}>
-          <input
+        <Campo label="CEP" erro={erro("cep")} dica={buscandoCep ? "Buscando endereço..." : undefined}>
+          <Entrada
+            mascara="cep"
             name="cep"
-            inputMode="numeric"
             value={endereco.cep}
-            onChange={(e) => setEndereco({ ...endereco, cep: e.target.value })}
-            onBlur={(e) => {
-              setEndereco({ ...endereco, cep: formatarCep(e.target.value) });
-              buscarCep(e.target.value);
+            onChange={(e) => {
+              setEndereco({ ...endereco, cep: e.target.value });
+              if (somenteDigitos(e.target.value).length === 8) buscarCep(e.target.value);
             }}
           />
         </Campo>
@@ -208,8 +200,8 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
         <Campo label="Bairro">
           <input name="bairro" value={endereco.bairro} onChange={(e) => setEndereco({ ...endereco, bairro: e.target.value })} />
         </Campo>
-        <Campo label="Cidade">
-          <input name="cidade" value={endereco.cidade} onChange={(e) => setEndereco({ ...endereco, cidade: e.target.value })} />
+        <Campo label="Cidade" erro={erro("cidade")}>
+          <Entrada mascara="nome" name="cidade" value={endereco.cidade} onChange={(e) => setEndereco({ ...endereco, cidade: e.target.value })} />
         </Campo>
         <Campo label="UF">
           <select name="uf" value={endereco.uf} onChange={(e) => setEndereco({ ...endereco, uf: e.target.value })}>
@@ -226,14 +218,15 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
           <Campo label="Descrição" className="sm:col-span-2">
             <input value={e.rotulo} onChange={(ev) => alterarEndereco(n, { rotulo: ev.target.value })} placeholder="ex.: Comercial, Entrega, Cobrança" />
           </Campo>
-          <Campo label="CEP">
-            <input
-              inputMode="numeric"
+          <Campo label="CEP" erro={erro(`endereco${n}`)}>
+            <Entrada
+              mascara="cep"
               value={e.cep}
-              onChange={(ev) => alterarEndereco(n, { cep: ev.target.value })}
-              onBlur={async (ev) => {
-                alterarEndereco(n, { cep: formatarCep(ev.target.value) });
-                const dados = await consultarCep(ev.target.value);
+              onChange={async (ev) => {
+                const cep = ev.target.value;
+                alterarEndereco(n, { cep });
+                if (somenteDigitos(cep).length !== 8) return;
+                const dados = await consultarCep(cep);
                 if (dados) alterarEndereco(n, dados);
               }}
             />
@@ -256,7 +249,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
             <input value={e.bairro} onChange={(ev) => alterarEndereco(n, { bairro: ev.target.value })} />
           </Campo>
           <Campo label="Cidade">
-            <input value={e.cidade} onChange={(ev) => alterarEndereco(n, { cidade: ev.target.value })} />
+            <Entrada mascara="nome" value={e.cidade} onChange={(ev) => alterarEndereco(n, { cidade: ev.target.value })} />
           </Campo>
           <Campo label="UF">
             <select value={e.uf} onChange={(ev) => alterarEndereco(n, { uf: ev.target.value })}>

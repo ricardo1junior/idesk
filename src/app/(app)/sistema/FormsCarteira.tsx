@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { lancarCreditoManual, salvarCobrancaLoja, salvarConfigSistema } from "./actions";
 
@@ -24,7 +25,7 @@ export function FormCobrancaLoja({ empresaId, diaria, isenta, diariaPadrao }: { 
     <form action={acao} className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-2">
       <h2 className="titulo-secao sm:col-span-full">Cobrança</h2>
       <Campo label="Diária desta loja (R$)" erro={estado.erros?.diaria} dica={`Vazio = padrão do sistema (R$ ${reais(diariaPadrao)})`}>
-        <input name="diaria" inputMode="decimal" defaultValue={estado.valores?.diaria ?? (diaria === null ? "" : reais(diaria))} />
+        <Entrada mascara="dinheiro" name="diaria" defaultValue={estado.valores?.diaria ?? (diaria === null ? "" : reais(diaria))} />
       </Campo>
       <label className="flex items-center gap-2 self-end pb-2 text-sm">
         <input type="checkbox" name="isenta" defaultChecked={estado.valores ? estado.valores.isenta === "on" : isenta} />
@@ -47,7 +48,7 @@ export function FormCreditoManual({ empresaId }: { empresaId: string }) {
         </select>
       </Campo>
       <Campo label="Valor (R$)" erro={estado.erros?.valor}>
-        <input name="valor" inputMode="decimal" defaultValue={estado.valores?.valor} required />
+        <Entrada mascara="dinheiroComSinal" name="valor" defaultValue={estado.valores?.valor} required />
       </Campo>
       <Campo label="Descrição">
         <input name="descricao" defaultValue={estado.valores?.descricao} placeholder="Ex.: pagamento em dinheiro" />
@@ -64,16 +65,16 @@ export function FormConfigSistema({ config }: { config: { diariaPadrao: number; 
     <form action={acao} className="grid gap-4 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
       <h2 className="titulo-secao sm:col-span-full">Cobrança das lojas</h2>
       <Campo label="Diária padrão (R$)" erro={estado.erros?.diariaPadrao} dica="Lojas sem diária própria">
-        <input name="diariaPadrao" inputMode="decimal" defaultValue={v("diariaPadrao")} required />
+        <Entrada mascara="dinheiro" name="diariaPadrao" defaultValue={v("diariaPadrao")} required />
       </Campo>
       <Campo label="Dias de tolerância" erro={estado.erros?.diasTolerancia} dica="Uso com saldo negativo antes do modo consulta">
         <input name="diasTolerancia" type="number" min={0} max={60} defaultValue={v("diasTolerancia", String)} required />
       </Campo>
       <Campo label="Crédito de boas-vindas (R$)" erro={estado.erros?.creditoBoasVindas} dica="Para cada loja nova">
-        <input name="creditoBoasVindas" inputMode="decimal" defaultValue={v("creditoBoasVindas")} required />
+        <Entrada mascara="dinheiro" name="creditoBoasVindas" defaultValue={v("creditoBoasVindas")} required />
       </Campo>
       <Campo label="Recarga mínima (R$)" erro={estado.erros?.recargaMinima}>
-        <input name="recargaMinima" inputMode="decimal" defaultValue={v("recargaMinima")} required />
+        <Entrada mascara="dinheiro" name="recargaMinima" defaultValue={v("recargaMinima")} required />
       </Campo>
       <Rodape pendente={pendente} estado={estado} texto="Salvar valores" />
     </form>

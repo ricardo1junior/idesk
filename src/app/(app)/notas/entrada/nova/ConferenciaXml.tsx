@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
+import { Entrada } from "@/components/Entrada";
 import { lerReais } from "@/lib/dinheiro";
 import { formatarDocumento } from "@/lib/documentos";
 import { dataLocal } from "@/lib/tempo";
@@ -191,7 +192,7 @@ export function ConferenciaXml() {
                           </label>
                           <label className="campo">
                             <span>Preço de venda (R$)</span>
-                            <input inputMode="decimal" placeholder="0,00" value={l.precoVenda} onChange={(e) => alterar(i, { precoVenda: e.target.value })} />
+                            <Entrada mascara="dinheiro" value={l.precoVenda} onChange={(e) => alterar(i, { precoVenda: e.target.value })} />
                           </label>
                         </>
                       )}
@@ -208,7 +209,7 @@ export function ConferenciaXml() {
                             IMEIs, um por linha ({qtdImeis} de {unidades})
                             {item.imeis.length > 0 && " · lidos da nota"}
                           </span>
-                          <textarea rows={Math.min(6, Math.max(2, unidades))} value={l.imeis} onChange={(e) => alterar(i, { imeis: e.target.value })} className="font-mono" />
+                          <textarea rows={Math.min(6, Math.max(2, unidades))} value={l.imeis} onChange={(e) => alterar(i, { imeis: e.target.value.replace(/[^\d\n]/g, "") })} className="font-mono" />
                         </label>
                       )}
                     </div>

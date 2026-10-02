@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cnpjValido, cpfValido, somenteDigitos } from "./documentos";
+import { emailOpcional, telefoneOpcional } from "./mascaras";
 
 // Dados e aparência da loja (Configurações > Dados da loja). Sem "server-only": usado nos testes.
 
@@ -28,13 +29,8 @@ export const dadosLojaSchema = z.object({
     .transform(somenteDigitos)
     .refine((v) => !v || (v.length === 11 ? cpfValido(v) : v.length === 14 && cnpjValido(v)), "CPF ou CNPJ inválido")
     .transform((v) => v || null),
-  telefone: z.string().transform(somenteDigitos).transform((v) => v || null),
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .refine((v) => !v || z.email().safeParse(v).success, "E-mail inválido")
-    .transform((v) => v || null),
+  telefone: telefoneOpcional(),
+  email: emailOpcional(),
   endereco: opcional,
   site: opcional,
   corDestaque: z
@@ -52,12 +48,7 @@ export const dadosLojaSchema = z.object({
   smtpSeguro: z.string().optional().transform((v) => v === "on" || v === "true"),
   smtpUsuario: opcional,
   smtpSenha: z.string().optional(),
-  emailRemetente: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .refine((v) => !v || z.email().safeParse(v).success, "E-mail inválido")
-    .transform((v) => v || null),
+  emailRemetente: emailOpcional(),
 });
 
 /** Variáveis de cor que a loja troca no tema (botões e seleção). */

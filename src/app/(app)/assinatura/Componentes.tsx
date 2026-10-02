@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { Entrada } from "@/components/Entrada";
 import { formatarReais } from "@/lib/vendas";
 import { novaRecarga, verificarRecarga, type EstadoRecarga } from "./actions";
 
@@ -32,7 +33,7 @@ export function FormRecarga({ diaria, minimo, disponivel }: { diaria: number; mi
       <div className="grid items-end gap-3 sm:grid-cols-[10rem_1fr_auto]">
         <label className="campo">
           <span>Valor (R$)</span>
-          <input name="valor" value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" />
+          <Entrada mascara="dinheiro" name="valor" value={valor} onChange={(e) => setValor(e.target.value)} />
         </label>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(FORMAS) as (keyof typeof FORMAS)[]).map((f) => (
