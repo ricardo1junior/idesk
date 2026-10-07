@@ -5,13 +5,13 @@ import { z } from "zod";
 import { nomePessoa } from "@/lib/mascaras";
 import { exigirSuperAdmin } from "@/lib/auth";
 import { randomUUID } from "node:crypto";
-import { atualizarCarteira, configSistema, esquecerCarteira, iniciarCarteira, lancarCredito } from "@/lib/carteira";
+import { atualizarCarteira, configSistema, esquecerCarteira, lancarCredito } from "@/lib/carteira";
+import { criarLojaComAdmin } from "@/lib/nova-loja";
 import { paraNumero } from "@/lib/estoque";
 import { somarDias, ymdLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/vendas";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { prismaBase, sessaoPorHash } from "@/lib/db";
-import { gerarHash } from "@/lib/senha";
 
 const novaLojaSchema = z.object({
   loja: z.string().trim().min(2, "Informe o nome da loja"),
@@ -30,16 +30,9 @@ export async function criarLoja(_e: EstadoFormulario, formData: FormData): Promi
     for (const i of r.error.issues) erros[String(i.path[0])] ??= i.message;
     return { erros, valores: { ...valores, senha: "" } };
   }
-  if (await prismaBase.usuario.findUnique({ where: { email: r.data.email } })) {
+  if (!(await criarLojaComAdmin(r.data))) {
     return { erros: { email: "Este e-mail já é usado por outro usuário." }, valores: { ...valores, senha: "" } };
   }
-  const senhaHash = await gerarHash(r.data.senha);
-  const empresa = await prismaBase.$transaction(async (tx) => {
-    const empresa = await tx.empresa.create({ data: { nome: r.data.loja } });
-    await tx.usuario.create({ data: { empresaId: empresa.id, nome: r.data.nome, email: r.data.email, senhaHash, perfil: "ADMIN" } });
-    return empresa;
-  });
-  await iniciarCarteira(empresa.id);
   revalidatePath("/sistema");
   return { mensagem: `Loja "${r.data.loja}" criada. O administrador já pode entrar com ${r.data.email}.` };
 }
