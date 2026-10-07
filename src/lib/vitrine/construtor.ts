@@ -699,24 +699,27 @@ function montarConvencional(ctx: Contexto, raiz: THREE.Group) {
     } else {
       p.malha(extrudar(retanguloArredondado(W - 0.6, H - 0.6, R - 0.3), zB, zB + 0.7, curvo ? 0.35 : 0.3), materialTraseira(ctx, p.mat));
     }
-    const corAnel = materialAro(ctx, p.mat);
     if (lay.plato) {
+      // No corpo unibody o platô é de alumínio e faz parte da estrutura; nos demais, é do vidro traseiro.
+      const dono = unibody ? pecaEm(ctx, raiz, "estrutura") : p;
       const pl = lay.plato;
-      const matPlato = unibody ? materialAro(ctx, p.mat) : materialTraseira(ctx, p.mat, true);
-      const cantos: [boolean, boolean, boolean, boolean] = [true, true, true, true];
-      p.malha(extrudar(retanguloArredondado(pl.w, pl.h, pl.r, X(pl.u), Y(pl.v), cantos), zB - (m.cameras === "barra-air" ? 1.6 : 1.1), zB + 0.3, 0.4), matPlato);
+      const matPlato = unibody ? materialAro(ctx, dono.mat) : materialTraseira(ctx, p.mat, true);
+      dono.malha(extrudar(retanguloArredondado(pl.w, pl.h, pl.r, X(pl.u), Y(pl.v)), zB - (m.cameras === "barra-air" ? 1.6 : 1.1), zB + 0.3, 0.4), matPlato);
     }
+    // Lentes, flash e LiDAR contam como "Câmeras traseiras" ao passar o mouse.
+    const c = pecaEm(ctx, raiz, "cameras");
+    const corAnel = materialAro(ctx, c.mat);
     const zTopo = zB - (lay.plato ? (m.cameras === "barra-air" ? 1.6 : 1.1) : 0);
     for (const l of lay.lentes) {
       const salto = lay.anelSemPlato ? 1.3 : 1.0;
-      p.malha(cilindro(l.r + 0.2, salto + 0.6, X(l.u), Y(l.v), zTopo - salto / 2 + 0.3), corAnel);
-      p.malha(cilindro(l.r - 0.5, 0.2, X(l.u), Y(l.v), zTopo - salto - 0.05), p.lente());
-      p.malha(cilindro(l.r * 0.36, 0.1, X(l.u), Y(l.v), zTopo - salto - 0.12), p.mat({ color: "#1b2340", metalness: 0.6, roughness: 0.05, clearcoat: 1 }));
+      c.malha(cilindro(l.r + 0.2, salto + 0.6, X(l.u), Y(l.v), zTopo - salto / 2 + 0.3), corAnel);
+      c.malha(cilindro(l.r - 0.5, 0.2, X(l.u), Y(l.v), zTopo - salto - 0.05), c.lente());
+      c.malha(cilindro(l.r * 0.36, 0.1, X(l.u), Y(l.v), zTopo - salto - 0.12), c.mat({ color: "#1b2340", metalness: 0.6, roughness: 0.05, clearcoat: 1 }));
     }
     const zSup = zTopo - 0.1;
-    p.malha(cilindro(lay.flash.r, 0.4, X(lay.flash.u), Y(lay.flash.v), zSup), p.mat({ color: "#f3efe4", roughness: 0.3, emissive: "#fff6df", emissiveIntensity: 0.15 }));
-    if (lay.lidar) p.malha(cilindro(lay.lidar.r, 0.4, X(lay.lidar.u), Y(lay.lidar.v), zSup), p.mat({ color: "#111216", metalness: 0.4, roughness: 0.1, clearcoat: 1 }));
-    p.malha(cilindro(lay.mic.r, 0.4, X(lay.mic.u), Y(lay.mic.v), zSup, 12), p.preto());
+    c.malha(cilindro(lay.flash.r, 0.4, X(lay.flash.u), Y(lay.flash.v), zSup), c.mat({ color: "#f3efe4", roughness: 0.3, emissive: "#fff6df", emissiveIntensity: 0.15 }));
+    if (lay.lidar) c.malha(cilindro(lay.lidar.r, 0.4, X(lay.lidar.u), Y(lay.lidar.v), zSup), c.mat({ color: "#111216", metalness: 0.4, roughness: 0.1, clearcoat: 1 }));
+    c.malha(cilindro(lay.mic.r, 0.4, X(lay.mic.u), Y(lay.mic.v), zSup, 12), c.preto());
   }
 }
 

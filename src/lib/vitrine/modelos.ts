@@ -430,7 +430,8 @@ export function modelosPorAno() {
   return anos.map((ano) => ({ ano, modelos: MODELOS.filter((m) => m.ano === ano) }));
 }
 
-export type InfoPeca = { id: string; nome: string; descricao: string; detalhes: string[] };
+// resumo: uma linha curta com os números principais, mostrada ao passar o mouse.
+export type InfoPeca = { id: string; nome: string; descricao: string; detalhes: string[]; resumo?: string };
 
 const MATERIAL: Record<Material, string> = { aluminio: "Alumínio", aco: "Aço inoxidável", titanio: "Titânio" };
 export const nomeMaterial = (m: Material) => MATERIAL[m];
@@ -535,7 +536,53 @@ export function pecasDoModelo(m: ModeloIphone): InfoPeca[] {
           : "Traseira em vidro brilhante, que permite o carregamento sem fio.",
     detalhes: ["Inclui o vidro das lentes e o flash True Tone"],
   });
-  return p;
+  return p.map((x) => ({ ...x, resumo: resumoPeca(m, x.id) }));
+}
+
+// Linha curta com os números de cada peça: "Bateria de 3.227 mAh · até 19 h de vídeo".
+function resumoPeca(m: ModeloIphone, id: string): string {
+  const megas = m.camerasTexto.map((t) => t.match(/(\d+) MP/)?.[1]).filter(Boolean);
+  const frontalMP = m.frontal.match(/(\d+) MP/)?.[1];
+  switch (id) {
+    case "tela":
+      return `${fmt(m.tela.polegadas)}" ${m.tela.tipo} · ${m.tela.hz > 60 ? "120 Hz" : "60 Hz"} · até ${fmt(m.tela.brilhoPico)} nits`;
+    case "tela-externa":
+      return m.telaExterna ? `${fmt(m.telaExterna.polegadas)}" OLED · ${m.telaExterna.resolucao}` : "";
+    case "dobradica":
+      return "Aberto: 5,2 mm · fechado: 11,3 mm";
+    case "inicio":
+      return "Leitor de digital Touch ID";
+    case "frontal":
+    case "truedepth":
+      return `Câmera de ${frontalMP ?? "?"} MP${m.biometria === "Face ID" ? " · Face ID" : ""}`;
+    case "auricular":
+    case "altofalante":
+      return "Som estéreo";
+    case "bateria":
+      return `${fmt(m.bateriaMah)} mAh · até ${m.videoHoras} h de vídeo`;
+    case "vapor":
+      return "Resfria o chip em uso pesado";
+    case "taptic":
+      return "Vibração tátil precisa";
+    case "porta":
+      return m.porta === "USB-C" ? `USB-C · ${m.conectividade.includes("USB 3") ? "até 10 Gb/s" : "até 480 Mb/s"}` : "Lightning · até 480 Mb/s";
+    case "placa":
+      return `Chip ${m.chip.split(" (")[0]} · ${m.armazenamento}`;
+    case "estrutura":
+      return `${nomeMaterial(m.material)} · ${m.agua.split(" (")[0]}`;
+    case "botoes":
+      return ["Volume", "Lateral", m.botaoAcao ? "Ação" : "Silencioso", ...(m.controleCamera ? ["Controle da Câmera"] : [])].join(" · ");
+    case "sim":
+      return "Nano-SIM + eSIM";
+    case "cameras":
+      return `${megas.map((n) => `${n} MP`).join(" + ")}${m.zoomOptico !== "—" ? ` · zoom ${m.zoomOptico.split(" (")[0]}` : ""}${m.lidar ? " · LiDAR" : ""}`;
+    case "magsafe":
+      return m.magsafe ? "Carregamento sem fio MagSafe" : "Carregamento sem fio Qi";
+    case "traseira":
+      return m.traseira === "aluminio" ? "Vidro Ceramic Shield" : m.traseira === "vidro-fosco" ? "Vidro fosco colorido" : "Vidro brilhante";
+    default:
+      return "";
+  }
 }
 
 function fmt(n: number) {

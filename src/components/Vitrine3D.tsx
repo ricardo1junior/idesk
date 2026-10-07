@@ -83,12 +83,14 @@ export function Vitrine3D() {
   }, []);
 
   // Fala o nome da peça sob o mouse (opcional), em português.
-  const nomeSobre = sobre ? nomePeca(pecasPorModelo, sobre) : null;
+  const pecaSobre = sobre ? pecasPorModelo.get(sobre.modelo)?.find((x) => x.id === sobre.peca) : undefined;
+  const nomeSobre = pecaSobre?.nome ?? null;
+  const falaSobre = pecaSobre ? [pecaSobre.nome, pecaSobre.resumo].filter(Boolean).join(". ") : null;
   useEffect(() => {
-    if (!falar || !nomeSobre || typeof speechSynthesis === "undefined") return;
+    if (!falar || !falaSobre || typeof speechSynthesis === "undefined") return;
     const t = setTimeout(() => {
       speechSynthesis.cancel();
-      const fala = new SpeechSynthesisUtterance(nomeSobre);
+      const fala = new SpeechSynthesisUtterance(falaSobre.replaceAll(" · ", ", "));
       fala.lang = "pt-BR";
       fala.rate = 1.05;
       const voz = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith("pt-br"));
@@ -96,7 +98,7 @@ export function Vitrine3D() {
       speechSynthesis.speak(fala);
     }, 250);
     return () => clearTimeout(t);
-  }, [falar, nomeSobre]);
+  }, [falar, falaSobre]);
 
   function selecionar(id: string | null) {
     selecionadaRef.current = id;
@@ -200,6 +202,7 @@ export function Vitrine3D() {
               style={{ left: sobre.x, top: sobre.y }}
             >
               <div className="text-sm font-semibold">{nomeSobre}</div>
+              {pecaSobre?.resumo && <div className="mt-0.5 text-xs text-white/85">{pecaSobre.resumo}</div>}
               {modelos.length > 1 && <div className="text-[11px] opacity-75">{modeloPorId(sobre.modelo)?.nome}</div>}
             </div>
           )}
@@ -297,10 +300,6 @@ export function Vitrine3D() {
       <FichaTecnica modelos={modelos} />
     </div>
   );
-}
-
-function nomePeca(pecasPorModelo: Map<string, InfoPeca[]>, p: PecaSob) {
-  return pecasPorModelo.get(p.modelo)?.find((x) => x.id === p.peca)?.nome ?? null;
 }
 
 function SeletorModelo({ valor, onChange }: { valor: string; onChange: (id: string) => void }) {
