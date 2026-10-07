@@ -31,3 +31,22 @@ test("formulário de entrega: taxa, dia e hora", async () => {
   assert.ok(TRANSICOES_ENTREGA.PENDENTE.includes("EM_ROTA"));
   assert.equal(statusEntregaValido("constructor"), false);
 });
+
+test("motoboy e terceirizado: estimativa e campos", async () => {
+  const { entregaSchema, estimarMotoboy } = await import("./entregas");
+  // 8 + 6,2 km × 2 = 20,40 → R$ 20; 15 min para chegar à loja + 17 de ida = 32 → 35 min.
+  assert.deepEqual(estimarMotoboy(6.2, 17, { taxaFixa: 8, valorKm: 2, minutosRetirada: 15 }), { minutos: 35, custo: 20 });
+  const base = { tipo: "ENTREGA", clienteId: "c1", endereco: "Rua A, 100, Centro", dia: "", hora: "", vendaId: "", osId: "", taxa: "", distanciaKm: "", minutosIda: "", minutosTotal: "", responsavelId: "", observacoes: "" };
+  // Entrega pela equipe da loja: os campos do motoboy nem vêm no formulário.
+  const loja = entregaSchema.parse(base);
+  assert.equal(loja.modalidade, "LOJA");
+  assert.equal(loja.prestador, null);
+  assert.equal(loja.custo, 0);
+  const moto = entregaSchema.parse({ ...base, modalidade: "MOTOBOY", prestador: " Carlos ", minutosPrestador: "35", custo: "22,50" });
+  assert.equal(moto.modalidade, "MOTOBOY");
+  assert.equal(moto.prestador, "Carlos");
+  assert.equal(moto.minutosPrestador, 35);
+  assert.equal(moto.custo, 22.5);
+  assert.equal(entregaSchema.safeParse({ ...base, modalidade: "MOTOBOY", custo: "-5" }).success, false);
+  assert.equal(entregaSchema.safeParse({ ...base, modalidade: "TERCEIRIZADO", minutosPrestador: "abc" }).success, false);
+});

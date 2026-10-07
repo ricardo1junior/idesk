@@ -1,9 +1,29 @@
-import type { StatusEntrega, TipoEntrega } from "@prisma/client";
+import type { ModalidadeEntrega, StatusEntrega, TipoEntrega } from "@prisma/client";
 import { z } from "zod";
 import { paraNumero } from "./estoque";
 import { ymdValido } from "./tempo";
 
 export const TIPOS_ENTREGA: Record<TipoEntrega, string> = { ENTREGA: "Entrega", COLETA: "Coleta (buscar no cliente)" };
+
+export const MODALIDADES_ENTREGA: Record<ModalidadeEntrega, { label: string; dica: string }> = {
+  LOJA: { label: "Equipe da loja", dica: "Alguém da loja vai e volta" },
+  MOTOBOY: { label: "Motoboy", dica: "Motoboy parceiro ou de aplicativo" },
+  TERCEIRIZADO: { label: "Serviço terceirizado", dica: "Lalamove, Loggi, Uber Flash, transportadora..." },
+};
+
+// Sugestões para o campo de quem vai levar.
+export const PRESTADORES_SUGERIDOS = ["Lalamove", "Loggi", "Uber Flash", "99 Entrega", "iFood Entrega Fácil", "Correios (Sedex)"];
+
+/**
+ * Estimativa do motoboy: ele precisa chegar à loja para retirar o aparelho e depois ir até o cliente.
+ * O custo é taxa fixa + valor por km (só ida, como cobram os motoboys e aplicativos), arredondado ao real.
+ */
+export function estimarMotoboy(distanciaKm: number, minutosIda: number, cfg: { taxaFixa: number; valorKm: number; minutosRetirada: number }) {
+  return {
+    minutos: Math.ceil((cfg.minutosRetirada + minutosIda) / 5) * 5,
+    custo: Math.max(0, Math.round(cfg.taxaFixa + distanciaKm * cfg.valorKm)),
+  };
+}
 
 export const STATUS_ENTREGA: Record<StatusEntrega, { label: string; cor: string }> = {
   PENDENTE: { label: "A fazer", cor: "bg-sky-100 text-sky-800" },
@@ -65,5 +85,19 @@ export const entregaSchema = z.object({
   minutosIda: z.string().transform((v) => (v ? Math.round(Number(v)) : null)),
   minutosTotal: z.string().transform((v) => (v ? Math.round(Number(v)) : null)),
   responsavelId: z.string().trim().transform((v) => v || null),
+  modalidade: z.enum(["LOJA", "MOTOBOY", "TERCEIRIZADO"]).catch("LOJA"),
+  // Os campos do motoboy/terceirizado só existem no formulário quando essa opção está escolhida.
+  prestador: z.string().default("").pipe(z.string().trim().max(80)).transform((v) => v || null),
+  minutosPrestador: z
+    .string()
+    .default("")
+    .pipe(z.string().trim())
+    .refine((v) => !v || (Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 24 * 60), "Tempo inválido")
+    .transform((v) => (v ? Math.round(Number(v)) : null)),
+  custo: z
+    .unknown()
+    .optional()
+    .transform(paraNumero)
+    .refine((v) => Number.isFinite(v) && v >= 0, "Valor inválido"),
   observacoes: z.string().trim().max(500).transform((v) => v || null),
 });

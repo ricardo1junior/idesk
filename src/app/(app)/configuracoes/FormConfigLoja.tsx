@@ -14,6 +14,9 @@ type Inicial = {
   duracaoAtendimento: string;
   atendimentosSimultaneos: string;
   minutosNoLocalEntrega: string;
+  motoboyTaxaFixa: string;
+  motoboyValorKm: string;
+  motoboyMinutosRetirada: string;
 };
 
 export function FormConfigLoja({ inicial }: { inicial: Inicial }) {
@@ -57,6 +60,18 @@ export function FormConfigLoja({ inicial }: { inicial: Inicial }) {
         </Campo>
         <Campo label="Tempo no local (min)" erro={erro("minutosNoLocalEntrega")} dica="Somado à ida e volta">
           <input name="minutosNoLocalEntrega" type="number" min={0} defaultValue={v("minutosNoLocalEntrega")} />
+        </Campo>
+        <p className="text-sm text-zinc-500 sm:col-span-4">
+          Estimativa do motoboy: o sistema calcula o custo como taxa fixa + valor por km (só a ida) e o tempo como a espera para ele chegar à loja + a ida até o cliente.
+        </p>
+        <Campo label="Motoboy: taxa fixa (R$)" erro={erro("motoboyTaxaFixa")}>
+          <input name="motoboyTaxaFixa" inputMode="decimal" defaultValue={v("motoboyTaxaFixa")} />
+        </Campo>
+        <Campo label="Motoboy: valor por km (R$)" erro={erro("motoboyValorKm")}>
+          <input name="motoboyValorKm" inputMode="decimal" defaultValue={v("motoboyValorKm")} />
+        </Campo>
+        <Campo label="Motoboy: chega à loja em (min)" erro={erro("motoboyMinutosRetirada")} className="sm:col-span-2">
+          <input name="motoboyMinutosRetirada" type="number" min={0} defaultValue={v("motoboyMinutosRetirada")} />
         </Campo>
       </section>
 

@@ -824,6 +824,10 @@ model LojaConfig {
   duracaoAtendimento      Int      @default(30) // minutos de cada horário da agenda
   atendimentosSimultaneos Int      @default(1) // quantos clientes a loja atende ao mesmo tempo
   minutosNoLocalEntrega   Int      @default(10)
+  // Estimativa do motoboy: taxa fixa + valor por km (só ida) e quanto ele demora para chegar à loja.
+  motoboyTaxaFixa         Decimal  @default(8) @db.Decimal(12, 2)
+  motoboyValorKm          Decimal  @default(2) @db.Decimal(12, 2)
+  motoboyMinutosRetirada  Int      @default(15)
   atualizadoEm            DateTime @updatedAt
 
   @@unique([empresaId])
@@ -872,6 +876,13 @@ enum TipoEntrega {
   COLETA
 }
 
+// Quem leva: a própria equipe da loja, um motoboy ou um serviço terceirizado (Lalamove, Loggi...).
+enum ModalidadeEntrega {
+  LOJA
+  MOTOBOY
+  TERCEIRIZADO
+}
+
 enum StatusEntrega {
   PENDENTE
   EM_ROTA
@@ -880,28 +891,32 @@ enum StatusEntrega {
 }
 
 model Entrega {
-  id            String        @id @default(cuid())
-  empresaId     String        @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
-  numero        Int           @default(dbgenerated("(current_setting('idesk.numero'::text))::integer")) // sequencial por loja (tabela Contador), preenchido por src/lib/db.ts
-  tipo          TipoEntrega   @default(ENTREGA)
-  status        StatusEntrega @default(PENDENTE)
-  clienteId     String
-  cliente       Cliente       @relation(fields: [clienteId], references: [id])
-  vendaId       String?
-  venda         Venda?        @relation(fields: [vendaId], references: [id])
-  osId          String?
-  os            OrdemServico? @relation(fields: [osId], references: [id])
-  endereco      String
-  agendadaPara  DateTime?
-  distanciaKm   Float? // só ida
-  minutosIda    Int?
-  minutosTotal  Int? // ida + tempo no local + volta
-  taxa          Decimal       @default(0) @db.Decimal(12, 2)
-  responsavelId String?
-  responsavel   Usuario?      @relation(fields: [responsavelId], references: [id])
-  observacoes   String?
-  criadoEm      DateTime      @default(now())
-  concluidaEm   DateTime?
+  id               String            @id @default(cuid())
+  empresaId        String            @default(dbgenerated("current_setting('idesk.empresa_id'::text)")) // loja dona do registro: preenchido por src/lib/db.ts; sem isso o insert falha
+  numero           Int               @default(dbgenerated("(current_setting('idesk.numero'::text))::integer")) // sequencial por loja (tabela Contador), preenchido por src/lib/db.ts
+  tipo             TipoEntrega       @default(ENTREGA)
+  status           StatusEntrega     @default(PENDENTE)
+  clienteId        String
+  cliente          Cliente           @relation(fields: [clienteId], references: [id])
+  vendaId          String?
+  venda            Venda?            @relation(fields: [vendaId], references: [id])
+  osId             String?
+  os               OrdemServico?     @relation(fields: [osId], references: [id])
+  endereco         String
+  agendadaPara     DateTime?
+  distanciaKm      Float? // só ida
+  minutosIda       Int?
+  minutosTotal     Int? // ida + tempo no local + volta
+  taxa             Decimal           @default(0) @db.Decimal(12, 2) // cobrada do cliente
+  modalidade       ModalidadeEntrega @default(LOJA)
+  prestador        String? // motoboy ou empresa que vai levar
+  minutosPrestador Int? // quanto tempo o motoboy/terceirizado leva até o cliente
+  custo            Decimal           @default(0) @db.Decimal(12, 2) // quanto a loja paga ao motoboy/terceirizado
+  responsavelId    String?
+  responsavel      Usuario?          @relation(fields: [responsavelId], references: [id])
+  observacoes      String?
+  criadoEm         DateTime          @default(now())
+  concluidaEm      DateTime?
 
   @@unique([empresaId, numero])
   @@index([agendadaPara])
