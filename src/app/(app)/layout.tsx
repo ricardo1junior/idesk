@@ -8,8 +8,6 @@ import { carteiraDaLoja } from "@/lib/carteira";
 import Link from "next/link";
 import { ItemMenu } from "./ItemMenu";
 import { AssistenteIA } from "@/components/AssistenteIA";
-import { EsconderMenu, MostrarMenu } from "@/components/AlternarMenu";
-import { cookies } from "next/headers";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
   { href: "/", label: "Início" },
@@ -29,31 +27,37 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = await exigirUsuario();
-  const [empresa, carteira, cookieStore] = await Promise.all([empresaAtual(), carteiraDaLoja(usuario.empresaId), cookies()]);
-  const menuOculto = cookieStore.get("menu")?.value === "oculto";
+  const [empresa, carteira] = await Promise.all([empresaAtual(), carteiraDaLoja(usuario.empresaId)]);
   const logo = urlLogo(empresa);
   const podeRecarregar = pode(usuario.perfil, "assinatura");
 
   return (
-    <div data-menu={menuOculto ? "oculto" : "visivel"} className="area-app flex min-h-screen flex-col md:flex-row" style={estiloCor(empresa.corDestaque)}>
-      <MostrarMenu />
-      <aside className="sticky top-0 z-20 flex flex-col border-b border-zinc-200/70 bg-cartao/75 backdrop-blur-xl backdrop-saturate-150 md:h-screen md:w-60 md:border-r md:border-b-0 print:hidden">
-        <div className="flex items-center gap-2 px-5 py-5 text-xl font-semibold tracking-tight">
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logo} alt="" className="size-8 shrink-0 rounded-[10px] object-contain" />
-          ) : (
-            <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">{empresa.nome.trim().charAt(0).toUpperCase() || "i"}</span>
-          )}
-          <span className="line-clamp-2 min-w-0 text-base leading-tight break-words" title={empresa.nome}>
-            {empresa.nome}
-          </span>
-          <span className="ml-auto flex items-center gap-1">
+    <div className="flex min-h-screen flex-col" style={estiloCor(empresa.corDestaque)}>
+      <header className="sticky top-0 z-20 border-b border-zinc-200/70 bg-cartao/75 backdrop-blur-xl backdrop-saturate-150 print:hidden">
+        <div className="flex items-center gap-3 px-4 pt-3 md:px-10">
+          <Link href="/" className="flex min-w-0 items-center gap-2 font-semibold tracking-tight">
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="" className="size-8 shrink-0 rounded-[10px] object-contain" />
+            ) : (
+              <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-zinc-900 text-sm text-zinc-50">{empresa.nome.trim().charAt(0).toUpperCase() || "i"}</span>
+            )}
+            <span className="truncate text-base" title={empresa.nome}>
+              {empresa.nome}
+            </span>
+          </Link>
+          <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
             <EscolherTema />
-            <EsconderMenu />
-          </span>
+            <div className="hidden text-right leading-tight sm:block">
+              <div className="font-medium">{usuario.nome}</div>
+              <div className="text-xs text-zinc-500">{PERFIS[usuario.perfil]}</div>
+            </div>
+            <form action={sair}>
+              <button className="text-xs text-link hover:underline">Sair</button>
+            </form>
+          </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
+        <nav className="flex gap-1 overflow-x-auto px-3 py-2 text-sm md:px-9">
           {menu
             .filter((item) => !item.permissao || pode(usuario.perfil, item.permissao))
             .filter((item) => item.href !== "/assinatura" || !carteira.isenta)
@@ -70,17 +74,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               ),
             )}
         </nav>
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-zinc-200 px-5 py-3 text-sm">
-          <div>
-            <div className="font-medium">{usuario.nome}</div>
-            <div className="text-xs text-zinc-500">{PERFIS[usuario.perfil]}</div>
-          </div>
-          <form action={sair}>
-            <button className="text-xs text-link hover:underline">Sair</button>
-          </form>
-        </div>
-      </aside>
-      <main className="min-w-0 flex-1 p-4 md:p-10 print:p-0">
+      </header>
+      <main className="mx-auto w-full min-w-0 max-w-screen-2xl flex-1 p-4 md:p-10 print:p-0">
         <AvisoSaldo situacao={carteira.situacao} dias={carteira.diasRestantes} podeRecarregar={podeRecarregar} />
         {children}
       </main>

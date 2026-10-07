@@ -254,7 +254,7 @@ export function PDV() {
         </section>
       </div>
 
-      <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+      <aside className="space-y-4 lg:sticky lg:top-32 lg:self-start">
         <section className="rounded-lg border border-zinc-200 bg-cartao p-5">
           <h2 className="titulo-secao">Cliente</h2>
           {cliente ? (
