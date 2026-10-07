@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import { DIAS_SEMANA } from "@/lib/agenda";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { salvarConfigLoja } from "./actions";
@@ -65,10 +66,10 @@ export function FormConfigLoja({ inicial }: { inicial: Inicial }) {
           Estimativa do motoboy: o sistema calcula o custo como taxa fixa + valor por km (só a ida) e o tempo como a espera para ele chegar à loja + a ida até o cliente.
         </p>
         <Campo label="Motoboy: taxa fixa (R$)" erro={erro("motoboyTaxaFixa")}>
-          <input name="motoboyTaxaFixa" data-mascara="dinheiro" inputMode="decimal" defaultValue={v("motoboyTaxaFixa")} />
+          <Entrada mascara="dinheiro" name="motoboyTaxaFixa" defaultValue={v("motoboyTaxaFixa")} />
         </Campo>
         <Campo label="Motoboy: valor por km (R$)" erro={erro("motoboyValorKm")}>
-          <input name="motoboyValorKm" data-mascara="dinheiro" inputMode="decimal" defaultValue={v("motoboyValorKm")} />
+          <Entrada mascara="dinheiro" name="motoboyValorKm" defaultValue={v("motoboyValorKm")} />
         </Campo>
         <Campo label="Motoboy: chega à loja em (min)" erro={erro("motoboyMinutosRetirada")} className="sm:col-span-2">
           <input name="motoboyMinutosRetirada" type="number" min={0} defaultValue={v("motoboyMinutosRetirada")} />

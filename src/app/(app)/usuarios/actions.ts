@@ -3,7 +3,7 @@
 import { Prisma, type Perfil } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { campoNome } from "@/lib/mascaras";
+import { nomePessoa } from "@/lib/mascaras";
 import { exigirUsuario } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { COOKIE_SESSAO } from "@/lib/auth-cookie";
@@ -15,8 +15,8 @@ import { gerarHash } from "@/lib/senha";
 export type EstadoUsuario = { erro?: string; ok?: string; valores?: Record<string, string> };
 
 const novoUsuarioSchema = z.object({
-  nome: campoNome("o nome"),
-  email: z.email("E-mail inválido").transform((v) => v.toLowerCase()),
+  nome: nomePessoa(),
+  email: z.string().trim().toLowerCase().pipe(z.email("E-mail inválido")),
   perfil: z.enum(["ADMIN", "VENDEDOR", "TECNICO", "FINANCEIRO", "ESTAGIARIO"]),
   senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres"),
 });

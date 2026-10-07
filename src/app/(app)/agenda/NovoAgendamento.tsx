@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import { MOTIVOS } from "@/lib/agenda";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { formatarTelefone } from "@/lib/documentos";
@@ -77,10 +78,10 @@ export function NovoAgendamento({ dia, horarios, hora, duracao }: { dia: string;
         </div>
       )}
       <Campo label="Nome" erro={erro("nome")}>
-        <input name="nome" data-mascara="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        <Entrada mascara={cliente ? "texto" : "nome"} name="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
       </Campo>
-      <Campo label="WhatsApp / telefone">
-        <input name="telefone" data-mascara="telefone" inputMode="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+      <Campo label="WhatsApp / telefone" erro={erro("telefone")}>
+        <Entrada mascara="telefone" name="telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
       </Campo>
       <Campo label="Motivo">
         <select name="motivo" defaultValue={v.motivo ?? "REPARO"}>

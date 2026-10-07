@@ -1,7 +1,7 @@
 import type { StatusOS, TipoSenha } from "@prisma/client";
 import { z } from "zod";
-import { imeiValido } from "./mascaras";
 import { paraNumero } from "./estoque";
+import { imeiOpcional, serialOpcional } from "./mascaras";
 import { ymdValido } from "./tempo";
 
 export const STATUS_OS: Record<StatusOS, { label: string; cor: string }> = {
@@ -56,8 +56,8 @@ export const aberturaOSSchema = z
     modelo: z.string().trim().min(2, "Informe o modelo do aparelho"),
     cor: opcional,
     capacidade: opcional,
-    imei: opcional.refine((v) => !v || imeiValido(v), "IMEI inválido: confira os 15 dígitos"),
-    serial: opcional,
+    imei: imeiOpcional(),
+    serial: serialOpcional,
     saudeBateria: opcional.refine((v) => !v || (Number(v) >= 0 && Number(v) <= 100), "Entre 0 e 100"),
     icloudBloqueado: z.enum(["", "sim", "nao"]).optional(),
     tipoSenha: z.enum(["NENHUMA", "NUMERICA", "ALFANUMERICA", "PADRAO", "NAO_INFORMADA"]),

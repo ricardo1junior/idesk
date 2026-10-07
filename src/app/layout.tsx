@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Mascaras } from "@/components/Mascaras";
 import { lerTema } from "@/lib/tema";
 import "./globals.css";
 
@@ -13,10 +12,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const tema = lerTema((await cookies()).get("tema")?.value);
   return (
     <html lang="pt-BR" data-tema={tema} className="h-full antialiased">
-      <body className="min-h-full">
-        {children}
-        <Mascaras />
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

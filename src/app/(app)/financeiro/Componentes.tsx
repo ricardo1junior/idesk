@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import { CalendarioPeriodo } from "@/components/CalendarioPeriodo";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { PERIODOS, type Filtros } from "@/lib/financeiro-filtros-cliente";
 import { ymdLocal } from "@/lib/tempo";
@@ -158,7 +159,7 @@ export function NovoLancamento({ categorias, fornecedores }: { categorias: Categ
         </select>
       </Campo>
       <Campo label="Valor total (R$)" erro={erro("valor")}>
-        <input name="valor" data-mascara="dinheiro" defaultValue={v.valor} inputMode="decimal" placeholder="0,00" />
+        <Entrada mascara="dinheiro" name="valor" defaultValue={v.valor} placeholder="0,00" />
       </Campo>
       <Campo label="Vencimento (1ª parcela)" erro={erro("vencimento")}>
         <input name="vencimento" type="date" defaultValue={v.vencimento ?? ymdLocal(new Date())} />

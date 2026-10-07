@@ -1,6 +1,6 @@
 import type { FormaPagamento } from "@prisma/client";
 import { z } from "zod";
-import { imeiValido } from "./mascaras";
+import { imeiOpcional, serialOpcional } from "./mascaras";
 
 export const FORMAS_PAGAMENTO: Record<FormaPagamento, string> = {
   DINHEIRO: "Dinheiro",
@@ -22,12 +22,8 @@ export const trocaSchema = z.object({
   modelo: z.string().trim().min(2, "Troca: informe o modelo"),
   capacidade: z.string().trim().optional(),
   cor: z.string().trim().optional(),
-  imei: z
-    .string()
-    .trim()
-    .optional()
-    .refine((v) => !v || imeiValido(v), "Troca: IMEI inválido, confira os 15 dígitos"),
-  serial: z.string().trim().optional(),
+  imei: imeiOpcional("Troca: IMEI").transform((v) => v ?? undefined),
+  serial: serialOpcional.transform((v) => v ?? undefined),
   condicao: z.enum(["SEMINOVO_A", "SEMINOVO_B", "SEMINOVO_C"]),
   saudeBateria: z.number().int().min(0).max(100).nullable().optional(),
   icloudDesativado: z.literal(true, "Troca: o iCloud / Buscar precisa estar desativado"),

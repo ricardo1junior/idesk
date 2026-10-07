@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { campoNome } from "@/lib/mascaras";
+import { nomePessoa } from "@/lib/mascaras";
 import { exigirSuperAdmin } from "@/lib/auth";
 import { randomUUID } from "node:crypto";
 import { atualizarCarteira, configSistema, esquecerCarteira, iniciarCarteira, lancarCredito } from "@/lib/carteira";
@@ -15,8 +15,8 @@ import { gerarHash } from "@/lib/senha";
 
 const novaLojaSchema = z.object({
   loja: z.string().trim().min(2, "Informe o nome da loja"),
-  nome: campoNome("o nome do administrador"),
-  email: z.email("E-mail inválido").transform((v) => v.toLowerCase()),
+  nome: nomePessoa("Informe o nome do administrador"),
+  email: z.string().trim().toLowerCase().pipe(z.email("E-mail inválido")),
   senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres"),
 });
 

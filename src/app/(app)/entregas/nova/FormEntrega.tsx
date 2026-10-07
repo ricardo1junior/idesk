@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Campo } from "@/components/Campos";
+import { Entrada } from "@/components/Entrada";
 import { BuscaCliente } from "@/components/OSForm";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { paraNumero } from "@/lib/estoque";
@@ -251,7 +252,7 @@ export function FormEntrega({
               <input name="minutosPrestador" type="number" min={0} value={minutosPrestador} onChange={(e) => setMinutosPrestador(e.target.value)} />
             </Campo>
             <Campo label="Custo para a loja (R$)" erro={erro("custo")} dica="Quanto a loja paga pela corrida">
-              <input name="custo" data-mascara="dinheiro" inputMode="decimal" placeholder="0,00" value={custo} onChange={(e) => setCusto(e.target.value)} />
+              <Entrada mascara="dinheiro" name="custo" value={custo} onChange={(e) => setCusto(e.target.value)} />
             </Campo>
           </>
         ) : (
@@ -267,7 +268,7 @@ export function FormEntrega({
           </Campo>
         )}
         <Campo label="Taxa cobrada do cliente (R$)" erro={erro("taxa")} className="sm:col-span-2">
-          <input name="taxa" data-mascara="dinheiro" inputMode="decimal" placeholder="0,00" value={taxa} onChange={(e) => setTaxa(e.target.value)} />
+          <Entrada mascara="dinheiro" name="taxa" value={taxa} onChange={(e) => setTaxa(e.target.value)} />
         </Campo>
         {terceiro && (valorCusto > 0 || valorTaxa > 0) && Number.isFinite(valorCusto) && Number.isFinite(valorTaxa) && (
           <div className={`self-end rounded-lg px-4 py-2 text-sm sm:col-span-2 ${valorTaxa - valorCusto >= 0 ? "bg-green-50 text-green-800" : "bg-amber-50 text-amber-800"}`}>

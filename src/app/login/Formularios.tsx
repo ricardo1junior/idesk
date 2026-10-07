@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Entrada } from "@/components/Entrada";
 import { criarAdministrador, entrar, type EstadoLogin } from "./actions";
 
 export function FormLogin() {
@@ -9,7 +10,7 @@ export function FormLogin() {
     <form action={acao} className="space-y-4">
       <label className="campo">
         <span>E-mail</span>
-        <input name="email" type="email" data-mascara="email" defaultValue={estado.email} autoComplete="username" required autoFocus />
+        <Entrada mascara="email" name="email" defaultValue={estado.email} autoComplete="username" required autoFocus />
       </label>
       <label className="campo">
         <span>Senha</span>
@@ -40,11 +41,11 @@ export function FormPrimeiroAcesso({ pedirCodigo }: { pedirCodigo: boolean }) {
       </label>
       <label className="campo">
         <span>Seu nome</span>
-        <input name="nome" data-mascara="nome" defaultValue={estado.nome} required autoFocus={!pedirCodigo} />
+        <Entrada mascara="nome" name="nome" defaultValue={estado.nome} required autoFocus={!pedirCodigo} />
       </label>
       <label className="campo">
         <span>E-mail</span>
-        <input name="email" type="email" data-mascara="email" defaultValue={estado.email} autoComplete="username" required />
+        <Entrada mascara="email" name="email" defaultValue={estado.email} autoComplete="username" required />
       </label>
       <label className="campo">
         <span>Senha (mínimo 8 caracteres)</span>

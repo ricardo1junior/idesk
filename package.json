@@ -14,7 +14,8 @@
     "postinstall": "prisma generate",
     "configurar": "node scripts/configurar.mjs",
     "demo": "node --env-file=.env scripts/demo.mjs",
-    "demo:apagar": "node --env-file=.env scripts/demo.mjs --apagar"
+    "demo:apagar": "node --env-file=.env scripts/demo.mjs --apagar",
+    "servidor": "node scripts/servidor.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

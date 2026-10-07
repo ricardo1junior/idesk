@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { cnpjValido, cpfValido, somenteDigitos } from "./documentos";
-import { campoCepOpcional, campoEmailOpcional, campoTelefoneOpcional, campoUfOpcional, emailValido, nomeValido, telefoneValido } from "./mascaras";
+import { cepValido, emailValido, nomeValido, telefoneValido } from "./mascaras";
 import { ymdValido } from "./tempo";
+
+const TELEFONE_INVALIDO = "Telefone inválido. Use DDD + número, ex.: (11) 99999-9999";
 
 const opcional = z
   .string()
@@ -20,21 +22,20 @@ export const clienteSchema = z
     dataNascimento: opcional.refine((v) => !v || ymdValido(v), "Data inválida"),
     inscricaoEstadual: opcional,
     inscricaoMunicipal: opcional,
-    email: campoEmailOpcional,
-    telefone: campoTelefoneOpcional,
-    whatsapp: campoTelefoneOpcional,
-    cep: campoCepOpcional,
+    email: opcional.transform((v) => v?.toLowerCase() ?? v).refine((v) => !v || emailValido(v), "E-mail inválido"),
+    telefone: opcional.transform((v) => (v ? somenteDigitos(v) : v)).refine((v) => !v || telefoneValido(v), TELEFONE_INVALIDO),
+    whatsapp: opcional.transform((v) => (v ? somenteDigitos(v) : v)).refine((v) => !v || telefoneValido(v), TELEFONE_INVALIDO),
+    cep: opcional.transform((v) => (v ? somenteDigitos(v) : v)).refine((v) => !v || cepValido(v), "CEP deve ter 8 dígitos"),
     logradouro: opcional,
     numero: opcional,
     complemento: opcional,
     bairro: opcional,
-    cidade: opcional.refine((v) => !v || nomeValido(v), "Cidade só com letras"),
-    uf: campoUfOpcional,
+    cidade: opcional.refine((v) => !v || nomeValido(v), "Cidade não pode ter números"),
+    uf: opcional.transform((v) => (v ? v.toUpperCase().slice(0, 2) : v)),
     observacoes: opcional,
   })
   .superRefine((c, ctx) => {
-    // Pessoa física: nome só com letras. Razão social (PJ) pode ter números.
-    if (c.tipo === "PF" && !nomeValido(c.nome)) ctx.addIssue({ code: "custom", path: ["nome"], message: "Use só letras (sem números ou símbolos)" });
+    if (c.tipo === "PF" && !nomeValido(c.nome)) ctx.addIssue({ code: "custom", path: ["nome"], message: "O nome não pode ter números nem símbolos" });
     const valido = c.tipo === "PF" ? cpfValido(c.documento) : cnpjValido(c.documento);
     if (!valido) {
       ctx.addIssue({ code: "custom", path: ["documento"], message: c.tipo === "PF" ? "CPF inválido" : "CNPJ inválido" });
@@ -87,14 +88,19 @@ export function prepararExtras(json: string | null) {
     .map((c, n) => ({ ...c, n }))
     .filter((c) => c.valor)
     .map((c, ordem) => {
-      if (c.tipo === "EMAIL" && !emailValido(c.valor)) erros[`contato${c.n}`] = "E-mail inválido";
       const valor = c.tipo === "EMAIL" ? c.valor.toLowerCase() : somenteDigitos(c.valor);
-      if (c.tipo === "TELEFONE" && !telefoneValido(valor)) erros[`contato${c.n}`] = "Telefone inválido: DDD + número";
+      if (c.tipo === "EMAIL" && !emailValido(valor)) erros[`contato${c.n}`] = "E-mail inválido";
+      if (c.tipo === "TELEFONE" && !telefoneValido(valor)) erros[`contato${c.n}`] = TELEFONE_INVALIDO;
       return { tipo: c.tipo, valor, rotulo: c.rotulo || null, whatsapp: c.tipo === "TELEFONE" && c.whatsapp, ordem };
     });
 
   const enderecos = dados.enderecos
+    .map((e, n) => ({ ...e, n }))
     .filter((e) => [e.cep, e.logradouro, e.numero, e.bairro, e.cidade].some(Boolean))
+    .map(({ n, ...e }) => {
+      if (e.cep && !cepValido(e.cep)) erros[`endereco${n}`] = "CEP deve ter 8 dígitos";
+      return e;
+    })
     .map((e, ordem) => ({
       ...Object.fromEntries(Object.entries(e).map(([k, v]) => [k, v || null])),
       cep: e.cep ? somenteDigitos(e.cep) : null,

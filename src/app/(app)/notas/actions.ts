@@ -1,5 +1,6 @@
 "use server";
 
+import { imeiValido } from "@/lib/mascaras";
 import { Prisma, type TipoProduto } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -163,6 +164,8 @@ export async function importarNota(xml: string, mapeamentos: unknown): Promise<{
             if (imeis.length !== unidades || imeis.some((i) => !/^\d{15}$/.test(i))) {
               throw new ErroImportacao(`Item ${item.numero} (${item.descricao}): informe ${unidades} IMEI(s) de 15 dígitos, um por linha.`);
             }
+            const invalido = imeis.find((i) => !imeiValido(i));
+            if (invalido) throw new ErroImportacao(`IMEI ${invalido} é inválido (dígito verificador não confere). Confira os números.`);
             for (const imei of imeis) {
               if (await tx.aparelho.findFirst({ where: { imei } })) throw new ErroImportacao(`IMEI ${imei} já está cadastrado.`);
               await tx.aparelho.create({
