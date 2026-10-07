@@ -12,7 +12,9 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "configurar": "node scripts/configurar.mjs"
+    "configurar": "node scripts/configurar.mjs",
+    "demo": "node --env-file=.env scripts/demo.mjs",
+    "demo:apagar": "node --env-file=.env scripts/demo.mjs --apagar"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
