@@ -10,7 +10,7 @@ const atual = existsSync(".env") ? readFileSync(".env", "utf8") : "";
 const lerAtual = (nome) => atual.match(new RegExp(`^${nome}\\s*=\\s*"?([^"\\n]*)"?`, "m"))?.[1] ?? "";
 
 console.log("\nConfiguração do iDesk\n");
-console.log('Na Neon, clique em "Connect" e copie a linha de conexão (pode colar do jeito que vier).');
+console.log('Informe a conexão do PostgreSQL, por exemplo: postgresql://idesk:idesk@localhost:5432/idesk');
 let texto = await rl.question("\nCole aqui a conexão e aperte Enter:\n> ");
 let url = texto.match(/postgres(?:ql)?:\/\/[^\s'"]+/)?.[0];
 while (!url) {
@@ -19,22 +19,20 @@ while (!url) {
 }
 rl.close();
 
-// Na Neon, a conexão "pooled" tem "-pooler" no endereço; a direta é a mesma sem isso.
-const direta = url.replace("-pooler.", ".");
 const segredo = lerAtual("APP_SECRET") || randomBytes(32).toString("base64");
 
 const manter = atual
   .split("\n")
   .filter((l) => l.trim() && !/^(DATABASE_URL|DIRECT_URL|APP_SECRET)\s*=/.test(l))
   .join("\n");
-writeFileSync(".env", `DATABASE_URL="${url}"\nDIRECT_URL="${direta}"\nAPP_SECRET="${segredo}"\n${manter ? `${manter}\n` : ""}`);
+writeFileSync(".env", `DATABASE_URL="${url}"\nAPP_SECRET="${segredo}"\n${manter ? `${manter}\n` : ""}`);
 console.log("\n✓ Arquivo .env criado.");
 
 console.log("\nPreparando as tabelas do banco (pode levar alguns segundos)...\n");
 try {
   execSync("npx prisma migrate deploy", { stdio: "inherit" });
 } catch {
-  console.log("\n✗ Não consegui acessar o banco. Confira se copiou a conexão inteira da Neon e rode de novo: npm run configurar");
+  console.log("\n✗ Não consegui acessar o banco. Confira se o PostgreSQL está ligado e se a conexão está certa, e rode de novo: npm run configurar");
   process.exit(1);
 }
 console.log('\n✓ Tudo pronto! Agora rode:  npm run dev   e abra http://localhost:3000\n');

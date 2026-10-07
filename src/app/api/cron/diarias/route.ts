@@ -2,7 +2,7 @@ import { atualizarCarteira } from "@/lib/carteira";
 import { prismaBase } from "@/lib/db";
 import { segredoConfere } from "@/lib/segredo";
 
-// Rotina diária (Vercel Cron): desconta as diárias de todas as lojas, mesmo das que não abriram o sistema.
+// Rotina diária (chamada uma vez por dia com a CRON_SECRET): desconta as diárias de todas as lojas, mesmo das que não abriram o sistema.
 export async function GET(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer /, "") ?? null;
   if (!segredoConfere(token, process.env.CRON_SECRET)) return Response.json({ erro: "Não autorizado" }, { status: 401 });

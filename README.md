@@ -12,34 +12,21 @@ Requisitos: Node 20+ e um PostgreSQL.
 
 ```bash
 npm install
-npm run configurar          # pede a conexão do banco (ex.: Neon), cria o .env e as tabelas
+npm run configurar          # pede a conexão do PostgreSQL, cria o .env e as tabelas
 npm run dev                 # http://localhost:3000
 ```
 
-Ou manualmente: copie `.env.example` para `.env`, ajuste `DATABASE_URL`/`DIRECT_URL` e rode `npm run db:migrate`.
+Ou manualmente: copie `.env.example` para `.env`, ajuste `DATABASE_URL` e rode `npm run db:migrate`.
 
 No primeiro acesso, a tela de login pede para criar o usuário administrador (com `CODIGO_PRIMEIRO_ACESSO` definido, pede também esse código). Os demais usuários são criados em **Usuários**.
 
 Testes: `npm test` · Lint: `npm run lint`
 
-### Publicar na Vercel + Neon
-
-1. Na [Neon](https://neon.tech), crie um projeto na região **AWS São Paulo (sa-east-1)** e copie as duas conexões: a *pooled* e a direta.
-2. Na [Vercel](https://vercel.com), importe este repositório e cadastre as variáveis:
-   - `DATABASE_URL` (pooled), da Neon. A `DIRECT_URL` (direta) é opcional: sem ela, o build usa a `DATABASE_URL` sem o `-pooler`;
-   - `APP_SECRET` (gere com `openssl rand -base64 32` e guarde; sem ela as senhas de aparelhos já salvas não abrem);
-   - `CODIGO_PRIMEIRO_ACESSO` (qualquer código só seu);
-   - `CADASTRO_ABERTO="sim"` para as lojas criarem a própria conta em `/cadastro`, e `CODIGO_CADASTRO` se quiser que só quem tiver o código consiga;
-   - `CRON_SECRET` (gere com `openssl rand -hex 32`): a Vercel usa para chamar a rotina diária das diárias;
-   - as opcionais de IMEI, Focus NFe, e-mail, Asaas, OpenRouteService e assistente de IA (veja `.env.example`).
-3. Faça o deploy. O script `vercel-build` aplica as migrações do banco antes de gerar o site. O `vercel.json` põe as funções em São Paulo (`gru1`), perto do banco, e agenda a rotina diária.
-4. Abra o link, informe o código de primeiro acesso e crie o administrador: ele é o dono do sistema (menu **Sistema**, sem cobrança).
-
 ### Lojas novas
 
 - **Cadastro pela própria loja:** com `CADASTRO_ABERTO="sim"`, o login mostra "Crie a conta da sua loja". A tela `/cadastro` cria a loja e o administrador, lança o crédito de boas-vindas (o período de teste: crédito ÷ diária, 7 dias no padrão) e já entra no sistema. Cada loja só vê os próprios dados.
 - **Pelo dono do sistema:** em **Sistema › Nova loja**.
-- **Dados de demonstração** numa loja: `npm run demo -- --loja=<id da loja>` (o id aparece no endereço em Sistema › loja), com o `.env` apontando para o banco da Neon. `npm run demo:apagar -- --loja=<id>` remove.
+- **Dados de demonstração** numa loja: `npm run demo -- --loja=<id da loja>` (o id aparece no endereço em Sistema › loja). `npm run demo:apagar -- --loja=<id>` remove.
 
 ## Situação
 

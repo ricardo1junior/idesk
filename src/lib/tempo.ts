@@ -1,4 +1,4 @@
-// Datas e horas sempre no horário de Brasília, mesmo com o servidor em UTC (ex.: Vercel).
+// Datas e horas sempre no horário de Brasília, mesmo com o servidor em UTC.
 // O Brasil não tem horário de verão desde 2019, então o fuso é fixo em -03:00.
 
 export const FUSO = "America/Sao_Paulo";
