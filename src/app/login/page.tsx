@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { usuarioAtual } from "@/lib/auth";
 import { prismaBase as prisma } from "@/lib/db";
+import { cadastroAberto } from "@/lib/nova-loja";
 import { FormLogin, FormPrimeiroAcesso } from "./Formularios";
 
 export default async function Login() {
@@ -15,6 +17,14 @@ export default async function Login() {
           <h1 className="text-3xl font-semibold">iDesk</h1>
         </div>
         {primeiroAcesso ? <FormPrimeiroAcesso pedirCodigo={!!process.env.CODIGO_PRIMEIRO_ACESSO} /> : <FormLogin />}
+        {!primeiroAcesso && cadastroAberto() && (
+          <p className="mt-6 text-center text-sm text-zinc-600">
+            Ainda não usa o iDesk?{" "}
+            <Link href="/cadastro" className="font-medium text-link hover:underline">
+              Crie a conta da sua loja
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );
