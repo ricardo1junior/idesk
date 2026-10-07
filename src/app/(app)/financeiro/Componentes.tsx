@@ -2,7 +2,8 @@
 
 import Form from "next/form";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { CalendarioPeriodo } from "@/components/CalendarioPeriodo";
 import { Campo } from "@/components/Campos";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { PERIODOS, type Filtros } from "@/lib/financeiro-filtros-cliente";
@@ -15,8 +16,10 @@ type Categoria = { id: string; nome: string; tipo: string };
 export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; categorias: Categoria[] }) {
   const [periodo, setPeriodo] = useState(filtros.periodo);
   const [base, setBase] = useState(filtros.base);
+  const [datas, setDatas] = useState({ de: filtros.de ?? "", ate: filtros.ate ?? "" });
+  const formulario = useRef<HTMLFormElement>(null);
   return (
-    <Form action="/financeiro" className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
+    <Form ref={formulario} action="/financeiro" className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
       <Campo label="Visão">
         <select name="base" value={base} onChange={(e) => setBase(e.target.value as Filtros["base"])}>
           <option value="pagamento">Realizado (o que entrou e saiu)</option>
@@ -32,14 +35,21 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
           ))}
         </select>
       </Campo>
+      <Campo label="Ou escolha as datas" className="sm:col-span-2">
+        <CalendarioPeriodo
+          de={periodo === "personalizado" ? datas.de : ""}
+          ate={periodo === "personalizado" ? datas.ate : ""}
+          onChange={(de, ate) => {
+            setDatas({ de, ate });
+            setPeriodo("personalizado");
+          }}
+          onAplicar={() => formulario.current?.requestSubmit()}
+        />
+      </Campo>
       {periodo === "personalizado" && (
         <>
-          <Campo label="De">
-            <input type="date" name="de" defaultValue={filtros.de} />
-          </Campo>
-          <Campo label="Até">
-            <input type="date" name="ate" defaultValue={filtros.ate} />
-          </Campo>
+          <input type="hidden" name="de" value={datas.de} />
+          <input type="hidden" name="ate" value={datas.ate} />
         </>
       )}
       <Campo label="Tipo">
