@@ -266,3 +266,20 @@ main a.underline {
     background: radial-gradient(120% 90% at 50% 20%, #2a2b30 0%, #151518 60%, #0a0a0b 100%);
   }
 }
+
+/* Menu lateral escondido/visível (botões em AlternarMenu). */
+.area-app[data-menu="visivel"] .botao-mostrar-menu {
+  display: none;
+}
+.area-app[data-menu="oculto"] > aside {
+  display: none;
+}
+.area-app[data-menu="oculto"] > main {
+  padding-top: 4.5rem;
+}
+@media (min-width: 768px) {
+  .area-app[data-menu="oculto"] > main {
+    padding-top: 2.5rem;
+    padding-left: 5rem;
+  }
+}
