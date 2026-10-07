@@ -26,7 +26,7 @@ Testes: `npm test` · Lint: `npm run lint`
 
 1. Na [Neon](https://neon.tech), crie um projeto na região **AWS São Paulo (sa-east-1)** e copie as duas conexões: a *pooled* e a direta.
 2. Na [Vercel](https://vercel.com), importe este repositório e cadastre as variáveis:
-   - `DATABASE_URL` (pooled) e `DIRECT_URL` (direta), da Neon;
+   - `DATABASE_URL` (pooled), da Neon. A `DIRECT_URL` (direta) é opcional: sem ela, o build usa a `DATABASE_URL` sem o `-pooler`;
    - `APP_SECRET` (gere com `openssl rand -base64 32` e guarde; sem ela as senhas de aparelhos já salvas não abrem);
    - `CODIGO_PRIMEIRO_ACESSO` (qualquer código só seu);
    - `CADASTRO_ABERTO="sim"` para as lojas criarem a própria conta em `/cadastro`, e `CODIGO_CADASTRO` se quiser que só quem tiver o código consiga;
