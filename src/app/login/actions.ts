@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { campoNome } from "@/lib/mascaras";
 import { criarSessao, encerrarSessao } from "@/lib/auth";
 import { prismaBase as prisma } from "@/lib/db";
 import { conferirSenha, gerarHash } from "@/lib/senha";
@@ -38,7 +39,7 @@ export async function entrar(_e: EstadoLogin, formData: FormData): Promise<Estad
 
 const primeiroAcessoSchema = z
   .object({
-    nome: z.string().trim().min(2, "Informe seu nome"),
+    nome: campoNome("seu nome"),
     email: z.email("E-mail inválido").transform((v) => v.toLowerCase()),
     senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres"),
     confirmacao: z.string(),

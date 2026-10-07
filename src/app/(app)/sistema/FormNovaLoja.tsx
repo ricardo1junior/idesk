@@ -16,10 +16,10 @@ export function FormNovaLoja() {
         <input name="loja" defaultValue={v("loja")} required />
       </Campo>
       <Campo label="Administrador da loja" erro={erro("nome")}>
-        <input name="nome" defaultValue={v("nome")} required />
+        <input name="nome" data-mascara="nome" autoComplete="name" defaultValue={v("nome")} required />
       </Campo>
       <Campo label="E-mail de acesso" erro={erro("email")}>
-        <input name="email" type="email" defaultValue={v("email")} autoComplete="off" required />
+        <input name="email" type="email" data-mascara="email" defaultValue={v("email")} autoComplete="off" required />
       </Campo>
       <Campo label="Senha inicial" erro={erro("senha")} className="sm:col-span-2" dica="Passe para o lojista; ele pode trocar depois">
         <input name="senha" type="text" autoComplete="off" minLength={8} required />

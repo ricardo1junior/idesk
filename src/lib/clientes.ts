@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cnpjValido, cpfValido, somenteDigitos } from "./documentos";
+import { campoCepOpcional, campoEmailOpcional, campoTelefoneOpcional, campoUfOpcional, emailValido, nomeValido, telefoneValido } from "./mascaras";
 import { ymdValido } from "./tempo";
 
 const opcional = z
@@ -19,19 +20,21 @@ export const clienteSchema = z
     dataNascimento: opcional.refine((v) => !v || ymdValido(v), "Data inválida"),
     inscricaoEstadual: opcional,
     inscricaoMunicipal: opcional,
-    email: opcional.refine((v) => !v || z.email().safeParse(v).success, "E-mail inválido"),
-    telefone: opcional.transform((v) => (v ? somenteDigitos(v) : v)),
-    whatsapp: opcional.transform((v) => (v ? somenteDigitos(v) : v)),
-    cep: opcional.transform((v) => (v ? somenteDigitos(v) : v)),
+    email: campoEmailOpcional,
+    telefone: campoTelefoneOpcional,
+    whatsapp: campoTelefoneOpcional,
+    cep: campoCepOpcional,
     logradouro: opcional,
     numero: opcional,
     complemento: opcional,
     bairro: opcional,
-    cidade: opcional,
-    uf: opcional.transform((v) => (v ? v.toUpperCase().slice(0, 2) : v)),
+    cidade: opcional.refine((v) => !v || nomeValido(v), "Cidade só com letras"),
+    uf: campoUfOpcional,
     observacoes: opcional,
   })
   .superRefine((c, ctx) => {
+    // Pessoa física: nome só com letras. Razão social (PJ) pode ter números.
+    if (c.tipo === "PF" && !nomeValido(c.nome)) ctx.addIssue({ code: "custom", path: ["nome"], message: "Use só letras (sem números ou símbolos)" });
     const valido = c.tipo === "PF" ? cpfValido(c.documento) : cnpjValido(c.documento);
     if (!valido) {
       ctx.addIssue({ code: "custom", path: ["documento"], message: c.tipo === "PF" ? "CPF inválido" : "CNPJ inválido" });
@@ -84,9 +87,9 @@ export function prepararExtras(json: string | null) {
     .map((c, n) => ({ ...c, n }))
     .filter((c) => c.valor)
     .map((c, ordem) => {
-      if (c.tipo === "EMAIL" && !z.email().safeParse(c.valor).success) erros[`contato${c.n}`] = "E-mail inválido";
+      if (c.tipo === "EMAIL" && !emailValido(c.valor)) erros[`contato${c.n}`] = "E-mail inválido";
       const valor = c.tipo === "EMAIL" ? c.valor.toLowerCase() : somenteDigitos(c.valor);
-      if (c.tipo === "TELEFONE" && valor.length < 8) erros[`contato${c.n}`] = "Telefone inválido";
+      if (c.tipo === "TELEFONE" && !telefoneValido(valor)) erros[`contato${c.n}`] = "Telefone inválido: DDD + número";
       return { tipo: c.tipo, valor, rotulo: c.rotulo || null, whatsapp: c.tipo === "TELEFONE" && c.whatsapp, ordem };
     });
 

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { salvarCliente } from "@/app/(app)/clientes/actions";
 import type { EstadoFormulario } from "@/lib/clientes";
+import { mascararTelefone } from "@/lib/mascaras";
 import { formatarCep, formatarDocumento, somenteDigitos } from "@/lib/documentos";
 import { Campo, Secao } from "./Campos";
 
@@ -99,7 +100,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
 
       <Secao titulo="Identificação">
         <Campo label={pf ? "Nome completo" : "Razão social"} erro={erro("nome")} className="sm:col-span-2">
-          <input name="nome" defaultValue={v.nome} required />
+          <input name="nome" data-mascara={pf ? "nome" : undefined} defaultValue={v.nome} required />
         </Campo>
         {!pf && (
           <Campo label="Nome fantasia" className="sm:col-span-2">
@@ -109,6 +110,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
         <Campo label={pf ? "CPF" : "CNPJ"} erro={erro("documento")}>
           <input
             name="documento"
+            data-mascara={pf ? "cpf" : "cnpj"}
             defaultValue={v.documento ? formatarDocumento(v.documento) : ""}
             inputMode="numeric"
             placeholder={pf ? "000.000.000-00" : "00.000.000/0000-00"}
@@ -119,7 +121,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
         {pf ? (
           <>
             <Campo label="RG">
-              <input name="rg" defaultValue={v.rg} />
+              <input name="rg" data-mascara="rg" defaultValue={v.rg} />
             </Campo>
             <Campo label="Data de nascimento">
               <input name="dataNascimento" type="date" defaultValue={v.dataNascimento} />
@@ -128,24 +130,24 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
         ) : (
           <>
             <Campo label="Inscrição estadual" dica='Use "ISENTO" se não tiver'>
-              <input name="inscricaoEstadual" defaultValue={v.inscricaoEstadual} />
+              <input name="inscricaoEstadual" data-mascara="inscricao" defaultValue={v.inscricaoEstadual} />
             </Campo>
             <Campo label="Inscrição municipal">
-              <input name="inscricaoMunicipal" defaultValue={v.inscricaoMunicipal} />
+              <input name="inscricaoMunicipal" data-mascara="inscricao" defaultValue={v.inscricaoMunicipal} />
             </Campo>
           </>
         )}
       </Secao>
 
       <Secao titulo="Contatos">
-        <Campo label="Telefone principal">
-          <input name="telefone" type="tel" defaultValue={v.telefone} />
+        <Campo label="Telefone principal" erro={erro("telefone")}>
+          <input name="telefone" type="tel" data-mascara="telefone" placeholder="(11) 99999-9999" defaultValue={v.telefone ? mascararTelefone(v.telefone) : ""} />
         </Campo>
-        <Campo label="WhatsApp">
-          <input name="whatsapp" type="tel" defaultValue={v.whatsapp} />
+        <Campo label="WhatsApp" erro={erro("whatsapp")}>
+          <input name="whatsapp" type="tel" data-mascara="telefone" placeholder="(11) 99999-9999" defaultValue={v.whatsapp ? mascararTelefone(v.whatsapp) : ""} />
         </Campo>
         <Campo label="E-mail principal" erro={erro("email")} className="sm:col-span-2">
-          <input name="email" type="email" defaultValue={v.email} />
+          <input name="email" type="email" data-mascara="email" defaultValue={v.email} />
         </Campo>
 
         {contatos.map((c, n) => (
@@ -154,6 +156,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
               <input
                 type={c.tipo === "EMAIL" ? "email" : "tel"}
                 inputMode={c.tipo === "EMAIL" ? "email" : "tel"}
+                data-mascara={c.tipo === "EMAIL" ? "email" : "telefone"}
                 value={c.valor}
                 onChange={(e) => alterarContato(n, { valor: e.target.value })}
               />
@@ -184,9 +187,11 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
       </Secao>
 
       <Secao titulo="Endereço principal">
-        <Campo label="CEP" dica={buscandoCep ? "Buscando endereço..." : undefined}>
+        <Campo label="CEP" erro={erro("cep")} dica={buscandoCep ? "Buscando endereço..." : undefined}>
           <input
             name="cep"
+            data-mascara="cep"
+            placeholder="00000-000"
             inputMode="numeric"
             value={endereco.cep}
             onChange={(e) => setEndereco({ ...endereco, cep: e.target.value })}
@@ -209,7 +214,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
           <input name="bairro" value={endereco.bairro} onChange={(e) => setEndereco({ ...endereco, bairro: e.target.value })} />
         </Campo>
         <Campo label="Cidade">
-          <input name="cidade" value={endereco.cidade} onChange={(e) => setEndereco({ ...endereco, cidade: e.target.value })} />
+          <input name="cidade" data-mascara="cidade" value={endereco.cidade} onChange={(e) => setEndereco({ ...endereco, cidade: e.target.value })} />
         </Campo>
         <Campo label="UF">
           <select name="uf" value={endereco.uf} onChange={(e) => setEndereco({ ...endereco, uf: e.target.value })}>
@@ -229,6 +234,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
           <Campo label="CEP">
             <input
               inputMode="numeric"
+              data-mascara="cep"
               value={e.cep}
               onChange={(ev) => alterarEndereco(n, { cep: ev.target.value })}
               onBlur={async (ev) => {
@@ -256,7 +262,7 @@ export function ClienteForm({ id, inicial = {}, contatosIniciais = [], enderecos
             <input value={e.bairro} onChange={(ev) => alterarEndereco(n, { bairro: ev.target.value })} />
           </Campo>
           <Campo label="Cidade">
-            <input value={e.cidade} onChange={(ev) => alterarEndereco(n, { cidade: ev.target.value })} />
+            <input data-mascara="cidade" value={e.cidade} onChange={(ev) => alterarEndereco(n, { cidade: ev.target.value })} />
           </Campo>
           <Campo label="UF">
             <select value={e.uf} onChange={(ev) => alterarEndereco(n, { uf: ev.target.value })}>

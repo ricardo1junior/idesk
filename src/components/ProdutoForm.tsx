@@ -37,13 +37,13 @@ export function ProdutoForm({ id, inicial = {} }: { id?: string; inicial?: Recor
           <input name="marca" defaultValue={v.marca ?? "Apple"} />
         </Campo>
         <Campo label="Código de barras (EAN)" erro={erro("codigoBarras")}>
-          <input name="codigoBarras" defaultValue={v.codigoBarras} inputMode="numeric" />
+          <input name="codigoBarras" data-mascara="inteiro" maxLength={14} defaultValue={v.codigoBarras} inputMode="numeric" />
         </Campo>
         <Campo label="SKU / código interno">
           <input name="sku" defaultValue={v.sku} />
         </Campo>
         <Campo label="NCM" dica="Necessário para nota fiscal">
-          <input name="ncm" defaultValue={v.ncm} inputMode="numeric" />
+          <input name="ncm" data-mascara="ncm" defaultValue={v.ncm} inputMode="numeric" />
         </Campo>
         {tipo === "PECA" && (
           <Campo label="Compatível com" dica="Modelos separados por vírgula" className="sm:col-span-3">
@@ -54,10 +54,10 @@ export function ProdutoForm({ id, inicial = {} }: { id?: string; inicial?: Recor
 
       <Secao titulo="Preço e estoque">
         <Campo label="Preço de custo (R$)" erro={erro("precoCusto")}>
-          <input name="precoCusto" defaultValue={v.precoCusto} inputMode="decimal" placeholder="0,00" />
+          <input name="precoCusto" data-mascara="dinheiro" defaultValue={v.precoCusto} inputMode="decimal" placeholder="0,00" />
         </Campo>
         <Campo label="Preço de venda (R$)" erro={erro("precoVenda")}>
-          <input name="precoVenda" defaultValue={v.precoVenda} inputMode="decimal" placeholder="0,00" />
+          <input name="precoVenda" data-mascara="dinheiro" defaultValue={v.precoVenda} inputMode="decimal" placeholder="0,00" />
         </Campo>
         <Campo label="Estoque mínimo">
           <input name="estoqueMinimo" type="number" min={0} defaultValue={v.estoqueMinimo ?? "0"} />

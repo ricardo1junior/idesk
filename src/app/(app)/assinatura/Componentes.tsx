@@ -32,7 +32,7 @@ export function FormRecarga({ diaria, minimo, disponivel }: { diaria: number; mi
       <div className="grid items-end gap-3 sm:grid-cols-[10rem_1fr_auto]">
         <label className="campo">
           <span>Valor (R$)</span>
-          <input name="valor" value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" />
+          <input name="valor" data-mascara="dinheiro" value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" />
         </label>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(FORMAS) as (keyof typeof FORMAS)[]).map((f) => (

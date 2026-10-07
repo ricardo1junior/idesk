@@ -47,7 +47,7 @@ export function FormCreditoManual({ empresaId }: { empresaId: string }) {
         </select>
       </Campo>
       <Campo label="Valor (R$)" erro={estado.erros?.valor}>
-        <input name="valor" inputMode="decimal" defaultValue={estado.valores?.valor} required />
+        <input name="valor" data-mascara="dinheiro" inputMode="decimal" defaultValue={estado.valores?.valor} required />
       </Campo>
       <Campo label="Descrição">
         <input name="descricao" defaultValue={estado.valores?.descricao} placeholder="Ex.: pagamento em dinheiro" />
@@ -73,7 +73,7 @@ export function FormConfigSistema({ config }: { config: { diariaPadrao: number; 
         <input name="creditoBoasVindas" inputMode="decimal" defaultValue={v("creditoBoasVindas")} required />
       </Campo>
       <Campo label="Recarga mínima (R$)" erro={estado.erros?.recargaMinima}>
-        <input name="recargaMinima" inputMode="decimal" defaultValue={v("recargaMinima")} required />
+        <input name="recargaMinima" data-mascara="dinheiro" inputMode="decimal" defaultValue={v("recargaMinima")} required />
       </Campo>
       <Rodape pendente={pendente} estado={estado} texto="Salvar valores" />
     </form>

@@ -30,13 +30,13 @@ export function FormDadosLoja({ inicial, logo }: { inicial: DadosLoja; logo: str
             <input name="razaoSocial" defaultValue={v("razaoSocial")} />
           </Campo>
           <Campo label="CNPJ ou CPF" erro={erro("documento")}>
-            <input name="documento" defaultValue={v("documento")} inputMode="numeric" />
+            <input name="documento" data-mascara="documento" defaultValue={v("documento")} inputMode="numeric" />
           </Campo>
           <Campo label="Telefone / WhatsApp">
-            <input name="telefone" defaultValue={v("telefone")} inputMode="tel" />
+            <input name="telefone" data-mascara="telefone" defaultValue={v("telefone")} inputMode="tel" />
           </Campo>
           <Campo label="E-mail de contato" erro={erro("email")} className="sm:col-span-2" dica="As respostas dos clientes chegam aqui">
-            <input name="email" type="email" defaultValue={v("email")} />
+            <input name="email" type="email" data-mascara="email" defaultValue={v("email")} />
           </Campo>
           <Campo label="Endereço (para impressão)" className="sm:col-span-3">
             <input name="endereco" defaultValue={v("endereco")} placeholder="Rua, número, bairro, cidade - UF" />
@@ -69,7 +69,7 @@ export function FormDadosLoja({ inicial, logo }: { inicial: DadosLoja; logo: str
             <input name="smtpHost" defaultValue={v("smtpHost")} placeholder="smtp.gmail.com" />
           </Campo>
           <Campo label="Porta" erro={erro("smtpPorta")}>
-            <input name="smtpPorta" defaultValue={v("smtpPorta")} inputMode="numeric" placeholder="465" />
+            <input name="smtpPorta" data-mascara="inteiro" maxLength={5} defaultValue={v("smtpPorta")} inputMode="numeric" placeholder="465" />
           </Campo>
           <label className="flex items-end gap-2 pb-2 text-sm">
             <input type="checkbox" name="smtpSeguro" defaultChecked={estado.valores ? estado.valores.smtpSeguro === "on" : inicial.smtpSeguro} key={String(estado.valores?.smtpSeguro)} /> Conexão segura (SSL)
@@ -81,7 +81,7 @@ export function FormDadosLoja({ inicial, logo }: { inicial: DadosLoja; logo: str
             <input name="smtpSenha" type="password" autoComplete="new-password" placeholder={inicial.temSenhaSmtp ? "••••••••" : ""} />
           </Campo>
           <Campo label="E-mail remetente" erro={erro("emailRemetente")} className="sm:col-span-2">
-            <input name="emailRemetente" type="email" defaultValue={v("emailRemetente")} placeholder="contato@sualoja.com.br" />
+            <input name="emailRemetente" type="email" data-mascara="email" defaultValue={v("emailRemetente")} placeholder="contato@sualoja.com.br" />
           </Campo>
         </section>
 

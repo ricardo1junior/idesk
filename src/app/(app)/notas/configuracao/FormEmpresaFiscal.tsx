@@ -21,7 +21,7 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
       <section className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
         <h2 className="titulo-secao sm:col-span-4">Empresa</h2>
         <Campo label="CNPJ" erro={erro("cnpj")}>
-          <input name="cnpj" defaultValue={v("cnpj")} />
+          <input name="cnpj" data-mascara="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" defaultValue={v("cnpj")} />
         </Campo>
         <Campo label="Razão social" erro={erro("razaoSocial")} className="sm:col-span-2">
           <input name="razaoSocial" defaultValue={v("razaoSocial")} />
@@ -30,10 +30,10 @@ export function FormEmpresaFiscal({ empresa, tokens }: { empresa?: Record<string
           <input name="nomeFantasia" defaultValue={v("nomeFantasia")} />
         </Campo>
         <Campo label="Inscrição estadual">
-          <input name="inscricaoEstadual" defaultValue={v("inscricaoEstadual")} />
+          <input name="inscricaoEstadual" data-mascara="inscricao" defaultValue={v("inscricaoEstadual")} />
         </Campo>
         <Campo label="UF" erro={erro("uf")}>
-          <input name="uf" maxLength={2} defaultValue={v("uf")} />
+          <input name="uf" data-mascara="uf" maxLength={2} defaultValue={v("uf")} />
         </Campo>
         <Campo label="Regime tributário" className="sm:col-span-2">
           <select name="regime" defaultValue={v("regime", "SIMPLES_NACIONAL")}>

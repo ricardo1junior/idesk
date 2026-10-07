@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cnpjValido, cpfValido, somenteDigitos } from "./documentos";
+import { telefoneValido } from "./mascaras";
 
 // Dados e aparência da loja (Configurações > Dados da loja). Sem "server-only": usado nos testes.
 
@@ -28,7 +29,11 @@ export const dadosLojaSchema = z.object({
     .transform(somenteDigitos)
     .refine((v) => !v || (v.length === 11 ? cpfValido(v) : v.length === 14 && cnpjValido(v)), "CPF ou CNPJ inválido")
     .transform((v) => v || null),
-  telefone: z.string().transform(somenteDigitos).transform((v) => v || null),
+  telefone: z
+    .string()
+    .trim()
+    .refine((v) => !v || telefoneValido(v), "Telefone inválido: DDD + número")
+    .transform((v) => somenteDigitos(v) || null),
   email: z
     .string()
     .trim()

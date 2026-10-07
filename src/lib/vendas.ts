@@ -1,5 +1,6 @@
 import type { FormaPagamento } from "@prisma/client";
 import { z } from "zod";
+import { imeiValido } from "./mascaras";
 
 export const FORMAS_PAGAMENTO: Record<FormaPagamento, string> = {
   DINHEIRO: "Dinheiro",
@@ -25,7 +26,7 @@ export const trocaSchema = z.object({
     .string()
     .trim()
     .optional()
-    .refine((v) => !v || /^\d{15}$/.test(v), "Troca: IMEI deve ter 15 dígitos"),
+    .refine((v) => !v || imeiValido(v), "Troca: IMEI inválido, confira os 15 dígitos"),
   serial: z.string().trim().optional(),
   condicao: z.enum(["SEMINOVO_A", "SEMINOVO_B", "SEMINOVO_C"]),
   saudeBateria: z.number().int().min(0).max(100).nullable().optional(),

@@ -1,5 +1,6 @@
 import type { CondicaoAparelho, TipoProduto } from "@prisma/client";
 import { z } from "zod";
+import { imeiValido } from "./mascaras";
 import { lerReais } from "./dinheiro";
 
 export const TIPOS_PRODUTO: Record<TipoProduto, string> = {
@@ -60,8 +61,8 @@ export const aparelhoSchema = z.object({
   modelo: z.string().trim().min(2, "Informe o modelo"),
   cor: opcional,
   capacidade: opcional,
-  imei: opcional.refine((v) => !v || /^\d{15}$/.test(v), "IMEI deve ter 15 dígitos"),
-  imei2: opcional.refine((v) => !v || /^\d{15}$/.test(v), "IMEI 2 deve ter 15 dígitos"),
+  imei: opcional.refine((v) => !v || imeiValido(v), "IMEI inválido: confira os 15 dígitos"),
+  imei2: opcional.refine((v) => !v || imeiValido(v), "IMEI 2 inválido: confira os 15 dígitos"),
   serial: opcional.transform((v) => v?.toUpperCase() ?? v),
   condicao: z.enum(["NOVO", "SEMINOVO_A", "SEMINOVO_B", "SEMINOVO_C"]),
   saudeBateria: opcional.refine((v) => !v || (Number(v) >= 0 && Number(v) <= 100), "Bateria entre 0 e 100"),

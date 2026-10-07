@@ -51,7 +51,7 @@ export function EntradaAparelhoForm({ produtoId, modelo }: { produtoId: string; 
         <input name="capacidade" defaultValue={v.capacidade} placeholder="128 GB" list="capacidades-apple" autoComplete="off" />
       </Campo>
       <Campo label="Cor">
-        <input name="cor" defaultValue={v.cor} />
+        <input name="cor" data-mascara="nome" defaultValue={v.cor} />
       </Campo>
       <Campo label="Condição">
         <select name="condicao" defaultValue={v.condicao ?? "NOVO"}>
@@ -63,19 +63,19 @@ export function EntradaAparelhoForm({ produtoId, modelo }: { produtoId: string; 
         </select>
       </Campo>
       <Campo label="IMEI" erro={erro("imei")}>
-        <input name="imei" defaultValue={v.imei} inputMode="numeric" maxLength={15} />
+        <input name="imei" data-mascara="imei" defaultValue={v.imei} inputMode="numeric" maxLength={15} />
       </Campo>
       <Campo label="IMEI 2" erro={erro("imei2")}>
         <input name="imei2" defaultValue={v.imei2} inputMode="numeric" maxLength={15} />
       </Campo>
       <Campo label="Nº de série">
-        <input name="serial" defaultValue={v.serial} className="uppercase" />
+        <input name="serial" data-mascara="serial" defaultValue={v.serial} className="uppercase" />
       </Campo>
       <Campo label="Bateria (%)" erro={erro("saudeBateria")}>
-        <input name="saudeBateria" defaultValue={v.saudeBateria} inputMode="numeric" />
+        <input name="saudeBateria" data-mascara="inteiro" maxLength={3} defaultValue={v.saudeBateria} inputMode="numeric" />
       </Campo>
       <Campo label="Custo (R$)" erro={erro("custo")}>
-        <input name="custo" defaultValue={v.custo} inputMode="decimal" placeholder="0,00" />
+        <input name="custo" data-mascara="dinheiro" defaultValue={v.custo} inputMode="decimal" placeholder="0,00" />
       </Campo>
       <Campo label="Observações" className="sm:col-span-2">
         <input name="observacoes" defaultValue={v.observacoes} />

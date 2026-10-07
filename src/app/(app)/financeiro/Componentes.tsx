@@ -132,7 +132,7 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
         </select>
       </Campo>
       <Campo label="Valor total (R$)" erro={erro("valor")}>
-        <input name="valor" defaultValue={v.valor} inputMode="decimal" placeholder="0,00" />
+        <input name="valor" data-mascara="dinheiro" defaultValue={v.valor} inputMode="decimal" placeholder="0,00" />
       </Campo>
       <Campo label="Vencimento (1ª parcela)" erro={erro("vencimento")}>
         <input name="vencimento" type="date" defaultValue={v.vencimento ?? ymdLocal(new Date())} />

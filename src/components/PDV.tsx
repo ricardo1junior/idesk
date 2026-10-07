@@ -413,15 +413,15 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
       </label>
       <label className="campo">
         <span>Cor</span>
-        <input {...campo("cor")} />
+        <input {...campo("cor")} data-mascara="nome" />
       </label>
       <label className="campo">
         <span>IMEI</span>
-        <input {...campo("imei")} inputMode="numeric" maxLength={15} />
+        <input {...campo("imei")} data-mascara="imei" inputMode="numeric" maxLength={15} />
       </label>
       <label className="campo">
         <span>Nº de série</span>
-        <input {...campo("serial")} />
+        <input {...campo("serial")} data-mascara="serial" className="uppercase" />
       </label>
       <label className="campo">
         <span>Condição</span>
@@ -435,7 +435,7 @@ function FormTroca({ troca, onChange }: { troca: Troca; onChange: (t: Troca) => 
       </label>
       <label className="campo">
         <span>Bateria (%)</span>
-        <input {...campo("saudeBateria")} inputMode="numeric" />
+        <input {...campo("saudeBateria")} data-mascara="inteiro" maxLength={3} inputMode="numeric" />
       </label>
       <AvaliacaoTroca modelo={troca.modelo} capacidade={troca.capacidade} />
       <div className="sm:col-span-4">

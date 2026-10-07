@@ -77,10 +77,10 @@ export function NovoAgendamento({ dia, horarios, hora, duracao }: { dia: string;
         </div>
       )}
       <Campo label="Nome" erro={erro("nome")}>
-        <input name="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        <input name="nome" data-mascara="nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
       </Campo>
       <Campo label="WhatsApp / telefone">
-        <input name="telefone" inputMode="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
+        <input name="telefone" data-mascara="telefone" inputMode="tel" value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(11) 99999-9999" />
       </Campo>
       <Campo label="Motivo">
         <select name="motivo" defaultValue={v.motivo ?? "REPARO"}>
