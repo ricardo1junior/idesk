@@ -15,6 +15,7 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
   { href: "/os", label: "Ordens de serviço", permissao: "os" },
   { href: "/clientes", label: "Clientes", permissao: "clientes" },
   { href: "/estoque", label: "Estoque", permissao: "estoque" },
+  { href: "/vitrine", label: "Vitrine 3D" },
   { href: "/financeiro", label: "Financeiro", permissao: "financeiro" },
   { href: "/notas", label: "Notas fiscais", permissao: "notasFiscais" },
   { href: "/entregas", label: "Entregas", permissao: "entregas" },
