@@ -7,6 +7,7 @@ import { estiloCor } from "@/lib/empresa-dados";
 import { carteiraDaLoja } from "@/lib/carteira";
 import Link from "next/link";
 import { ItemMenu } from "./ItemMenu";
+import { AssistenteIA } from "@/components/AssistenteIA";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
   { href: "/", label: "Início" },
@@ -78,6 +79,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <AvisoSaldo situacao={carteira.situacao} dias={carteira.diasRestantes} podeRecarregar={podeRecarregar} />
         {children}
       </main>
+      <AssistenteIA />
     </div>
   );
 }

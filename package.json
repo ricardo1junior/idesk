@@ -15,6 +15,7 @@
     "configurar": "node scripts/configurar.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@prisma/client": "^6.19.3",
     "fast-xml-parser": "^5.11.1",
     "next": "16.3.6",
