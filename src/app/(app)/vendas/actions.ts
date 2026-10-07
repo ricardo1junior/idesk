@@ -92,9 +92,13 @@ export async function buscarParaVenda(termo: string): Promise<OpcaoVenda[]> {
 class ErroVenda extends Error {}
 
 async function receberTroca(tx: Tx, troca: TrocaEntrada, valor: number) {
-  // A troca entra no estoque ligada a um produto "aparelho" do mesmo modelo (criado se não existir).
+  // A troca entra no estoque ligada ao produto seminovo do mesmo modelo (criado se não existir),
+  // para não se misturar com o produto do aparelho novo, que tem outro preço.
   const produto =
-    (await tx.produto.findFirst({ where: { tipo: "APARELHO", modelo: { equals: troca.modelo, mode: "insensitive" } }, select: { id: true } })) ??
+    (await tx.produto.findFirst({
+      where: { tipo: "APARELHO", modelo: { equals: troca.modelo, mode: "insensitive" }, descricao: { contains: "seminovo", mode: "insensitive" } },
+      select: { id: true },
+    })) ??
     (await tx.produto.create({ data: { tipo: "APARELHO", descricao: `${troca.modelo} seminovo`, modelo: troca.modelo }, select: { id: true } }));
 
   const dados = {
