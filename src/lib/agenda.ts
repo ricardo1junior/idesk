@@ -2,6 +2,7 @@ import type { MotivoAgendamento, StatusAgendamento } from "@prisma/client";
 import { z } from "zod";
 import { nomeValido, telefoneOpcional } from "./mascaras";
 import { dataHoraLocal, diaDaSemana, ymdValido } from "./tempo";
+import { paraNumero } from "./estoque";
 
 export const MOTIVOS: Record<MotivoAgendamento, string> = {
   REPARO: "Reparo / assistência",
@@ -107,5 +108,8 @@ export const configLojaSchema = z
     duracaoAtendimento: z.coerce.number().int().min(5, "Mínimo 5 minutos").max(240),
     atendimentosSimultaneos: z.coerce.number().int().min(1).max(20),
     minutosNoLocalEntrega: z.coerce.number().int().min(0).max(240),
+    motoboyTaxaFixa: z.unknown().transform(paraNumero).refine((v) => Number.isFinite(v) && v >= 0 && v <= 10000, "Valor inválido"),
+    motoboyValorKm: z.unknown().transform(paraNumero).refine((v) => Number.isFinite(v) && v >= 0 && v <= 1000, "Valor inválido"),
+    motoboyMinutosRetirada: z.coerce.number().int().min(0).max(240),
   })
   .refine((c) => c.abreAs < c.fechaAs, { message: "O horário de fechar deve ser depois do de abrir", path: ["fechaAs"] });

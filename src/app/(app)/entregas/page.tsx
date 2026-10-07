@@ -3,7 +3,7 @@ import { BotaoEnviar } from "@/components/BotaoEnviar";
 import { LinkWhatsApp } from "@/components/LinkWhatsApp";
 import { exigirUsuario } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatarDuracao, STATUS_ENTREGA } from "@/lib/entregas";
+import { formatarDuracao, MODALIDADES_ENTREGA, STATUS_ENTREGA } from "@/lib/entregas";
 import { configLoja } from "@/lib/loja";
 import { linkGoogleMaps } from "@/lib/rotas";
 import { dataLocal, horaLocal } from "@/lib/tempo";
@@ -57,9 +57,19 @@ export default async function Entregas() {
             </div>
             <div className="text-zinc-700">{e.endereco}</div>
             <div className="text-zinc-500">
-              {e.minutosTotal ? `~${formatarDuracao(e.minutosTotal)} fora da loja (${e.distanciaKm?.toLocaleString("pt-BR")} km até lá)` : "Tempo não calculado"}
+              {e.modalidade === "LOJA"
+                ? e.minutosTotal
+                  ? `~${formatarDuracao(e.minutosTotal)} fora da loja (${e.distanciaKm?.toLocaleString("pt-BR")} km até lá)`
+                  : "Tempo não calculado"
+                : [
+                    `${MODALIDADES_ENTREGA[e.modalidade].label}${e.prestador ? `: ${e.prestador}` : ""}`,
+                    e.minutosPrestador ? `~${formatarDuracao(e.minutosPrestador)} até o cliente` : null,
+                    Number(e.custo) > 0 ? `custo ${formatarReais(Number(e.custo))}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
               {Number(e.taxa) > 0 && ` · taxa ${formatarReais(Number(e.taxa))}`}
-              {e.responsavel && ` · vai: ${e.responsavel.nome}`}
+              {e.modalidade === "LOJA" && e.responsavel && ` · vai: ${e.responsavel.nome}`}
               {e.venda && (
                 <>
                   {" · "}
@@ -86,7 +96,13 @@ export default async function Entregas() {
             {e.status === "PENDENTE" && acao("EM_ROTA", "Saiu para entrega", true)}
             {e.status === "EM_ROTA" && acao("CONCLUIDA", "Concluir", true)}
             {e.status === "EM_ROTA" && tel && (
-              <LinkWhatsApp telefone={tel} mensagem={`Olá ${e.cliente.nome.split(" ")[0]}! Saímos agora para a ${e.tipo === "COLETA" ? "coleta" : "entrega"}${e.minutosIda ? `, chegamos em cerca de ${formatarDuracao(e.minutosIda)}` : ""}.`}>
+              <LinkWhatsApp telefone={tel} mensagem={`Olá ${e.cliente.nome.split(" ")[0]}! Saímos agora para a ${e.tipo === "COLETA" ? "coleta" : "entrega"}${
+                  e.modalidade !== "LOJA" && e.minutosPrestador
+                    ? `, ${e.prestador ? `com ${e.prestador}, ` : ""}chega em cerca de ${formatarDuracao(e.minutosPrestador)}`
+                    : e.minutosIda
+                      ? `, chegamos em cerca de ${formatarDuracao(e.minutosIda)}`
+                      : ""
+                }.`}>
                 <span className="text-sm text-link hover:underline">Avisar cliente</span>
               </LinkWhatsApp>
             )}

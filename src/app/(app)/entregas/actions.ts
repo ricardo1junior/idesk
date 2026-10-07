@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { exigirUsuario } from "@/lib/auth";
 import type { EstadoFormulario } from "@/lib/clientes";
 import { prisma } from "@/lib/db";
-import { enderecoEmLinha, entregaSchema, statusEntregaValido, tempoTotal, TRANSICOES_ENTREGA } from "@/lib/entregas";
+import { enderecoEmLinha, entregaSchema, estimarMotoboy, MODALIDADES_ENTREGA, statusEntregaValido, tempoTotal, TRANSICOES_ENTREGA } from "@/lib/entregas";
+import { categoriaId } from "@/lib/financeiro";
 import { configLoja } from "@/lib/loja";
 import { geocodificar, linkGoogleMaps, rotaDeCarro, rotasConfiguradas } from "@/lib/rotas";
 import { dataHoraLocal } from "@/lib/tempo";
@@ -32,7 +33,7 @@ export async function dadosClienteEntrega(clienteId: string) {
   };
 }
 
-export type Estimativa = { erro?: string; distanciaKm?: number; minutosIda?: number; minutosTotal?: number; mapa: string };
+export type Estimativa = { erro?: string; distanciaKm?: number; minutosIda?: number; minutosTotal?: number; motoboy?: { minutos: number; custo: number }; mapa: string };
 
 export async function estimarRota(endereco: string): Promise<Estimativa> {
   await exigirUsuario("entregas");
@@ -52,7 +53,13 @@ export async function estimarRota(endereco: string): Promise<Estimativa> {
     const rota = await rotaDeCarro(origem, destino);
     if (!rota) return { erro: "Não foi possível traçar a rota até esse endereço.", mapa };
     const minutosIda = Math.max(1, Math.round(rota.segundos / 60));
-    return { distanciaKm: Math.round(rota.metros / 100) / 10, minutosIda, minutosTotal: tempoTotal(minutosIda, loja.minutosNoLocalEntrega), mapa };
+    const distanciaKm = Math.round(rota.metros / 100) / 10;
+    const motoboy = estimarMotoboy(distanciaKm, minutosIda, {
+      taxaFixa: Number(loja.motoboyTaxaFixa),
+      valorKm: Number(loja.motoboyValorKm),
+      minutosRetirada: loja.motoboyMinutosRetirada,
+    });
+    return { distanciaKm, minutosIda, minutosTotal: tempoTotal(minutosIda, loja.minutosNoLocalEntrega), motoboy, mapa };
   } catch (e) {
     console.error("Falha ao calcular rota", e);
     return { erro: "O serviço de mapas não respondeu. Tente de novo ou use o link do mapa.", mapa };
@@ -93,7 +100,12 @@ export async function criarEntrega(_e: EstadoFormulario, formData: FormData): Pr
       distanciaKm: d.distanciaKm,
       minutosIda: d.minutosIda,
       minutosTotal: d.minutosTotal,
-      responsavelId: d.responsavelId,
+      // Motoboy/terceirizado: quem vai é o prestador; a equipe da loja não sai.
+      modalidade: d.modalidade,
+      responsavelId: d.modalidade === "LOJA" ? d.responsavelId : null,
+      prestador: d.modalidade === "LOJA" ? null : d.prestador,
+      minutosPrestador: d.modalidade === "LOJA" ? null : d.minutosPrestador,
+      custo: d.modalidade === "LOJA" ? 0 : d.custo,
       observacoes: d.observacoes,
     },
   });
@@ -103,11 +115,34 @@ export async function criarEntrega(_e: EstadoFormulario, formData: FormData): Pr
 }
 
 export async function mudarStatusEntrega(id: string, status: string) {
-  await exigirUsuario("entregas");
+  const usuario = await exigirUsuario("entregas");
   if (!statusEntregaValido(status)) return;
   const de = (Object.keys(TRANSICOES_ENTREGA) as (keyof typeof TRANSICOES_ENTREGA)[]).filter((s) => TRANSICOES_ENTREGA[s].includes(status));
-  // Só muda a partir de um status que permite a transição: clique repetido ou entrega já finalizada não fazem nada.
-  await prisma.entrega.updateMany({ where: { id, status: { in: de } }, data: { status, concluidaEm: status === "CONCLUIDA" ? new Date() : null } });
+  await prisma.$transaction(async (tx) => {
+    const agora = new Date();
+    // Só muda a partir de um status que permite a transição: clique repetido ou entrega já finalizada não fazem nada.
+    const r = await tx.entrega.updateMany({ where: { id, status: { in: de } }, data: { status, concluidaEm: status === "CONCLUIDA" ? agora : null } });
+    if (r.count !== 1 || status !== "CONCLUIDA") return;
+    // Entrega feita por motoboy/terceirizado: o custo vai para o financeiro como saída.
+    const e = await tx.entrega.findUnique({ where: { id }, select: { numero: true, tipo: true, modalidade: true, prestador: true, custo: true, clienteId: true, vendaId: true, osId: true } });
+    if (!e || e.modalidade === "LOJA" || Number(e.custo) <= 0) return;
+    await tx.lancamento.create({
+      data: {
+        tipo: "SAIDA",
+        status: "PAGO",
+        descricao: `${e.tipo === "COLETA" ? "Coleta" : "Entrega"} #${e.numero} · ${e.prestador || MODALIDADES_ENTREGA[e.modalidade].label}`,
+        valor: e.custo,
+        vencimento: agora,
+        pagoEm: agora,
+        categoriaId: await categoriaId(tx, "SAIDA", "Entregas e fretes"),
+        clienteId: e.clienteId,
+        vendaId: e.vendaId,
+        osId: e.osId,
+        usuarioId: usuario.id,
+      },
+    });
+  });
   revalidatePath("/entregas");
   revalidatePath("/agenda");
+  revalidatePath("/financeiro");
 }

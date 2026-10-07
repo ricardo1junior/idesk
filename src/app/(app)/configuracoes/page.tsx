@@ -39,6 +39,9 @@ export default async function Configuracoes() {
           duracaoAtendimento: String(c.duracaoAtendimento),
           atendimentosSimultaneos: String(c.atendimentosSimultaneos),
           minutosNoLocalEntrega: String(c.minutosNoLocalEntrega),
+          motoboyTaxaFixa: Number(c.motoboyTaxaFixa).toFixed(2).replace(".", ","),
+          motoboyValorKm: Number(c.motoboyValorKm).toFixed(2).replace(".", ","),
+          motoboyMinutosRetirada: String(c.motoboyMinutosRetirada),
         }}
       />
     </div>

@@ -251,3 +251,35 @@ main a.underline {
 .icone-lua {
   opacity: var(--escuro);
 }
+
+/* Fundo do palco da Vitrine 3D (claro e escuro acompanham o tema). */
+.vitrine-palco {
+  background: radial-gradient(120% 90% at 50% 20%, #ffffff 0%, #eef0f4 55%, #dfe2e8 100%);
+}
+@media screen {
+  :root[data-tema="escuro"] .vitrine-palco {
+    background: radial-gradient(120% 90% at 50% 20%, #2a2b30 0%, #151518 60%, #0a0a0b 100%);
+  }
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .vitrine-palco {
+    background: radial-gradient(120% 90% at 50% 20%, #2a2b30 0%, #151518 60%, #0a0a0b 100%);
+  }
+}
+
+/* Menu lateral escondido/visível (botões em AlternarMenu). */
+.area-app[data-menu="visivel"] .botao-mostrar-menu {
+  display: none;
+}
+.area-app[data-menu="oculto"] > aside {
+  display: none;
+}
+.area-app[data-menu="oculto"] > main {
+  padding-top: 4.5rem;
+}
+@media (min-width: 768px) {
+  .area-app[data-menu="oculto"] > main {
+    padding-top: 2.5rem;
+    padding-left: 5rem;
+  }
+}

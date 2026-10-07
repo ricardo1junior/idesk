@@ -7,6 +7,9 @@ import { estiloCor } from "@/lib/empresa-dados";
 import { carteiraDaLoja } from "@/lib/carteira";
 import Link from "next/link";
 import { ItemMenu } from "./ItemMenu";
+import { AssistenteIA } from "@/components/AssistenteIA";
+import { EsconderMenu, MostrarMenu } from "@/components/AlternarMenu";
+import { cookies } from "next/headers";
 
 const menu: { href: string; label: string; permissao?: Permissao; embreve?: boolean }[] = [
   { href: "/", label: "Início" },
@@ -15,6 +18,7 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
   { href: "/os", label: "Ordens de serviço", permissao: "os" },
   { href: "/clientes", label: "Clientes", permissao: "clientes" },
   { href: "/estoque", label: "Estoque", permissao: "estoque" },
+  { href: "/vitrine", label: "Vitrine 3D" },
   { href: "/financeiro", label: "Financeiro", permissao: "financeiro" },
   { href: "/notas", label: "Notas fiscais", permissao: "notasFiscais" },
   { href: "/entregas", label: "Entregas", permissao: "entregas" },
@@ -25,12 +29,14 @@ const menu: { href: string; label: string; permissao?: Permissao; embreve?: bool
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const usuario = await exigirUsuario();
-  const [empresa, carteira] = await Promise.all([empresaAtual(), carteiraDaLoja(usuario.empresaId)]);
+  const [empresa, carteira, cookieStore] = await Promise.all([empresaAtual(), carteiraDaLoja(usuario.empresaId), cookies()]);
+  const menuOculto = cookieStore.get("menu")?.value === "oculto";
   const logo = urlLogo(empresa);
   const podeRecarregar = pode(usuario.perfil, "assinatura");
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row" style={estiloCor(empresa.corDestaque)}>
+    <div data-menu={menuOculto ? "oculto" : "visivel"} className="area-app flex min-h-screen flex-col md:flex-row" style={estiloCor(empresa.corDestaque)}>
+      <MostrarMenu />
       <aside className="sticky top-0 z-20 flex flex-col border-b border-zinc-200/70 bg-cartao/75 backdrop-blur-xl backdrop-saturate-150 md:h-screen md:w-60 md:border-r md:border-b-0 print:hidden">
         <div className="flex items-center gap-2 px-5 py-5 text-xl font-semibold tracking-tight">
           {logo ? (
@@ -42,8 +48,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           <span className="line-clamp-2 min-w-0 text-base leading-tight break-words" title={empresa.nome}>
             {empresa.nome}
           </span>
-          <span className="ml-auto">
+          <span className="ml-auto flex items-center gap-1">
             <EscolherTema />
+            <EsconderMenu />
           </span>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-3 pb-3 text-sm md:flex-col">
@@ -77,6 +84,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         <AvisoSaldo situacao={carteira.situacao} dias={carteira.diasRestantes} podeRecarregar={podeRecarregar} />
         {children}
       </main>
+      <AssistenteIA />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { lerFiltros, paramsDosFiltros, whereDosFiltros } from "@/lib/financeiro-
 import { dataLocal, inicioDeHoje, ymdLocal } from "@/lib/tempo";
 import { FORMAS_PAGAMENTO, formatarReais } from "@/lib/vendas";
 import { baixarLancamento, cancelarLancamento, estornarLancamento } from "./actions";
-import { FiltrosFluxo, NovoLancamento } from "./Componentes";
+import { AbasFinanceiro, FiltrosFluxo, NovoLancamento } from "./Componentes";
 
 const LIMITE = 2000;
 
@@ -59,6 +59,7 @@ export default async function FluxoDeCaixa({ searchParams }: PageProps<"/finance
 
   return (
     <div className="max-w-6xl space-y-6">
+      <AbasFinanceiro ativa="fluxo" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Fluxo de caixa</h1>

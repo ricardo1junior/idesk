@@ -2,7 +2,8 @@
 
 import Form from "next/form";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { CalendarioPeriodo } from "@/components/CalendarioPeriodo";
 import { Campo } from "@/components/Campos";
 import { Entrada } from "@/components/Entrada";
 import type { EstadoFormulario } from "@/lib/clientes";
@@ -16,8 +17,10 @@ type Categoria = { id: string; nome: string; tipo: string };
 export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; categorias: Categoria[] }) {
   const [periodo, setPeriodo] = useState(filtros.periodo);
   const [base, setBase] = useState(filtros.base);
+  const [datas, setDatas] = useState({ de: filtros.de ?? "", ate: filtros.ate ?? "" });
+  const formulario = useRef<HTMLFormElement>(null);
   return (
-    <Form action="/financeiro" className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
+    <Form ref={formulario} action="/financeiro" className="grid gap-3 rounded-lg border border-zinc-200 bg-cartao p-5 sm:grid-cols-4">
       <Campo label="Visão">
         <select name="base" value={base} onChange={(e) => setBase(e.target.value as Filtros["base"])}>
           <option value="pagamento">Realizado (o que entrou e saiu)</option>
@@ -33,14 +36,21 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
           ))}
         </select>
       </Campo>
+      <Campo label="Ou escolha as datas" className="sm:col-span-2">
+        <CalendarioPeriodo
+          de={periodo === "personalizado" ? datas.de : ""}
+          ate={periodo === "personalizado" ? datas.ate : ""}
+          onChange={(de, ate) => {
+            setDatas({ de, ate });
+            setPeriodo("personalizado");
+          }}
+          onAplicar={() => formulario.current?.requestSubmit()}
+        />
+      </Campo>
       {periodo === "personalizado" && (
         <>
-          <Campo label="De">
-            <input type="date" name="de" defaultValue={filtros.de} />
-          </Campo>
-          <Campo label="Até">
-            <input type="date" name="ate" defaultValue={filtros.ate} />
-          </Campo>
+          <input type="hidden" name="de" value={datas.de} />
+          <input type="hidden" name="ate" value={datas.ate} />
         </>
       )}
       <Campo label="Tipo">
@@ -103,22 +113,38 @@ export function FiltrosFluxo({ filtros, categorias }: { filtros: Filtros; catego
   );
 }
 
-export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
+// Com fornecedores, vira o cadastro de conta a pagar: tipo fixo em saída e escolha do fornecedor.
+export function NovoLancamento({ categorias, fornecedores }: { categorias: Categoria[]; fornecedores?: { id: string; nome: string }[] }) {
   const [estado, acao, pendente] = useActionState<EstadoFormulario, FormData>(criarLancamento, {});
   const [tipo, setTipo] = useState("SAIDA");
+  const contaPagar = !!fornecedores;
   const erro = (c: string) => estado.erros?.[c];
   // Em caso de erro a action devolve o que foi digitado, para não perder o formulário.
   const v = estado.valores ?? {};
   return (
     <form action={acao} key={estado.mensagem} className="grid gap-3 sm:grid-cols-4">
-      <Campo label="Tipo">
-        <select name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-          <option value="SAIDA">Saída (despesa, conta a pagar)</option>
-          <option value="ENTRADA">Entrada (receita, conta a receber)</option>
-        </select>
-      </Campo>
+      {contaPagar ? (
+        <Campo label="Fornecedor" erro={erro("fornecedorId")}>
+          <input type="hidden" name="tipo" value="SAIDA" />
+          <select name="fornecedorId" defaultValue={v.fornecedorId ?? ""}>
+            <option value="">Sem fornecedor</option>
+            {fornecedores.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+      ) : (
+        <Campo label="Tipo">
+          <select name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            <option value="SAIDA">Saída (despesa, conta a pagar)</option>
+            <option value="ENTRADA">Entrada (receita, conta a receber)</option>
+          </select>
+        </Campo>
+      )}
       <Campo label="Descrição" erro={erro("descricao")} className="sm:col-span-2">
-        <input name="descricao" defaultValue={v.descricao} placeholder="ex.: Aluguel de outubro" />
+        <input name="descricao" defaultValue={v.descricao} placeholder={contaPagar ? "ex.: Aluguel de outubro, conta de luz" : "ex.: Aluguel de outubro"} />
       </Campo>
       <Campo label="Categoria" erro={erro("categoriaId")}>
         <select name="categoriaId" defaultValue={v.categoriaId ?? ""}>
@@ -167,5 +193,24 @@ export function NovoLancamento({ categorias }: { categorias: Categoria[] }) {
         {estado.erros && <span className="text-sm text-red-600">Corrija os campos destacados.</span>}
       </div>
     </form>
+  );
+}
+
+// Abas do financeiro.
+export function AbasFinanceiro({ ativa }: { ativa: "fluxo" | "pagar" }) {
+  const aba = (id: "fluxo" | "pagar", href: string, rotulo: string) => (
+    <Link
+      href={href}
+      aria-current={ativa === id ? "page" : undefined}
+      className={`rounded-full px-4 py-1.5 transition ${ativa === id ? "bg-cartao font-medium shadow-sm" : "text-zinc-600 hover:text-zinc-900"}`}
+    >
+      {rotulo}
+    </Link>
+  );
+  return (
+    <nav className="inline-flex rounded-full bg-zinc-900/[0.06] p-1 text-sm" aria-label="Financeiro">
+      {aba("fluxo", "/financeiro", "Fluxo de caixa")}
+      {aba("pagar", "/financeiro/contas-a-pagar", "Contas a pagar")}
+    </nav>
   );
 }
