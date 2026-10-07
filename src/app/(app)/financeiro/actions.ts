@@ -22,6 +22,9 @@ export async function criarLancamento(_e: EstadoFormulario, formData: FormData):
   if (d.categoriaId && !(await prisma.categoriaFinanceira.findFirst({ where: { id: d.categoriaId, tipo: d.tipo }, select: { id: true } }))) {
     return { erros: { categoriaId: "Categoria não encontrada" }, valores };
   }
+  if (d.fornecedorId && !(await prisma.fornecedor.findFirst({ where: { id: d.fornecedorId }, select: { id: true } }))) {
+    return { erros: { fornecedorId: "Fornecedor não encontrado" }, valores };
+  }
   const centavos = Math.round(d.valor * 100);
   const base = Math.floor(centavos / d.parcelas);
 
@@ -41,12 +44,13 @@ export async function criarLancamento(_e: EstadoFormulario, formData: FormData):
         parcela: d.parcelas > 1 ? i + 1 : null,
         totalParcelas: d.parcelas > 1 ? d.parcelas : null,
         categoriaId: d.categoriaId ?? null,
+        fornecedorId: d.tipo === "SAIDA" ? (d.fornecedorId ?? null) : null,
         observacoes: d.observacoes ?? null,
         usuarioId: usuario.id,
       };
     }),
   });
-  revalidatePath("/financeiro");
+  revalidatePath("/financeiro", "layout");
   return { mensagem: d.parcelas > 1 ? `${d.parcelas} parcelas lançadas.` : "Lançamento criado." };
 }
 
@@ -64,18 +68,18 @@ export async function baixarLancamento(id: string, formData: FormData) {
       ...(forma in FORMAS_PAGAMENTO ? { forma: forma as FormaPagamento } : {}),
     },
   });
-  revalidatePath("/financeiro");
+  revalidatePath("/financeiro", "layout");
 }
 
 export async function estornarLancamento(id: string) {
   await exigirUsuario("financeiro");
   // Lançamentos de venda são estornados pelo cancelamento da venda.
   await prisma.lancamento.updateMany({ where: { id, status: "PAGO", vendaId: null }, data: { status: "PENDENTE", pagoEm: null } });
-  revalidatePath("/financeiro");
+  revalidatePath("/financeiro", "layout");
 }
 
 export async function cancelarLancamento(id: string) {
   await exigirUsuario("financeiro");
   await prisma.lancamento.updateMany({ where: { id, status: "PENDENTE", vendaId: null }, data: { status: "CANCELADO" } });
-  revalidatePath("/financeiro");
+  revalidatePath("/financeiro", "layout");
 }

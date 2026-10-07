@@ -124,5 +124,6 @@ export const lancamentoSchema = z.object({
   pago: z.enum(["sim"]).optional(),
   forma: z.enum(["DINHEIRO", "PIX", "TRANSFERENCIA", "DEBITO", "CREDITO", "BOLETO", "A_PRAZO"]).optional().or(z.literal("").transform(() => undefined)),
   categoriaId: opcional,
+  fornecedorId: opcional,
   observacoes: opcional,
 });

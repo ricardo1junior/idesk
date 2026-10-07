@@ -22,8 +22,10 @@ if (apagar) {
   const produtos = (await prisma.produto.findMany({ where: { empresaId: E, sku: { startsWith: "DEMO-" } }, select: { id: true } })).map((p) => p.id);
   const vendas = (await prisma.venda.findMany({ where: { empresaId: E, observacoes: { startsWith: MARCA } }, select: { id: true } })).map((v) => v.id);
   const os = (await prisma.ordemServico.findMany({ where: { empresaId: E, clienteId: { in: clientes } }, select: { id: true } })).map((o) => o.id);
+  const fornecedores = (await prisma.fornecedor.findMany({ where: { empresaId: E, razaoSocial: { endsWith: MARCA } }, select: { id: true } })).map((f) => f.id);
   await prisma.$transaction([
-    prisma.lancamento.deleteMany({ where: { empresaId: E, OR: [{ vendaId: { in: vendas } }, { osId: { in: os } }] } }),
+    prisma.lancamento.deleteMany({ where: { empresaId: E, OR: [{ vendaId: { in: vendas } }, { osId: { in: os } }, { observacoes: { startsWith: MARCA } }, { fornecedorId: { in: fornecedores } }] } }),
+    prisma.fornecedor.deleteMany({ where: { id: { in: fornecedores } } }),
     prisma.venda.deleteMany({ where: { id: { in: vendas } } }), // itens e pagamentos vão junto
     prisma.ordemServico.deleteMany({ where: { id: { in: os } } }), // itens e histórico vão junto
     prisma.movimentoEstoque.deleteMany({ where: { produtoId: { in: produtos } } }),
@@ -37,8 +39,59 @@ if (apagar) {
   process.exit(0);
 }
 
+async function categoriaPagar(nome) {
+  await prisma.categoriaFinanceira.createMany({ data: [{ empresaId: E, nome, tipo: "SAIDA" }], skipDuplicates: true });
+  return (await prisma.categoriaFinanceira.findFirst({ where: { empresaId: E, nome, tipo: "SAIDA" } })).id;
+}
+
+// ---------- Contas a pagar (fornecedores e despesas) ----------
+if (!(await prisma.fornecedor.count({ where: { empresaId: E, razaoSocial: { endsWith: MARCA } } }))) {
+  const catCompra = await categoriaPagar("Compra de mercadoria");
+  const forn = [];
+  for (const [cnpj, razao, fantasia] of [
+    ["04252011000110", "Distribuidora Maçã Mobile Ltda", "Maçã Mobile"],
+    ["18727053000174", "Peças Premium Assistência Ltda", "Peças Premium"],
+    ["33041260065290", "Acessórios Brasil Importação Ltda", "Acessórios Brasil"],
+  ]) {
+    forn.push(await prisma.fornecedor.create({ data: { empresaId: E, cnpj, razaoSocial: `${razao} ${MARCA}`, nomeFantasia: fantasia, cidade: "São Paulo", uf: "SP" } }));
+  }
+  const hoje = new Date();
+  const dia = (d) => new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + d, 12);
+  const contas = [
+    // [descrição, valor, dias até vencer, fornecedor, categoria, parcela, total, pago]
+    ["NF 4521 dup. 1", 6890.5, -20, 0, catCompra, 1, 3, true],
+    ["NF 4521 dup. 2", 6890.5, -3, 0, catCompra, 2, 3, false],
+    ["NF 4521 dup. 3", 6890.5, 27, 0, catCompra, 3, 3, false],
+    ["NF 887 peças de reposição", 2140, 0, 1, catCompra, null, null, false],
+    ["NF 1203 capas e películas", 1385.9, 5, 2, catCompra, null, null, false],
+    ["Aluguel da loja", 4500, 8, null, await categoriaPagar("Aluguel"), null, null, false],
+    ["Energia elétrica", 612.37, 2, null, await categoriaPagar("Energia, água e internet"), null, null, false],
+    ["Internet fibra", 199.9, 12, null, await categoriaPagar("Energia, água e internet"), null, null, false],
+    ["DAS Simples Nacional", 1874.22, 15, null, await categoriaPagar("Impostos"), null, null, false],
+    ["Salários da equipe", 7800, 20, null, await categoriaPagar("Salários"), null, null, false],
+  ];
+  await prisma.lancamento.createMany({
+    data: contas.map(([descricao, valor, d, f, categoriaId, parcela, totalParcelas, pago]) => ({
+      empresaId: E,
+      tipo: "SAIDA",
+      status: pago ? "PAGO" : "PENDENTE",
+      descricao,
+      valor,
+      vencimento: dia(d),
+      pagoEm: pago ? dia(d) : null,
+      forma: pago ? "BOLETO" : null,
+      parcela,
+      totalParcelas,
+      categoriaId,
+      fornecedorId: f == null ? null : forn[f].id,
+      observacoes: `${MARCA} Conta fictícia`,
+    })),
+  });
+  console.log(`Criadas ${contas.length} contas a pagar de demonstração (${forn.length} fornecedores).`);
+}
+
 if (await prisma.cliente.count({ where: { empresaId: E, observacoes: { startsWith: MARCA } } })) {
-  console.log("Os dados de demonstração já existem. Para recriar, rode antes com --apagar.");
+  console.log("Os demais dados de demonstração já existem. Para recriar, rode antes com --apagar.");
   await prisma.$disconnect();
   process.exit(0);
 }
